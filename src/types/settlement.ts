@@ -37,6 +37,8 @@ export interface VerifyResponse {
     nonceUsed?: boolean;
     /** Current timestamp */
     timestamp?: number;
+    /** Error message for debugging (when invalidReason is unknown_error) */
+    error?: string;
   };
 }
 

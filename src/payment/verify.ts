@@ -65,9 +65,7 @@ export async function verifyPayment(
     }
 
     // 5. Verify authorization token matches requirement
-    if (
-      payload.payload.authorization.token !== paymentRequirements.asset
-    ) {
+    if (payload.payload.authorization.token !== paymentRequirements.asset) {
       return {
         isValid: false,
         invalidReason: 'invalid_network',
@@ -127,11 +125,16 @@ export async function verifyPayment(
       },
     };
   } catch (error) {
-    // If it's a Zod validation error or any other error, return unknown_error
+    // Capture error details for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
     return {
       isValid: false,
       invalidReason: 'unknown_error',
       payer: '',
+      details: {
+        error: errorMessage,
+      },
     };
   }
 }

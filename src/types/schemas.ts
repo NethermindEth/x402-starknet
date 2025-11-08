@@ -112,6 +112,7 @@ export const VerifyResponseSchema = z.object({
       balance: z.string().optional(),
       nonceUsed: z.boolean().optional(),
       timestamp: z.number().int().optional(),
+      error: z.string().optional(),
     })
     .optional(),
 });

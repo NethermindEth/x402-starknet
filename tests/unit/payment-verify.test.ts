@@ -200,6 +200,7 @@ describe('Payment Verification', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('unknown_error');
+      expect(result.details?.error).toBe('RPC error');
     });
 
     it('should handle zero balance', async () => {

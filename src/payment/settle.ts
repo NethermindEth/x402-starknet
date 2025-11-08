@@ -77,19 +77,15 @@ export async function settlePayment(
       paymasterEndpoint?: string;
     };
     const paymasterEndpoint =
-      options?.paymasterConfig?.endpoint ??
-      payloadWithExtras.paymasterEndpoint;
+      options?.paymasterConfig?.endpoint ?? payloadWithExtras.paymasterEndpoint;
 
     if (!paymasterEndpoint) {
       throw new Error('Paymaster endpoint not provided');
     }
 
     // 3. Create paymaster client
-    const {
-      createPaymasterClient,
-      executeTransaction,
-      createTransferCall,
-    } = await import('../paymaster/index.js');
+    const { createPaymasterClient, executeTransaction, createTransferCall } =
+      await import('../paymaster/index.js');
 
     const paymasterClient = createPaymasterClient({
       endpoint: paymasterEndpoint,
