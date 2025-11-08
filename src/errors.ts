@@ -15,10 +15,8 @@ export class X402Error extends Error {
     super(message);
     this.name = 'X402Error';
     this.code = code;
-    // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
+    // Maintains proper stack trace for where our error was thrown
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -115,7 +113,7 @@ export class NetworkError extends X402Error {
 /**
  * Error code constants for stable programmatic handling
  */
-export const ErrorCodes = {
+export const ERROR_CODES = {
   // Payment errors
   INVALID_PAYLOAD: 'INVALID_PAYLOAD',
   INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
@@ -132,4 +130,4 @@ export const ErrorCodes = {
   PAYMASTER_UNAVAILABLE: 'PAYMASTER_UNAVAILABLE',
 } as const;
 
-export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

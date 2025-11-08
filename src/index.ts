@@ -94,7 +94,7 @@ export {
   X402Error,
   PaymentError,
   NetworkError,
-  ErrorCodes,
+  ERROR_CODES,
   type ErrorCode,
 } from './errors.js';
 

@@ -750,12 +750,12 @@ class PaymasterError extends Error {
 
 ---
 
-### `ErrorCodes`
+### `ERROR_CODES`
 
 All error codes as constants.
 
 ```typescript
-const ErrorCodes: {
+const ERROR_CODES: {
   readonly INVALID_PAYLOAD: 'INVALID_PAYLOAD';
   readonly INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE';
   readonly VERIFICATION_FAILED: 'VERIFICATION_FAILED';

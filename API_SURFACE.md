@@ -52,7 +52,7 @@ Network utilities:
 
 ### Error Codes (1)
 
-- `ErrorCodes` - Constant object with all error codes
+- `ERROR_CODES` - Constant object with all error codes
 
 ### Types (Exported as TypeScript types)
 

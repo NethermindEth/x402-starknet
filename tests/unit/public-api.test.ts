@@ -35,7 +35,7 @@ describe('Public API Surface', () => {
       'PaymentError',
       'NetworkError',
       'PaymasterError',
-      'ErrorCodes',
+      'ERROR_CODES',
     ];
 
     expect(allExports.sort()).toEqual(expectedExports.sort());
@@ -43,7 +43,7 @@ describe('Public API Surface', () => {
 
   it('should export correct number of symbols', () => {
     const allExports = Object.keys(publicApi).filter((key) => key !== 'default');
-    // 11 functions + 4 constants + 4 error classes + 1 ErrorCodes = 20
+    // 11 functions + 4 constants + 4 error classes + 1 ERROR_CODES = 20
     expect(allExports).toHaveLength(20);
   });
 
@@ -76,8 +76,8 @@ describe('Public API Surface', () => {
     expect(publicApi.PaymasterError).toBeDefined();
   });
 
-  it('should export ErrorCodes', () => {
-    expect(publicApi.ErrorCodes).toEqual({
+  it('should export ERROR_CODES', () => {
+    expect(publicApi.ERROR_CODES).toEqual({
       INVALID_PAYLOAD: 'INVALID_PAYLOAD',
       INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
       VERIFICATION_FAILED: 'VERIFICATION_FAILED',
