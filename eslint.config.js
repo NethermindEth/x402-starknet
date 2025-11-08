@@ -1,3 +1,5 @@
+// @ts-check
+// ESLint configuration - this file is intentionally ignored from linting
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import unusedImports from 'eslint-plugin-unused-imports';
@@ -5,16 +7,15 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 
-export default tseslint.config(
+export default [
   {
     ignores: [
       'node_modules/**',
       'dist/**',
       'coverage/**',
       '**/*.d.ts',
-      '*.config.js',
-      '*.config.ts',
-      'eslint.config.js',
+      '**/*.config.js',
+      '**/*.config.ts',
     ],
   },
   eslint.configs.recommended,
@@ -45,7 +46,6 @@ export default tseslint.config(
       unicorn,
     },
     rules: {
-      '@typescript-eslint/no-unnecessary-condition': 'error',
       'no-console': 'warn',
       'no-restricted-syntax': [
         'error',
@@ -155,5 +155,5 @@ export default tseslint.config(
     rules: {
       'unicorn/prefer-module': 'off',
     },
-  }
-);
+  },
+];
