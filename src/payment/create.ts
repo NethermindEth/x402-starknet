@@ -6,8 +6,15 @@ import type {
   PaymentRequirements,
   PaymentPayload,
   PaymentRequirementsSelector,
+  PaymasterConfig,
 } from '../types/index.js';
-import type { Account, RpcProvider } from 'starknet';
+import type { Account, RpcProvider, TypedData } from 'starknet';
+import {
+  createPaymasterClient,
+  buildTransaction,
+  createTransferCall,
+  DEFAULT_PAYMASTER_ENDPOINTS,
+} from '../paymaster/index.js';
 
 /**
  * Select appropriate payment requirements from available options
@@ -56,14 +63,13 @@ export type { PaymentRequirementsSelector };
 /**
  * Create payment payload for x402 request
  *
- * This is the core function that applications will use to create
- * payment authorizations. The actual implementation will depend on
- * whether using paymaster or other methods.
+ * This builds a gasless transaction via paymaster and returns
+ * the signed payload ready to send to the server.
  *
  * @param account - User's Starknet account
  * @param x402Version - x402 protocol version (currently 1)
  * @param paymentRequirements - Payment requirements from server
- * @param options - Additional options (paymaster config, etc.)
+ * @param paymasterConfig - Paymaster configuration (endpoint, API key)
  * @returns Payment payload to send to server
  *
  * @example
@@ -72,22 +78,91 @@ export type { PaymentRequirementsSelector };
  *   account,
  *   1,
  *   paymentRequirements,
- *   { paymasterEndpoint: 'https://paymaster.example.com' }
+ *   {
+ *     endpoint: 'https://paymaster.avnu.fi',
+ *     network: 'starknet-sepolia'
+ *   }
  * );
  * ```
  */
 export async function createPaymentPayload(
-  _account: Account,
-  _x402Version: number,
-  _paymentRequirements: PaymentRequirements,
-  _options?: {
-    paymasterEndpoint?: string;
-    [key: string]: unknown;
-  }
+  account: Account,
+  x402Version: number,
+  paymentRequirements: PaymentRequirements,
+  paymasterConfig: PaymasterConfig
 ): Promise<PaymentPayload> {
-  // TODO: Implement payment payload creation
-  // This will use paymaster integration when available
-  throw new Error('Not implemented yet - will be added in Phase 2');
+  // 1. Create transfer call
+  const transferCall = createTransferCall(
+    paymentRequirements.asset,
+    paymentRequirements.payTo,
+    paymentRequirements.maxAmountRequired
+  );
+
+  // 2. Create paymaster client
+  const client = createPaymasterClient(paymasterConfig);
+
+  // 3. Build transaction with paymaster (sponsored mode)
+  const buildResult = await buildTransaction(
+    client,
+    account.address,
+    [transferCall],
+    { mode: 'sponsored' } // Server pays gas
+  );
+
+  if (buildResult.type !== 'invoke') {
+    throw new Error('Expected invoke transaction from paymaster');
+  }
+
+  // 4. Sign typed data
+  const signature = await account.signMessage(buildResult.typed_data);
+
+  // 5. Create payment payload
+  const payload: PaymentPayload = {
+    x402Version: x402Version as 1,
+    scheme: 'exact',
+    network: paymentRequirements.network,
+    payload: {
+      signature: {
+        r: Array.isArray(signature) ? signature[0] ?? '0x0' : '0x0',
+        s: Array.isArray(signature) ? signature[1] ?? '0x0' : '0x0',
+      },
+      authorization: {
+        from: account.address,
+        to: paymentRequirements.payTo,
+        amount: paymentRequirements.maxAmountRequired,
+        token: paymentRequirements.asset,
+        nonce: '0', // Will be extracted from typed data
+        validUntil: '0', // Will be extracted from typed data
+      },
+    },
+  };
+
+  // Store the typed data and paymaster endpoint for later execution
+  // Note: The actual implementation needs to store this somewhere
+  // for the facilitator to use when settling
+  (payload as unknown as { typedData: TypedData }).typedData =
+    buildResult.typed_data;
+  (payload as unknown as { paymasterEndpoint: string }).paymasterEndpoint =
+    paymasterConfig.endpoint;
+
+  return payload;
+}
+
+/**
+ * Get default paymaster endpoint for network
+ *
+ * @param network - Network identifier
+ * @returns Default paymaster endpoint URL
+ *
+ * @example
+ * ```typescript
+ * const endpoint = getDefaultPaymasterEndpoint('starknet-sepolia');
+ * ```
+ */
+export function getDefaultPaymasterEndpoint(
+  network: 'starknet-mainnet' | 'starknet-sepolia' | 'starknet-devnet'
+): string {
+  return DEFAULT_PAYMASTER_ENDPOINTS[network];
 }
 
 /**

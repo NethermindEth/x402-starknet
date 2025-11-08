@@ -32,6 +32,27 @@ export type {
   SupportedKindsResponse,
 } from './settlement.js';
 
+// Paymaster types
+export type {
+  PaymasterConfig,
+  PaymasterFeeMode,
+  InvokeParameters,
+  TransactionParameters,
+  ExecutionParameters,
+  FeeEstimate,
+  BuildTransactionRequest,
+  InvokeTransactionResponse,
+  BuildTransactionResponse,
+  ExecuteTransactionRequest,
+  ExecuteTransactionResponse,
+  SupportedTokensResponse,
+  IsAvailableResponse,
+  JsonRpcRequest,
+  JsonRpcResponse,
+} from './paymaster.js';
+
+export { PaymasterError } from './paymaster.js';
+
 // Zod schemas
 export {
   StarknetNetworkSchema,

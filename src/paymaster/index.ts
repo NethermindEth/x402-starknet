@@ -3,23 +3,19 @@
  * @module paymaster
  */
 
-// TODO: Implement in Phase 2
-// This will include:
-// - Paymaster client types
-// - RPC client wrapper
-// - Transaction building
-// - Transaction execution
+export { PaymasterClient, createPaymasterClient } from './client.js';
+export * from './helpers.js';
 
-/**
- * Placeholder for paymaster client
- */
-export class PaymasterClient {
-  constructor(public endpoint: string) {}
-}
+// Re-export paymaster types for convenience
+export type {
+  PaymasterConfig,
+  PaymasterFeeMode,
+  BuildTransactionRequest,
+  BuildTransactionResponse,
+  ExecuteTransactionRequest,
+  ExecuteTransactionResponse,
+  SupportedTokensResponse,
+  IsAvailableResponse,
+} from '../types/paymaster.js';
 
-/**
- * Create paymaster client
- */
-export function createPaymasterClient(endpoint: string): PaymasterClient {
-  return new PaymasterClient(endpoint);
-}
+export { PaymasterError } from '../types/paymaster.js';
