@@ -111,15 +111,15 @@ The x402 protocol consists of three layers:
 
 ---
 
-## Phase 2: Paymaster Integration Setup (Days 3-4)
+## Phase 2: Paymaster Integration Setup (Days 3-4) ✅ COMPLETE
 
-### Step 2.1: Add Paymaster Dependencies
+### Step 2.1: Add Paymaster Dependencies ✅
 
 **Tasks**:
-- [ ] Research AVNU Paymaster public endpoints
-- [ ] Add paymaster client dependencies
-- [ ] Configure paymaster network endpoints
-- [ ] Create paymaster configuration types
+- [x] Research AVNU Paymaster public endpoints
+- [x] Add paymaster client dependencies
+- [x] Configure paymaster network endpoints
+- [x] Create paymaster configuration types
 
 **Dependencies to add**:
 ```json
@@ -182,21 +182,21 @@ export interface PaymasterBuildResponse {
 }
 ```
 
-**Deliverables**:
+**Deliverables**: ✅ Complete
 - Paymaster configuration types
 - Network endpoint mapping for paymaster services
 
-**Testing**: Type compilation
+**Testing**: ✅ Type compilation
 
 ---
 
-### Step 2.2: Paymaster Client Utilities
+### Step 2.2: Paymaster Client Utilities ✅
 
 **Tasks**:
-- [ ] Create paymaster client wrapper
-- [ ] Implement `buildTransaction` wrapper
-- [ ] Implement `executeTransaction` wrapper
-- [ ] Add error handling for paymaster responses
+- [x] Create paymaster client wrapper
+- [x] Implement `buildTransaction` wrapper
+- [x] Implement `executeTransaction` wrapper
+- [x] Add error handling for paymaster responses
 
 **Files to create**:
 - `src/paymaster/client.ts` - Paymaster RPC client
@@ -230,169 +230,146 @@ export async function executePaymasterTransaction(
 ): Promise<{ transactionHash: string }>;
 ```
 
-**Deliverables**:
+**Deliverables**: ✅ Complete
 - Paymaster client abstraction
 - Clean API for transaction building/execution
 
-**Testing**: Unit tests with mock paymaster responses
+**Testing**: ✅ Unit tests with mock paymaster responses (48 tests passing)
 
 ---
 
-## Phase 3: Client-Side Implementation (Days 5-7)
+## Phase 3: Payment Verification & Settlement (Days 5-7)
 
-### Step 3.1: Payment Transaction Builder
+This phase implements the verification and settlement logic as pure library functions. These are used by applications to verify and execute payments.
+
+### Step 3.1: Payment Verification Logic
 
 **Tasks**:
-- [ ] Create `src/client/` directory
-- [ ] Implement payment transaction builder using paymaster
-- [ ] Create transfer call encoding
-- [ ] Implement payment header formatting
+- [ ] Implement signature verification for payment payloads
+- [ ] Add balance checking before execution
+- [ ] Validate payment authorization matches requirements
+- [ ] Extract payer address from payload
 
-**Files to create**:
-- `src/client/index.ts` - Main client API
-- `src/client/builder.ts` - Transaction building
-- `src/client/header.ts` - Header formatting
+**Files to update**:
+- `src/payment/verify.ts` - Verification logic
+- `src/types/index.ts` - Add signature verification types if needed
+
+**Core Functions**:
+```typescript
+/**
+ * Verify payment payload without executing
+ *
+ * Validates signature, balance, and payment parameters
+ */
+export async function verifyPayment(
+  provider: RpcProvider,
+  payload: PaymentPayload,
+  paymentRequirements: PaymentRequirements
+): Promise<VerifyResponse> {
+  // 1. Validate payload structure with Zod
+  PaymentPayloadSchema.parse(payload);
+
+  // 2. Extract payer address from authorization
+  const payer = payload.payload.authorization.from;
+
+  // 3. Verify signature matches (starknet.js signature verification)
+  const isValidSignature = verifyMessageHash(
+    /* hash from typed data */,
+    payload.payload.signature,
+    payer
+  );
+
+  // 4. Check token balance
+  const balance = await getTokenBalance(
+    provider,
+    paymentRequirements.asset,
+    payer
+  );
+
+  // 5. Validate amount matches
+  if (payload.payload.authorization.amount !== paymentRequirements.maxAmountRequired) {
+    return { isValid: false, invalidReason: 'invalid_amount', payer };
+  }
+
+  return { isValid: true, payer };
+}
+```
+
+**Deliverables**:
+- Complete payment verification logic
+- Signature verification
+- Balance checking
+- Payer extraction
+
+**Testing**: Unit tests for verification logic
+
+---
+
+### Step 3.2: Payment Settlement Logic
+
+**Tasks**:
+- [ ] Implement settlement via paymaster
+- [ ] Add transaction execution logic
+- [ ] Implement transaction monitoring
+- [ ] Handle settlement errors and retries
+
+**Files to update**:
+- `src/payment/settle.ts` - Settlement logic
 
 **Core Function**:
 ```typescript
 /**
- * Create payment header for x402 request
+ * Settle payment by executing via paymaster
  *
- * This builds a gasless transaction via paymaster and returns
- * the signed payload as a base64-encoded header.
+ * Verifies first, then executes the transaction
  */
-export async function createPaymentHeader(
-  account: Account,
-  x402Version: number,
+export async function settlePayment(
+  provider: RpcProvider,
+  payload: PaymentPayload,
   paymentRequirements: PaymentRequirements,
-  paymasterConfig: PaymasterConfig
-): Promise<string> {
-  // 1. Create ERC20 transfer call
-  const transferCall = {
-    to: paymentRequirements.asset,
-    selector: 'transfer',
-    calldata: [
-      paymentRequirements.payTo,
-      paymentRequirements.maxAmountRequired,
-      '0' // u256 high part
-    ]
-  };
-
-  // 2. Build transaction with paymaster
-  const paymasterClient = createPaymasterClient(paymasterConfig);
-  const buildResult = await buildPaymasterTransaction(
-    paymasterClient,
-    account.address,
-    [transferCall],
-    { mode: 'sponsored' } // Server pays gas
-  );
-
-  // 3. Sign typed data
-  const signature = await account.signMessage(buildResult.typedData);
-
-  // 4. Create payment payload
-  const payload: PaymentPayload = {
-    x402Version,
-    scheme: 'exact',
-    network: paymentRequirements.network,
-    payload: {
-      signedTypedData: buildResult.typedData,
-      signature,
-      paymasterEndpoint: paymasterConfig.endpoint,
-    },
-  };
-
-  // 5. Encode as base64 header
-  return encodePaymentPayload(payload);
-}
-```
-
-**Deliverables**:
-- Client payment creation API
-- Paymaster-based transaction building
-
-**Testing**: Unit tests for transaction building
-
----
-
-### Step 3.2: Payment Requirements Selection
-
-**Tasks**:
-- [ ] Implement payment requirements selector
-- [ ] Add network compatibility checks
-- [ ] Create balance validation
-
-**Files to create**:
-- `src/client/selector.ts` - Requirements selection logic
-
-**Core Function**:
-```typescript
-export async function selectPaymentRequirements(
-  requirements: PaymentRequirements[],
-  account: Account,
-  provider: RpcProvider
-): Promise<PaymentRequirements> {
-  // 1. Filter by network compatibility
-  const compatible = requirements.filter(
-    req => req.network === getNetworkFromProvider(provider)
-  );
-
-  // 2. Check token balances for each option
-  for (const req of compatible) {
-    const balance = await getTokenBalance(
-      provider,
-      req.asset,
-      account.address
-    );
-
-    if (BigInt(balance) >= BigInt(req.maxAmountRequired)) {
-      return req;
-    }
+  options?: { paymasterConfig?: PaymasterConfig }
+): Promise<SettleResponse> {
+  // 1. Verify payment first
+  const verification = await verifyPayment(provider, payload, paymentRequirements);
+  if (!verification.isValid) {
+    return {
+      success: false,
+      errorReason: verification.invalidReason,
+      transaction: '',
+      network: paymentRequirements.network,
+      payer: verification.payer,
+    };
   }
 
-  throw new Error('No payment requirements can be satisfied');
+  // 2. Get paymaster client and execute transaction
+  const paymasterClient = createPaymasterClient(options.paymasterConfig);
+  const result = await executeTransaction(
+    paymasterClient,
+    payload.payload.authorization.from,
+    [createTransferCall(...)],
+    { mode: 'sponsored' },
+    [payload.payload.signature.r, payload.payload.signature.s]
+  );
+
+  // 3. Wait for confirmation
+  const receipt = await waitForSettlement(provider, result.transaction_hash);
+
+  return {
+    success: true,
+    transaction: result.transaction_hash,
+    network: paymentRequirements.network,
+    payer: verification.payer,
+  };
 }
 ```
 
 **Deliverables**:
-- Automatic payment requirements selection
-- Balance and compatibility checks
+- Complete settlement logic
+- Transaction execution via paymaster
+- Transaction monitoring
+- Error handling
 
-**Testing**: Unit tests for selection logic
-
----
-
-### Step 3.3: Wallet Integration
-
-**Tasks**:
-- [ ] Add support for different Starknet wallets
-- [ ] Integrate with starknet.js `Account` interface
-- [ ] Support browser wallets (ArgentX, Braavos)
-- [ ] Support server wallets (local signers)
-
-**Files to create**:
-- `src/client/wallet.ts` - Wallet abstraction
-
-**Wallet Types to Support**:
-```typescript
-/** Connect to browser wallet via get-starknet */
-export async function connectBrowserWallet(
-  network: StarknetNetwork
-): Promise<Account>;
-
-/** Create local account for servers/agents */
-export function createLocalAccount(
-  provider: RpcProvider,
-  privateKey: string,
-  accountAddress: string
-): Account;
-```
-
-**Deliverables**:
-- Multi-wallet support
-- Unified account interface
-
-**Testing**: Integration tests with different wallet types
+**Testing**: Unit tests for settlement logic
 
 ---
 

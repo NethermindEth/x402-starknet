@@ -43,8 +43,12 @@ export async function settlePayment(
   provider: RpcProvider,
   payload: PaymentPayload,
   paymentRequirements: PaymentRequirements,
-  _options?: {
-    paymasterEndpoint?: string;
+  options?: {
+    paymasterConfig?: {
+      endpoint?: string;
+      network?: string;
+      apiKey?: string;
+    };
     [key: string]: unknown;
   }
 ): Promise<SettleResponse> {
@@ -67,12 +71,66 @@ export async function settlePayment(
   }
 
   try {
-    // 2. Execute transaction
-    // TODO: Implement settlement logic
-    // - Use paymaster if endpoint provided
-    // - Otherwise use direct transaction submission
+    // 2. Get paymaster configuration
+    // Extract from payload if available, otherwise use options
+    const payloadWithExtras = payload as unknown as {
+      paymasterEndpoint?: string;
+    };
+    const paymasterEndpoint =
+      options?.paymasterConfig?.endpoint ??
+      payloadWithExtras.paymasterEndpoint;
 
-    throw new Error('Not implemented yet - will be added in Phase 4');
+    if (!paymasterEndpoint) {
+      throw new Error('Paymaster endpoint not provided');
+    }
+
+    // 3. Create paymaster client
+    const {
+      createPaymasterClient,
+      executeTransaction,
+      createTransferCall,
+    } = await import('../paymaster/index.js');
+
+    const paymasterClient = createPaymasterClient({
+      endpoint: paymasterEndpoint,
+      network: paymentRequirements.network,
+      ...(options?.paymasterConfig?.apiKey
+        ? { apiKey: options.paymasterConfig.apiKey }
+        : {}),
+    });
+
+    // 4. Create transfer call
+    const transferCall = createTransferCall(
+      paymentRequirements.asset,
+      paymentRequirements.payTo,
+      paymentRequirements.maxAmountRequired
+    );
+
+    // 5. Execute transaction via paymaster
+    const result = await executeTransaction(
+      paymasterClient,
+      payload.payload.authorization.from,
+      [transferCall],
+      { mode: 'sponsored' }, // Facilitator pays gas
+      [payload.payload.signature.r, payload.payload.signature.s]
+    );
+
+    // 6. Wait for transaction to be accepted
+    const receipt = await waitForSettlement(provider, result.transaction_hash);
+
+    // Extract block info if available (successful receipts have these)
+    const blockNumber =
+      'block_number' in receipt ? receipt.block_number : undefined;
+    const blockHash = 'block_hash' in receipt ? receipt.block_hash : undefined;
+
+    return {
+      success: true,
+      transaction: result.transaction_hash,
+      network: paymentRequirements.network,
+      payer: verification.payer,
+      ...(blockNumber !== undefined ? { blockNumber } : {}),
+      ...(blockHash !== undefined ? { blockHash } : {}),
+    };
   } catch (error) {
     return {
       success: false,

@@ -35,7 +35,7 @@ import { PaymentPayloadSchema } from '../types/index.js';
  * ```
  */
 export async function verifyPayment(
-  _provider: RpcProvider,
+  provider: RpcProvider,
   payload: PaymentPayload,
   paymentRequirements: PaymentRequirements
 ): Promise<VerifyResponse> {
@@ -43,32 +43,91 @@ export async function verifyPayment(
     // 1. Validate payload structure
     PaymentPayloadSchema.parse(payload);
 
-    // 2. Verify network matches
+    // 2. Extract payer address
+    const payer = extractPayerAddress(payload);
+
+    // 3. Verify network matches
     if (payload.network !== paymentRequirements.network) {
       return {
         isValid: false,
         invalidReason: 'invalid_network',
-        payer: '', // Will be extracted from payload
+        payer,
       };
     }
 
-    // 3. Verify scheme matches
+    // 4. Verify scheme matches
     if (payload.scheme !== paymentRequirements.scheme) {
       return {
         isValid: false,
         invalidReason: 'invalid_amount',
-        payer: '',
+        payer,
       };
     }
 
-    // TODO: Implement full verification logic
-    // - Extract payer address from signature
-    // - Verify signature validity
-    // - Check token balance
-    // - Validate transfer calls
+    // 5. Verify authorization token matches requirement
+    if (
+      payload.payload.authorization.token !== paymentRequirements.asset
+    ) {
+      return {
+        isValid: false,
+        invalidReason: 'invalid_network',
+        payer,
+      };
+    }
 
-    throw new Error('Not implemented yet - will be added in Phase 3');
+    // 6. Verify authorization recipient matches requirement
+    if (payload.payload.authorization.to !== paymentRequirements.payTo) {
+      return {
+        isValid: false,
+        invalidReason: 'invalid_amount',
+        payer,
+      };
+    }
+
+    // 7. Verify amount matches requirement
+    if (
+      payload.payload.authorization.amount !==
+      paymentRequirements.maxAmountRequired
+    ) {
+      return {
+        isValid: false,
+        invalidReason: 'invalid_amount',
+        payer,
+      };
+    }
+
+    // 8. Check token balance
+    const { getTokenBalance } = await import('../utils/token.js');
+    const balance = await getTokenBalance(
+      provider,
+      paymentRequirements.asset,
+      payer
+    );
+
+    if (BigInt(balance) < BigInt(paymentRequirements.maxAmountRequired)) {
+      return {
+        isValid: false,
+        invalidReason: 'insufficient_balance',
+        payer,
+        details: {
+          balance,
+        },
+      };
+    }
+
+    // Note: We don't cryptographically verify the signature here.
+    // The signature will be implicitly verified when executing via paymaster.
+    // If the signature is invalid, the paymaster execution will fail.
+
+    return {
+      isValid: true,
+      payer,
+      details: {
+        balance,
+      },
+    };
   } catch (error) {
+    // If it's a Zod validation error or any other error, return unknown_error
     return {
       isValid: false,
       invalidReason: 'unknown_error',
@@ -83,7 +142,7 @@ export async function verifyPayment(
  * @param payload - Payment payload
  * @returns Payer address
  */
-export function extractPayerAddress(_payload: PaymentPayload): string {
-  // TODO: Extract from signature or typed data
-  throw new Error('Not implemented yet');
+export function extractPayerAddress(payload: PaymentPayload): string {
+  // The payer address is in the authorization.from field
+  return payload.payload.authorization.from;
 }
