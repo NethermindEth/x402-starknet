@@ -2,311 +2,367 @@
 
 **Pure library for implementing the x402 payment protocol on Starknet**
 
-A TypeScript library providing core types, utilities, and functions for building x402-compatible payment systems on Starknet. This is a foundation library meant to be used by applications like [voyager-x402](https://github.com/yourusername/voyager-x402).
+A TypeScript library providing core functions for building x402-compatible payment systems on Starknet. Designed as a foundation library with a minimal, stable API surface.
+
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/yourusername/x402-starknet)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 ## Overview
 
-This library implements the [x402 payment protocol](https://github.com/x402) for Starknet, allowing developers to build applications that accept micropayments for digital resources using HTTP 402 status codes. Built with TypeScript, Bun, and starknet.js.
+This library implements the [x402 payment protocol](https://github.com/x402) for Starknet, enabling applications to accept micropayments for digital resources using HTTP 402 status codes.
 
 ## Features
 
-- 🎯 **Pure Library** - No application code, just reusable building blocks
-- 🚀 **Type Safe** - Complete TypeScript types with runtime validation
-- 🔗 **Starknet Native** - Built for Starknet's unique architecture
-- 🌐 **Multi-Network** - Support for mainnet, Sepolia testnet, and devnet
-- 📦 **Modular** - Import only what you need
-- 🛡️ **Validated** - Zod schemas for runtime type checking
+- 🎯 **Minimal API Surface** - Only 20 named exports, all essential
+- 🚀 **Type Safe** - Complete TypeScript support with strict types
+- 🔗 **Starknet Native** - Built for Starknet's architecture
+- 🌐 **Multi-Network** - Mainnet, Sepolia testnet, and devnet
+- 📦 **Tree-Shakeable** - `sideEffects: false`, import only what you need
+- 🛡️ **Validated** - Runtime validation with Zod schemas (internal)
+- ⚡ **Zero Runtime Deps** - Only `zod` and `@scure/base`
 
 ## Installation
 
 ```bash
+npm install @x402/starknet starknet
+# or
 bun add @x402/starknet starknet
 # or
-npm install @x402/starknet starknet
+yarn add @x402/starknet starknet
 ```
 
-## What's Included
-
-This library provides:
-
-### Core Functions
-- `createPaymentPayload` - Build payment authorizations
-- `verifyPayment` - Verify payment validity
-- `settlePayment` - Execute and settle payments
-- `selectPaymentRequirements` - Choose payment options
-
-### Type System
-- Complete TypeScript definitions
-- Zod runtime validation schemas
-- Network configurations
-- Payment protocol types
-
-### Utilities
-- Token balance checking
-- Provider management
-- Encoding/decoding helpers
-- Network utilities
+**Peer Dependencies:**
+- `starknet` ^8.0.0
 
 ## Quick Start
-
-### Basic Payment Flow
 
 ```typescript
 import {
   createPaymentPayload,
   verifyPayment,
   settlePayment,
-  createProvider,
-  getTokenBalance
+  DEFAULT_PAYMASTER_ENDPOINTS,
+  type PaymentRequirements,
 } from '@x402/starknet';
-import { Account } from 'starknet';
+import { Account, RpcProvider } from 'starknet';
 
-// 1. Create a payment (client-side)
+// 1. Create payment payload (client-side)
 const payload = await createPaymentPayload(
   account,              // Starknet account
-  1,                    // x402 version
+  1,                    // x402 protocol version
   paymentRequirements,  // From server's 402 response
-  { paymasterEndpoint: 'https://paymaster.avnu.fi' }
+  {
+    endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
+    network: 'starknet-sepolia',
+  }
 );
 
-// 2. Verify a payment (server-side)
-const provider = createProvider('starknet-sepolia');
+// 2. Verify payment (server-side)
+const provider = new RpcProvider({ nodeUrl: 'https://...' });
 const verification = await verifyPayment(
   provider,
   payload,
   paymentRequirements
 );
 
-if (verification.isValid) {
-  // 3. Settle the payment
-  const result = await settlePayment(
-    provider,
-    payload,
-    paymentRequirements
-  );
+if (!verification.isValid) {
+  console.error('Payment invalid:', verification.invalidReason);
+  return;
+}
 
-  console.log('Payment settled:', result.transaction);
+// 3. Settle payment (server-side)
+const settlement = await settlePayment(
+  provider,
+  payload,
+  paymentRequirements
+);
+
+console.log('Payment settled:', settlement.transaction);
+console.log('Status:', settlement.status);
+```
+
+## Public API
+
+This library exports **exactly 20 symbols** from a single entry point:
+
+### Core Functions (11)
+
+**Payment Operations:**
+- `createPaymentPayload()` - Create signed payment payload
+- `verifyPayment()` - Verify payment validity
+- `settlePayment()` - Execute payment transaction
+
+**Encoding:**
+- `encodePaymentHeader()` - Encode payload to base64
+- `decodePaymentHeader()` - Decode base64 to payload
+
+**Network Utilities:**
+- `getNetworkConfig()` - Get network configuration
+- `getTransactionUrl()` - Get explorer URL for transaction
+- `getAddressUrl()` - Get explorer URL for address
+- `isTestnet()` - Check if network is testnet
+- `isMainnet()` - Check if network is mainnet
+- `getSupportedNetworks()` - Get all supported networks
+
+### Constants (4)
+
+- `VERSION` - Library version (`'0.1.0'`)
+- `X402_VERSION` - Protocol version (`1`)
+- `DEFAULT_PAYMASTER_ENDPOINTS` - AVNU paymaster endpoints
+- `NETWORK_CONFIGS` - Network configurations
+
+### Error Classes (4)
+
+- `X402Error` - Base error class
+- `PaymentError` - Payment-related errors
+- `NetworkError` - Network-related errors
+- `PaymasterError` - Paymaster errors
+
+### Error Codes (1)
+
+- `ERROR_CODES` - All error codes as constants
+
+### TypeScript Types
+
+All types are exported for TypeScript users:
+```typescript
+import type {
+  StarknetNetwork,
+  NetworkConfig,
+  PaymentRequirements,
+  PaymentPayload,
+  VerifyResponse,
+  SettleResponse,
+  PaymasterConfig,
+  ErrorCode,
+} from '@x402/starknet';
+```
+
+## Usage Examples
+
+### Error Handling
+
+```typescript
+import { PaymentError, ERROR_CODES, settlePayment } from '@x402/starknet';
+
+try {
+  const result = await settlePayment(provider, payload, requirements);
+  console.log('Success:', result.transaction);
+} catch (error) {
+  if (error instanceof PaymentError) {
+    switch (error.code) {
+      case ERROR_CODES.INSUFFICIENT_BALANCE:
+        console.error('Insufficient balance');
+        break;
+      case ERROR_CODES.INVALID_PAYLOAD:
+        console.error('Invalid payload');
+        break;
+      default:
+        console.error('Payment error:', error.message);
+    }
+  }
 }
 ```
 
-### Using Individual Modules
+### Network Configuration
 
 ```typescript
-// Types only
-import type {
-  PaymentRequirements,
-  PaymentPayload
-} from '@x402/starknet/types';
-
-// Network utilities
 import {
   getNetworkConfig,
-  isTestnet
-} from '@x402/starknet/networks';
+  getTransactionUrl,
+  isTestnet,
+  NETWORK_CONFIGS,
+} from '@x402/starknet';
 
-// Payment functions
+// Get network config
+const config = getNetworkConfig('starknet-sepolia');
+console.log('RPC URL:', config.rpcUrl);
+console.log('Chain ID:', config.chainId);
+
+// Get explorer URL
+const txUrl = getTransactionUrl('starknet-sepolia', '0x123...');
+console.log('View transaction:', txUrl);
+
+// Check network type
+if (isTestnet('starknet-sepolia')) {
+  console.log('Using testnet');
+}
+
+// All network configs
+console.log('Available networks:', Object.keys(NETWORK_CONFIGS));
+```
+
+### Payment Header Encoding
+
+```typescript
+import { encodePaymentHeader, decodePaymentHeader } from '@x402/starknet';
+
+// Encode for HTTP header
+const encoded = encodePaymentHeader(payload);
+
+// Send in request
+await fetch(url, {
+  headers: {
+    'X-Payment': encoded,
+  },
+});
+
+// Decode on server
+const header = request.headers.get('X-Payment');
+const payload = decodePaymentHeader(header);
+```
+
+## Complete Flow Example
+
+### Client Side
+
+```typescript
 import {
   createPaymentPayload,
-  encodePaymentHeader
-} from '@x402/starknet/payment';
+  encodePaymentHeader,
+  DEFAULT_PAYMASTER_ENDPOINTS,
+  type PaymentRequirementsResponse,
+} from '@x402/starknet';
+import { Account } from 'starknet';
 
-// Utilities
+async function payForResource(url: string, account: Account) {
+  // 1. Request resource
+  let response = await fetch(url);
+
+  // 2. Handle 402 Payment Required
+  if (response.status === 402) {
+    const { paymentRequirements } = await response.json() as PaymentRequirementsResponse;
+    const requirement = paymentRequirements[0];
+
+    // 3. Create payment
+    const payload = await createPaymentPayload(
+      account,
+      1,
+      requirement,
+      {
+        endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
+        network: requirement.network,
+      }
+    );
+
+    // 4. Retry with payment
+    response = await fetch(url, {
+      headers: {
+        'X-Payment': encodePaymentHeader(payload),
+      },
+    });
+  }
+
+  // 5. Access resource
+  return response.json();
+}
+```
+
+### Server Side
+
+```typescript
 import {
-  getTokenBalance,
-  createProvider
-} from '@x402/starknet/utils';
-```
+  decodePaymentHeader,
+  verifyPayment,
+  settlePayment,
+  type PaymentRequirements,
+} from '@x402/starknet';
+import { RpcProvider } from 'starknet';
 
-## Library Structure
+const provider = new RpcProvider({ nodeUrl: 'https://...' });
 
-```
-@x402/starknet
-├── types/          # Type definitions and schemas
-├── networks/       # Network configurations
-├── payment/        # Core payment functions
-│   ├── create      # Payment creation
-│   ├── verify      # Payment verification
-│   └── settle      # Payment settlement
-├── paymaster/      # Paymaster integration (Phase 2)
-└── utils/          # Utility functions
-    ├── provider    # RPC provider utilities
-    ├── token       # ERC20 token interactions
-    └── encoding    # Encoding/serialization
-```
-
-## API Reference
-
-### Payment Functions
-
-#### `createPaymentPayload(account, x402Version, requirements, options)`
-Create a payment authorization payload.
-
-**Parameters:**
-- `account: Account` - Starknet account for signing
-- `x402Version: number` - Protocol version (currently 1)
-- `requirements: PaymentRequirements` - Payment requirements from server
-- `options?: object` - Optional configuration (paymaster endpoint, etc.)
-
-**Returns:** `Promise<PaymentPayload>`
-
----
-
-#### `verifyPayment(provider, payload, requirements)`
-Verify a payment without executing it.
-
-**Parameters:**
-- `provider: RpcProvider` - Starknet RPC provider
-- `payload: PaymentPayload` - Payment payload from client
-- `requirements: PaymentRequirements` - Expected payment requirements
-
-**Returns:** `Promise<VerifyResponse>`
-
----
-
-#### `settlePayment(provider, payload, requirements, options)`
-Execute and settle a verified payment.
-
-**Parameters:**
-- `provider: RpcProvider` - Starknet RPC provider
-- `payload: PaymentPayload` - Payment payload from client
-- `requirements: PaymentRequirements` - Payment requirements
-- `options?: object` - Settlement options (paymaster config, etc.)
-
-**Returns:** `Promise<SettleResponse>`
-
----
-
-### Network Functions
-
-#### `getNetworkConfig(network)`
-Get configuration for a Starknet network.
-
-```typescript
-const config = getNetworkConfig('starknet-sepolia');
-console.log(config.rpcUrl); // https://starknet-sepolia.public.blastapi.io
-```
-
-#### `createProvider(network)`
-Create an RPC provider for a network.
-
-```typescript
-const provider = createProvider('starknet-sepolia');
-```
-
----
-
-### Token Utilities
-
-#### `getTokenBalance(provider, tokenAddress, accountAddress)`
-Get ERC20 token balance.
-
-```typescript
-const balance = await getTokenBalance(
-  provider,
-  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7', // ETH
-  '0x1234...'
-);
-```
-
-#### `getTokenMetadata(provider, tokenAddress)`
-Get token name, symbol, and decimals.
-
-```typescript
-const metadata = await getTokenMetadata(provider, tokenAddress);
-console.log(`${metadata.name} (${metadata.symbol})`);
-```
-
-## Type Definitions
-
-### `PaymentRequirements`
-```typescript
-interface PaymentRequirements {
-  scheme: 'exact';
-  network: StarknetNetwork;
-  maxAmountRequired: string;
-  asset: string;           // Token contract address
-  payTo: string;           // Recipient address
-  resource: string;        // Protected resource URL
-  description?: string;
-  mimeType?: string;
-  maxTimeoutSeconds?: number;
-}
-```
-
-### `PaymentPayload`
-```typescript
-interface PaymentPayload {
-  x402Version: 1;
-  scheme: 'exact';
-  network: StarknetNetwork;
-  payload: {
-    signature: Signature;
-    authorization: PaymentAuthorization;
-  };
-}
-```
-
-### `VerifyResponse`
-```typescript
-interface VerifyResponse {
-  isValid: boolean;
-  invalidReason?: InvalidPaymentReason;
-  payer: string;
-  details?: {
-    balance?: string;
-    nonceUsed?: boolean;
-    timestamp?: number;
-  };
-}
-```
-
-## Building Applications
-
-This library is designed to be used by applications. For a complete implementation example, see:
-
-**[voyager-x402](https://github.com/yourusername/voyager-x402)** - Reference implementation with:
-- Client application (browser wallet integration)
-- Server/facilitator (HTTP endpoints)
-- Example integrations
-
-## Paymaster Configuration
-
-AVNU Paymaster endpoints (SNIP-29 compatible):
-
-- **Mainnet**: `https://starknet.paymaster.avnu.fi`
-- **Sepolia**: `https://sepolia.paymaster.avnu.fi`
-
-```typescript
-import { createPaymasterClient, DEFAULT_PAYMASTER_ENDPOINTS } from '@x402/starknet';
-
-const client = createPaymasterClient({
-  endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
+const requirements: PaymentRequirements = {
+  scheme: 'exact',
   network: 'starknet-sepolia',
-  apiKey: 'your-api-key' // Optional, for sponsored mode
-});
+  maxAmountRequired: '1000000', // 1 USDC
+  asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+  payTo: '0x1234...', // Your address
+  resource: 'https://api.example.com/data',
+};
+
+async function handleRequest(request: Request) {
+  const paymentHeader = request.headers.get('X-Payment');
+
+  // No payment - return 402
+  if (!paymentHeader) {
+    return new Response(
+      JSON.stringify({
+        x402Version: 1,
+        paymentRequirements: [requirements],
+      }),
+      { status: 402 }
+    );
+  }
+
+  // Decode and verify
+  const payload = decodePaymentHeader(paymentHeader);
+  const verification = await verifyPayment(provider, payload, requirements);
+
+  if (!verification.isValid) {
+    return new Response(
+      JSON.stringify({ error: verification.invalidReason }),
+      { status: 400 }
+    );
+  }
+
+  // Settle payment
+  const settlement = await settlePayment(provider, payload, requirements);
+
+  if (!settlement.success) {
+    return new Response(
+      JSON.stringify({ error: settlement.errorReason }),
+      { status: 500 }
+    );
+  }
+
+  // Return resource
+  return new Response(
+    JSON.stringify({ data: 'Premium content', tx: settlement.transaction })
+  );
+}
 ```
 
-**Note**: API keys can be obtained from [AVNU Dashboard](https://app.avnu.fi).
+## Error Codes
 
-## Development Status
+All errors include stable error codes for programmatic handling:
 
-**Current Phase**: Phase 3 Complete ✅
+```typescript
+const ERROR_CODES = {
+  // Payment errors
+  INVALID_PAYLOAD: 'INVALID_PAYLOAD',
+  INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
+  VERIFICATION_FAILED: 'VERIFICATION_FAILED',
+  SETTLEMENT_FAILED: 'SETTLEMENT_FAILED',
 
-- [x] Core types and validation schemas
-- [x] Network configuration
-- [x] Utility functions (provider, token, encoding)
-- [x] Payment creation implementation
-- [x] Paymaster integration (AVNU)
-- [x] Payment verification logic
-- [x] Payment settlement logic
-- [x] Comprehensive test suite (68 tests, 85%+ coverage)
-- [ ] Application implementation (in voyager-x402)
+  // Network errors
+  UNSUPPORTED_NETWORK: 'UNSUPPORTED_NETWORK',
+  NETWORK_MISMATCH: 'NETWORK_MISMATCH',
+  RPC_FAILED: 'RPC_FAILED',
 
-See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for complete roadmap.
+  // Paymaster errors
+  PAYMASTER_ERROR: 'PAYMASTER_ERROR',
+  PAYMASTER_UNAVAILABLE: 'PAYMASTER_UNAVAILABLE',
+};
+```
+
+## API Documentation
+
+For complete API reference, see [API.md](./API.md).
+
+For API design and best practices, see [API_SURFACE.md](./API_SURFACE.md).
+
+## Network Support
+
+| Network | Chain ID | Status |
+|---------|----------|--------|
+| Starknet Mainnet | `0x534e5f4d41494e` | ✅ Supported |
+| Starknet Sepolia | `0x534e5f5345504f4c4941` | ✅ Supported |
+| Starknet Devnet | `0x534e5f474f45524c49` | ✅ Supported |
 
 ## Development
 
 ### Setup
+
 ```bash
 git clone https://github.com/yourusername/x402-starknet.git
 cd x402-starknet
@@ -314,53 +370,73 @@ bun install
 ```
 
 ### Commands
+
 ```bash
 bun run build          # Build TypeScript
 bun run typecheck      # Type checking
 bun run lint           # Lint code
-bun run format         # Format code
 bun run test           # Run tests
 bun run test:watch     # Run tests in watch mode
-bun run test:coverage  # Run tests with coverage report
+bun run test:coverage  # Coverage report
 ```
 
 ### Testing
 
-The library includes comprehensive unit tests with **95%+ coverage** of implemented functionality:
+**78 tests** with comprehensive coverage:
 
-- Paymaster integration tests
-- Payment creation and encoding tests
-- Token utility tests
-- Provider and retry logic tests
-
-Run tests with coverage:
 ```bash
-bun run test:coverage
+bun run test
 ```
 
-## Network Support
+## Import Rules
 
-| Network | Chain ID | Status |
-|---------|----------|--------|
-| Starknet Mainnet | `0x534e5f4d41494e` | ✅ Configured |
-| Starknet Sepolia | `0x534e5f5345504f4c4941` | ✅ Configured |
-| Starknet Devnet | `0x534e5f474f45524c49` | ✅ Configured |
+✅ **Do this** - Import from root:
+```typescript
+import { createPaymentPayload, verifyPayment } from '@x402/starknet';
+```
+
+❌ **Don't do this** - Deep imports not supported:
+```typescript
+import { verifyPayment } from '@x402/starknet/payment'; // ERROR
+```
+
+## Design Principles
+
+This library follows modern library best practices:
+
+- **Small surface** - Only 20 exports
+- **Named exports** - No wildcards, explicit imports
+- **Single entry** - No subpath exports
+- **Tree-shakeable** - `sideEffects: false`
+- **Type-safe** - Strict TypeScript
+- **Stable errors** - Error codes, not strings
+- **Minimal deps** - Only 2 runtime dependencies
+
+See [API_SURFACE.md](./API_SURFACE.md) for detailed design decisions.
+
+## Building Applications
+
+This library is designed to be used by applications. For a complete implementation, see:
+
+**[voyager-x402](https://github.com/yourusername/voyager-x402)** - Reference implementation
 
 ## Contributing
 
 Contributions welcome! This is a pure library - application code belongs in separate repos.
 
+## Resources
+
+- [Complete API Reference](./API.md)
+- [API Surface Design](./API_SURFACE.md)
+- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
+- [x402 Protocol](https://github.com/x402)
+- [Starknet Documentation](https://docs.starknet.io)
+- [Starknet.js](https://www.starknetjs.com/)
+
 ## License
 
 MIT License - see [LICENSE](./LICENSE) for details.
 
-## Resources
-
-- [x402 Protocol](https://github.com/x402)
-- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
-- [Starknet Documentation](https://docs.starknet.io)
-- [Starknet.js](https://www.starknetjs.com/)
-
 ---
 
-**Version**: 0.1.0 | **Status**: 🚧 Under Development | **Phase**: 3 of 10 Complete
+**Version**: 0.1.0 | **Status**: ✅ Core Complete | **Tests**: 78 passing
