@@ -1,18 +1,18 @@
-# x402-starknet Implementation Plan
+# x402-starknet Implementation Plan (Paymaster-Based)
 
 ## Executive Summary
 
-This document outlines a step-by-step incremental plan to create a Starknet-compatible x402 library. The x402 protocol enables internet-native micropayments using HTTP 402 status codes. We will port the existing EVM/Solana implementation to Starknet using TypeScript, Bun, and starknet.js.
+This document outlines a step-by-step incremental plan to create a Starknet-compatible x402 library. The x402 protocol enables internet-native micropayments using HTTP 402 status codes. We will implement this for Starknet using TypeScript, Bun, starknet.js, and **AVNU Paymaster** for gasless transactions.
 
 ## Project Overview
 
-**Goal**: Create a Starknet implementation of the x402 payment protocol that maintains compatibility with the existing specification while adapting to Starknet's unique architecture.
+**Goal**: Create a Starknet implementation of the x402 payment protocol that maintains compatibility with the existing specification while leveraging Starknet's unique features and paymaster infrastructure for gasless payments.
 
 **Tech Stack**:
 - TypeScript (for type safety and consistency with original)
 - Bun (runtime and package manager)
 - starknet.js v8.7.0 (blockchain interaction)
-- Cairo contracts (on-chain payment verification)
+- **AVNU Paymaster** (gasless transaction infrastructure)
 
 **Repository**: `/home/ametel/source/x402-starknet`
 
@@ -26,7 +26,7 @@ The x402 protocol consists of three layers:
    - `SettlementResponse` - Transaction confirmation
 
 2. **Logic Layer** - Scheme and network-specific verification/settlement
-   - "Exact" scheme: Fixed-amount transfers using EIP-3009 (EVM) or TransferChecked (Solana)
+   - "Exact" scheme: Fixed-amount transfers
    - Signature verification, balance checking, amount validation
 
 3. **Representation Layer** - Transport-specific implementation
@@ -34,327 +34,284 @@ The x402 protocol consists of three layers:
    - MCP: Model Context Protocol for AI agents
    - A2A: Agent-to-Agent protocol
 
-## Key Differences: EVM/Solana vs Starknet
+## Key Differences: EVM vs Starknet
 
-### Challenges to Address
+### EVM x402 Flow (with EIP-3009)
+```
+1. Client signs authorization (off-chain)
+2. Client sends signature to server
+3. Server calls USDC.transferWithAuthorization() (1 tx)
+4. Server pays gas, gets tx hash
+5. Server returns resource + tx hash
+```
 
-1. **No EIP-3009 on Starknet**: Starknet doesn't support EIP-3009's `transferWithAuthorization`. We need to design a Cairo contract equivalent.
+### Starknet x402 Flow (with Paymaster)
+```
+1. Client builds transaction via paymaster (off-chain)
+2. Client signs transaction (off-chain, no gas needed)
+3. Client sends signature to server
+4. Server calls paymaster.executeTransaction()
+5. Paymaster relayer submits tx (paymaster pays gas in STRK)
+6. Server gets tx hash, waits for confirmation
+7. Server returns resource + tx hash
+```
 
-2. **Different Signature Scheme**:
-   - EVM uses ECDSA secp256k1 with EIP-712
-   - Starknet uses STARK-friendly curves (ECDSA over Stark curve) with structured hashing
+### Why Paymaster?
 
-3. **Account Abstraction**:
-   - Starknet has native Account Abstraction (all accounts are smart contracts)
-   - Need to support both standard accounts and custom account contracts
+**Problem**: Starknet USDC doesn't have EIP-3009 or permit functionality.
 
-4. **Transaction Structure**:
-   - Different nonce management
-   - Different gas model (steps vs gas)
-   - No mempool (transactions go directly to sequencer)
-
-5. **Token Standards**:
-   - No USDC with EIP-3009 on Starknet
-   - Need to work with ERC20-like tokens or create custom payment tokens
+**Solution**: AVNU Paymaster (SNIP-29 compliant) provides:
+- ✅ Gasless transactions (clients pay nothing)
+- ✅ Sponsored mode (facilitator pays all gas)
+- ✅ Uses existing USDC contracts (no custom contracts needed)
+- ✅ Production-ready, audited infrastructure
+- ✅ Automatic relayer pool management
 
 ## Implementation Plan
 
 ---
 
-## Phase 1: Project Setup & Foundation (Days 1-2)
+## Phase 1: Project Setup & Foundation (Days 1-2) ✅ COMPLETE
 
-### Step 1.1: Initialize Bun Project
+### Step 1.1: Initialize Bun Project ✅
 
 **Tasks**:
 - [x] Create project structure
-- [ ] Initialize Bun project with `bun init`
-- [ ] Configure `package.json` with dependencies
-- [ ] Set up TypeScript configuration (`tsconfig.json`)
-- [ ] Configure linting (ESLint) and formatting (Prettier)
-- [ ] Set up `.gitignore`
+- [x] Initialize Bun project with `bun init`
+- [x] Configure `package.json` with dependencies
+- [x] Set up TypeScript configuration (`tsconfig.json`)
+- [x] Configure linting (ESLint) and formatting (Prettier)
+- [x] Set up `.gitignore`
 
-**Deliverables**:
-- Working Bun project with TypeScript
-- Development tooling configured
+**Deliverables**: ✅ Complete
 
-**Dependencies to install**:
+---
+
+### Step 1.2: Define Core Types ✅
+
+**Tasks**:
+- [x] Create `src/types/` directory
+- [x] Port core x402 types from original library
+- [x] Add Starknet-specific type extensions
+- [x] Define network configuration types
+- [x] Create Zod schemas for runtime validation
+
+**Deliverables**: ✅ Complete
+
+---
+
+### Step 1.3: Network Configuration ✅
+
+**Tasks**:
+- [x] Create `src/networks/` directory
+- [x] Define Starknet network configurations
+- [x] Add support for mainnet, Sepolia testnet, and devnet
+
+**Deliverables**: ✅ Complete
+
+---
+
+## Phase 2: Paymaster Integration Setup (Days 3-4)
+
+### Step 2.1: Add Paymaster Dependencies
+
+**Tasks**:
+- [ ] Research AVNU Paymaster public endpoints
+- [ ] Add paymaster client dependencies
+- [ ] Configure paymaster network endpoints
+- [ ] Create paymaster configuration types
+
+**Dependencies to add**:
 ```json
 {
   "dependencies": {
-    "starknet": "^8.7.0",
-    "@scure/base": "^1.1.10",
-    "zod": "^3.24.2"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.7.0",
-    "eslint": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "prettier": "^3.4.0",
-    "vitest": "^3.0.0"
+    "@avnu/paymaster-rpc": "^latest", // If available as npm package
+    // Or use direct HTTP client to paymaster JSON-RPC
   }
 }
 ```
 
-**Testing**: Verify Bun installation and TypeScript compilation
-
----
-
-### Step 1.2: Define Core Types
-
-**Tasks**:
-- [ ] Create `src/types/` directory
-- [ ] Port core x402 types from original library
-- [ ] Add Starknet-specific type extensions
-- [ ] Define network configuration types
-- [ ] Create Zod schemas for runtime validation
-
 **Files to create**:
-- `src/types/index.ts` - Export all types
-- `src/types/payment.ts` - Payment requirements and payloads
-- `src/types/network.ts` - Starknet network configurations
-- `src/types/settlement.ts` - Settlement and verification responses
-- `src/types/schemas.ts` - Zod validation schemas
+- `src/types/paymaster.ts` - Paymaster-specific types
+- `src/paymaster/config.ts` - Paymaster endpoint configuration
 
-**Key Types**:
+**Paymaster Types**:
 ```typescript
-// Starknet network configuration
-export type StarknetNetwork =
-  | "starknet-mainnet"
-  | "starknet-sepolia"
-  | "starknet-devnet";
-
-// Payment requirements (Starknet-specific)
-export interface StarknetPaymentRequirements {
-  scheme: "exact"; // Start with exact scheme
+export interface PaymasterConfig {
+  /** Paymaster RPC endpoint URL */
+  endpoint: string;
+  /** API key for sponsored mode (optional) */
+  apiKey?: string;
+  /** Network identifier */
   network: StarknetNetwork;
-  maxAmountRequired: string; // u256 as string
-  asset: string; // Token contract address (felt)
-  payTo: string; // Recipient address (felt)
-  resource: string; // Protected resource URL
-  description?: string;
-  mimeType?: string;
-  maxTimeoutSeconds?: number;
-  extra?: {
-    tokenName?: string;
-    tokenSymbol?: string;
-    tokenDecimals?: number;
+}
+
+export interface PaymasterFeeMode {
+  /** Fee mode: sponsored (server pays) or default (user pays in token) */
+  mode: 'sponsored' | 'default';
+  /** Gas token address (for default mode) */
+  gasToken?: string;
+}
+
+export interface PaymasterTransactionRequest {
+  transaction: {
+    type: 'invoke';
+    invoke: {
+      user_address: string;
+      calls: Array<{
+        to: string;
+        selector: string;
+        calldata: string[];
+      }>;
+    };
+  };
+  parameters: {
+    version: '0x1';
+    fee_mode: PaymasterFeeMode;
   };
 }
 
-// Payment payload (client creates)
-export interface StarknetPaymentPayload {
-  x402Version: 1;
-  scheme: "exact";
-  network: StarknetNetwork;
-  payload: {
-    signature: {
-      r: string; // Signature component (felt)
-      s: string; // Signature component (felt)
-    };
-    authorization: {
-      from: string; // Payer address (felt)
-      to: string; // Recipient address (felt)
-      amount: string; // Payment amount (u256 as string)
-      token: string; // Token contract address (felt)
-      nonce: string; // Replay protection (felt)
-      validUntil: string; // Expiry timestamp (u64)
-    };
+export interface PaymasterBuildResponse {
+  /** Typed data for client to sign */
+  typedData: object;
+  /** Estimated gas fees */
+  estimatedFee: {
+    amount: string;
+    token: string;
   };
 }
 ```
 
 **Deliverables**:
-- Complete type definitions in `src/types/`
-- Runtime validation schemas
-- JSDoc documentation for all types
+- Paymaster configuration types
+- Network endpoint mapping for paymaster services
 
-**Testing**: Type compilation, Zod schema validation tests
+**Testing**: Type compilation
 
 ---
 
-### Step 1.3: Network Configuration
+### Step 2.2: Paymaster Client Utilities
 
 **Tasks**:
-- [ ] Create `src/networks/` directory
-- [ ] Define Starknet network configurations (RPC URLs, chain IDs)
-- [ ] Add support for mainnet, Sepolia testnet, and devnet
-- [ ] Create network utility functions
+- [ ] Create paymaster client wrapper
+- [ ] Implement `buildTransaction` wrapper
+- [ ] Implement `executeTransaction` wrapper
+- [ ] Add error handling for paymaster responses
 
 **Files to create**:
-- `src/networks/index.ts` - Network configurations and utilities
-- `src/networks/constants.ts` - Network constants
+- `src/paymaster/client.ts` - Paymaster RPC client
+- `src/paymaster/index.ts` - Public API exports
 
-**Network Configurations**:
+**Core Functions**:
 ```typescript
-export const STARKNET_NETWORKS = {
-  "starknet-mainnet": {
-    chainId: "0x534e5f4d41494e", // SN_MAIN
-    rpcUrl: "https://starknet-mainnet.public.blastapi.io",
-    explorerUrl: "https://starkscan.co",
-  },
-  "starknet-sepolia": {
-    chainId: "0x534e5f5345504f4c4941", // SN_SEPOLIA
-    rpcUrl: "https://starknet-sepolia.public.blastapi.io",
-    explorerUrl: "https://sepolia.starkscan.co",
-  },
-  "starknet-devnet": {
-    chainId: "0x534e5f474f45524c49", // SN_GOERLI (for devnet)
-    rpcUrl: "http://localhost:5050",
-    explorerUrl: null,
-  },
-} as const;
+/**
+ * Create paymaster client for network
+ */
+export function createPaymasterClient(
+  config: PaymasterConfig
+): PaymasterClient;
+
+/**
+ * Build transaction using paymaster
+ */
+export async function buildPaymasterTransaction(
+  client: PaymasterClient,
+  userAddress: string,
+  calls: Call[],
+  feeMode: PaymasterFeeMode
+): Promise<PaymasterBuildResponse>;
+
+/**
+ * Execute transaction via paymaster
+ */
+export async function executePaymasterTransaction(
+  client: PaymasterClient,
+  signedTypedData: SignedTypedData
+): Promise<{ transactionHash: string }>;
 ```
 
 **Deliverables**:
-- Network configuration module
-- Helper functions for network selection
+- Paymaster client abstraction
+- Clean API for transaction building/execution
 
-**Testing**: Network configuration retrieval
-
----
-
-## Phase 2: Cairo Smart Contracts (Days 3-5)
-
-### Step 2.1: Design Payment Authorization Contract
-
-**Tasks**:
-- [ ] Create `contracts/` directory
-- [ ] Design Cairo contract interface for payment authorization
-- [ ] Implement signature verification using Starknet's account abstraction
-- [ ] Add nonce management for replay protection
-- [ ] Implement expiry validation
-
-**Contract Design**: `PaymentAuthorization.cairo`
-
-**Key Functions**:
-```cairo
-// Verify payment authorization without executing
-#[external(v0)]
-fn verify_payment(
-    ref self: ContractState,
-    payer: ContractAddress,
-    recipient: ContractAddress,
-    token: ContractAddress,
-    amount: u256,
-    nonce: felt252,
-    valid_until: u64,
-    signature: Signature
-) -> bool;
-
-// Execute payment with authorization
-#[external(v0)]
-fn execute_payment(
-    ref self: ContractState,
-    payer: ContractAddress,
-    recipient: ContractAddress,
-    token: ContractAddress,
-    amount: u256,
-    nonce: felt252,
-    valid_until: u64,
-    signature: Signature
-);
-
-// Check if nonce has been used
-#[external(v0)]
-fn is_nonce_used(self: @ContractState, payer: ContractAddress, nonce: felt252) -> bool;
-```
-
-**Deliverables**:
-- Cairo contract implementation
-- Comprehensive comments and documentation
-
-**Testing**: Unit tests for contract logic (later in Phase 4)
+**Testing**: Unit tests with mock paymaster responses
 
 ---
 
-### Step 2.2: Token Transfer Logic
+## Phase 3: Client-Side Implementation (Days 5-7)
 
-**Tasks**:
-- [ ] Implement ERC20 token transfer within payment contract
-- [ ] Add balance verification
-- [ ] Handle transfer failures gracefully
-- [ ] Emit payment events
-
-**Contract Events**:
-```cairo
-#[event]
-fn PaymentExecuted(
-    payer: ContractAddress,
-    recipient: ContractAddress,
-    token: ContractAddress,
-    amount: u256,
-    nonce: felt252
-);
-
-#[event]
-fn PaymentVerified(
-    payer: ContractAddress,
-    recipient: ContractAddress,
-    amount: u256
-);
-```
-
-**Deliverables**:
-- Token transfer implementation
-- Event emission
-
----
-
-### Step 2.3: Deploy Contracts to Networks
-
-**Tasks**:
-- [ ] Set up deployment scripts using starknet.js
-- [ ] Deploy to Sepolia testnet first
-- [ ] Deploy to devnet for local testing
-- [ ] Create deployment documentation
-
-**Files to create**:
-- `scripts/deploy.ts` - Deployment script
-- `contracts/deployments.json` - Deployed contract addresses
-
-**Deliverables**:
-- Deployed contracts on testnet and devnet
-- Contract addresses documented
-
----
-
-## Phase 3: Client-Side Implementation (Days 6-8)
-
-### Step 3.1: Payment Header Creation
+### Step 3.1: Payment Transaction Builder
 
 **Tasks**:
 - [ ] Create `src/client/` directory
-- [ ] Implement payment payload signing using starknet.js
-- [ ] Create structured hash for authorization (similar to EIP-712)
+- [ ] Implement payment transaction builder using paymaster
+- [ ] Create transfer call encoding
 - [ ] Implement payment header formatting
 
 **Files to create**:
 - `src/client/index.ts` - Main client API
-- `src/client/signer.ts` - Signature creation
+- `src/client/builder.ts` - Transaction building
 - `src/client/header.ts` - Header formatting
 
 **Core Function**:
 ```typescript
+/**
+ * Create payment header for x402 request
+ *
+ * This builds a gasless transaction via paymaster and returns
+ * the signed payload as a base64-encoded header.
+ */
 export async function createPaymentHeader(
-  account: Account | Signer,
+  account: Account,
   x402Version: number,
-  paymentRequirements: StarknetPaymentRequirements
+  paymentRequirements: PaymentRequirements,
+  paymasterConfig: PaymasterConfig
 ): Promise<string> {
-  // 1. Generate nonce
-  // 2. Create authorization payload
-  // 3. Hash payload using Starknet's structured hash
-  // 4. Sign hash with account/signer
-  // 5. Format as base64-encoded JSON
+  // 1. Create ERC20 transfer call
+  const transferCall = {
+    to: paymentRequirements.asset,
+    selector: 'transfer',
+    calldata: [
+      paymentRequirements.payTo,
+      paymentRequirements.maxAmountRequired,
+      '0' // u256 high part
+    ]
+  };
+
+  // 2. Build transaction with paymaster
+  const paymasterClient = createPaymasterClient(paymasterConfig);
+  const buildResult = await buildPaymasterTransaction(
+    paymasterClient,
+    account.address,
+    [transferCall],
+    { mode: 'sponsored' } // Server pays gas
+  );
+
+  // 3. Sign typed data
+  const signature = await account.signMessage(buildResult.typedData);
+
+  // 4. Create payment payload
+  const payload: PaymentPayload = {
+    x402Version,
+    scheme: 'exact',
+    network: paymentRequirements.network,
+    payload: {
+      signedTypedData: buildResult.typedData,
+      signature,
+      paymasterEndpoint: paymasterConfig.endpoint,
+    },
+  };
+
+  // 5. Encode as base64 header
+  return encodePaymentPayload(payload);
 }
 ```
 
 **Deliverables**:
 - Client payment creation API
-- Signature generation and verification
+- Paymaster-based transaction building
 
-**Testing**: Unit tests for signature creation
+**Testing**: Unit tests for transaction building
 
 ---
 
@@ -363,7 +320,7 @@ export async function createPaymentHeader(
 **Tasks**:
 - [ ] Implement payment requirements selector
 - [ ] Add network compatibility checks
-- [ ] Create wallet/account validation
+- [ ] Create balance validation
 
 **Files to create**:
 - `src/client/selector.ts` - Requirements selection logic
@@ -371,13 +328,29 @@ export async function createPaymentHeader(
 **Core Function**:
 ```typescript
 export async function selectPaymentRequirements(
-  requirements: StarknetPaymentRequirements[],
-  account: Account
-): Promise<StarknetPaymentRequirements> {
+  requirements: PaymentRequirements[],
+  account: Account,
+  provider: RpcProvider
+): Promise<PaymentRequirements> {
   // 1. Filter by network compatibility
-  // 2. Check token balance
-  // 3. Verify account can sign
-  // 4. Return best match or throw error
+  const compatible = requirements.filter(
+    req => req.network === getNetworkFromProvider(provider)
+  );
+
+  // 2. Check token balances for each option
+  for (const req of compatible) {
+    const balance = await getTokenBalance(
+      provider,
+      req.asset,
+      account.address
+    );
+
+    if (BigInt(balance) >= BigInt(req.maxAmountRequired)) {
+      return req;
+    }
+  }
+
+  throw new Error('No payment requirements can be satisfied');
 }
 ```
 
@@ -394,17 +367,20 @@ export async function selectPaymentRequirements(
 **Tasks**:
 - [ ] Add support for different Starknet wallets
 - [ ] Integrate with starknet.js `Account` interface
-- [ ] Support both Browser wallets (ArgentX, Braavos) and Server wallets (local signers)
+- [ ] Support browser wallets (ArgentX, Braavos)
+- [ ] Support server wallets (local signers)
 
 **Files to create**:
 - `src/client/wallet.ts` - Wallet abstraction
 
 **Wallet Types to Support**:
 ```typescript
-// Browser wallet (via get-starknet)
-export async function connectBrowserWallet(): Promise<Account>;
+/** Connect to browser wallet via get-starknet */
+export async function connectBrowserWallet(
+  network: StarknetNetwork
+): Promise<Account>;
 
-// Local signer (for servers/agents)
+/** Create local account for servers/agents */
 export function createLocalAccount(
   provider: RpcProvider,
   privateKey: string,
@@ -420,15 +396,15 @@ export function createLocalAccount(
 
 ---
 
-## Phase 4: Facilitator Implementation (Days 9-11)
+## Phase 4: Facilitator/Server Implementation (Days 8-10)
 
-### Step 4.1: Verification Service
+### Step 4.1: Payment Verification
 
 **Tasks**:
 - [ ] Create `src/facilitator/` directory
-- [ ] Implement payment verification logic
-- [ ] Add signature verification using starknet.js
-- [ ] Check balance, nonce, and expiry
+- [ ] Implement payment payload validation
+- [ ] Add signature verification
+- [ ] Check balance before execution
 
 **Files to create**:
 - `src/facilitator/index.ts` - Main facilitator API
@@ -436,33 +412,73 @@ export function createLocalAccount(
 
 **Core Function**:
 ```typescript
+/**
+ * Verify payment payload without executing
+ *
+ * This validates the signed transaction is properly formed
+ * and the user has sufficient balance.
+ */
 export async function verify(
   provider: RpcProvider,
-  contractAddress: string,
-  payload: StarknetPaymentPayload,
-  paymentRequirements: StarknetPaymentRequirements
+  payload: PaymentPayload,
+  paymentRequirements: PaymentRequirements
 ): Promise<VerifyResponse> {
   // 1. Validate payload structure
-  // 2. Check signature validity
-  // 3. Verify token balance
-  // 4. Check nonce not used
-  // 5. Verify not expired
-  // 6. Return verification result
-}
-```
+  PaymentPayloadSchema.parse(payload);
 
-**Response Type**:
-```typescript
-export interface VerifyResponse {
-  isValid: boolean;
-  invalidReason?:
-    | "invalid_signature"
-    | "insufficient_balance"
-    | "nonce_used"
-    | "expired"
-    | "invalid_network"
-    | "invalid_amount";
-  payer: string;
+  // 2. Extract user address from signed typed data
+  const userAddress = payload.payload.signedTypedData.user_address;
+
+  // 3. Verify signature is valid (recover signer)
+  const isValidSignature = await verifyTypedDataSignature(
+    payload.payload.signedTypedData,
+    payload.payload.signature,
+    userAddress
+  );
+
+  if (!isValidSignature) {
+    return {
+      isValid: false,
+      invalidReason: 'invalid_signature',
+      payer: userAddress,
+    };
+  }
+
+  // 4. Check token balance
+  const balance = await getTokenBalance(
+    provider,
+    paymentRequirements.asset,
+    userAddress
+  );
+
+  if (BigInt(balance) < BigInt(paymentRequirements.maxAmountRequired)) {
+    return {
+      isValid: false,
+      invalidReason: 'insufficient_balance',
+      payer: userAddress,
+      details: { balance },
+    };
+  }
+
+  // 5. Validate transaction calls match requirements
+  const calls = payload.payload.signedTypedData.calls;
+  const isValidTransfer = validateTransferCall(
+    calls[0],
+    paymentRequirements
+  );
+
+  if (!isValidTransfer) {
+    return {
+      isValid: false,
+      invalidReason: 'invalid_amount',
+      payer: userAddress,
+    };
+  }
+
+  return {
+    isValid: true,
+    payer: userAddress,
+  };
 }
 ```
 
@@ -474,12 +490,12 @@ export interface VerifyResponse {
 
 ---
 
-### Step 4.2: Settlement Service
+### Step 4.2: Payment Settlement (Execution via Paymaster)
 
 **Tasks**:
-- [ ] Implement payment settlement (transaction execution)
-- [ ] Call Cairo contract's `execute_payment` function
-- [ ] Handle transaction submission and confirmation
+- [ ] Implement payment execution via paymaster
+- [ ] Handle transaction submission
+- [ ] Wait for transaction confirmation
 - [ ] Return transaction hash and status
 
 **Files to create**:
@@ -487,36 +503,80 @@ export interface VerifyResponse {
 
 **Core Function**:
 ```typescript
+/**
+ * Settle payment by executing transaction via paymaster
+ *
+ * The facilitator's paymaster relayers pay the gas fees.
+ */
 export async function settle(
-  account: Account,
-  contractAddress: string,
-  payload: StarknetPaymentPayload,
-  paymentRequirements: StarknetPaymentRequirements
+  provider: RpcProvider,
+  payload: PaymentPayload,
+  paymentRequirements: PaymentRequirements
 ): Promise<SettleResponse> {
   // 1. Verify payment first
-  // 2. Prepare contract call
-  // 3. Execute transaction
-  // 4. Wait for acceptance
-  // 5. Return transaction details
-}
-```
+  const verification = await verify(provider, payload, paymentRequirements);
+  if (!verification.isValid) {
+    return {
+      success: false,
+      errorReason: verification.invalidReason,
+      transaction: '',
+      network: paymentRequirements.network,
+      payer: verification.payer,
+    };
+  }
 
-**Response Type**:
-```typescript
-export interface SettleResponse {
-  success: boolean;
-  errorReason?: string;
-  transaction: string; // Transaction hash
-  network: StarknetNetwork;
-  payer: string;
+  // 2. Create paymaster client
+  const paymasterClient = createPaymasterClient({
+    endpoint: payload.payload.paymasterEndpoint,
+    network: paymentRequirements.network,
+  });
+
+  // 3. Execute transaction via paymaster
+  try {
+    const result = await executePaymasterTransaction(
+      paymasterClient,
+      {
+        typedData: payload.payload.signedTypedData,
+        signature: payload.payload.signature,
+      }
+    );
+
+    // 4. Wait for transaction to be accepted
+    const receipt = await provider.waitForTransaction(
+      result.transactionHash,
+      {
+        retryInterval: 2000,
+        successStates: ['ACCEPTED_ON_L2', 'ACCEPTED_ON_L1'],
+      }
+    );
+
+    return {
+      success: true,
+      transaction: result.transactionHash,
+      network: paymentRequirements.network,
+      payer: verification.payer,
+      status: receipt.status,
+      blockNumber: receipt.block_number,
+      blockHash: receipt.block_hash,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      errorReason: error.message,
+      transaction: '',
+      network: paymentRequirements.network,
+      payer: verification.payer,
+    };
+  }
 }
 ```
 
 **Deliverables**:
 - Settlement service implementation
 - Transaction monitoring
+- Error recovery
 
-**Testing**: Integration tests on testnet
+**Testing**: Integration tests on testnet with paymaster
 
 ---
 
@@ -526,7 +586,7 @@ export interface SettleResponse {
 - [ ] Create HTTP server for facilitator endpoints
 - [ ] Implement `/verify` endpoint
 - [ ] Implement `/settle` endpoint
-- [ ] Implement `/supported` endpoint for discovery
+- [ ] Implement `/supported` endpoint
 - [ ] Add error handling and logging
 
 **Files to create**:
@@ -536,23 +596,50 @@ export interface SettleResponse {
 ```typescript
 // POST /verify
 interface VerifyRequest {
-  paymentPayload: StarknetPaymentPayload;
-  paymentRequirements: StarknetPaymentRequirements;
+  paymentPayload: PaymentPayload;
+  paymentRequirements: PaymentRequirements;
 }
 
 // POST /settle
 interface SettleRequest {
-  paymentPayload: StarknetPaymentPayload;
-  paymentRequirements: StarknetPaymentRequirements;
+  paymentPayload: PaymentPayload;
+  paymentRequirements: PaymentRequirements;
 }
 
 // GET /supported
 interface SupportedResponse {
   kinds: Array<{
-    scheme: "exact";
+    scheme: 'exact';
     network: StarknetNetwork;
+    paymasterEndpoint: string;
   }>;
 }
+```
+
+**Server Example**:
+```typescript
+import { serve } from 'bun';
+
+const server = serve({
+  port: 3000,
+  async fetch(req) {
+    const url = new URL(req.url);
+
+    if (url.pathname === '/verify' && req.method === 'POST') {
+      const body = await req.json() as VerifyRequest;
+      const result = await verify(provider, body.paymentPayload, body.paymentRequirements);
+      return Response.json(result);
+    }
+
+    if (url.pathname === '/settle' && req.method === 'POST') {
+      const body = await req.json() as SettleRequest;
+      const result = await settle(provider, body.paymentPayload, body.paymentRequirements);
+      return Response.json(result);
+    }
+
+    // ... more endpoints
+  },
+});
 ```
 
 **Deliverables**:
@@ -563,7 +650,7 @@ interface SupportedResponse {
 
 ---
 
-## Phase 5: Utilities & Shared Code (Days 12-13)
+## Phase 5: Utilities & Shared Code (Days 11-12)
 
 ### Step 5.1: Encoding & Serialization
 
@@ -580,16 +667,9 @@ interface SupportedResponse {
 
 **Utility Functions**:
 ```typescript
-// Encode payment payload to base64
-export function encodePaymentPayload(payload: StarknetPaymentPayload): string;
-
-// Decode payment payload from base64
-export function decodePaymentPayload(encoded: string): StarknetPaymentPayload;
-
-// Convert hex to felt252
+export function encodePaymentPayload(payload: PaymentPayload): string;
+export function decodePaymentPayload(encoded: string): PaymentPayload;
 export function hexToFelt(hex: string): string;
-
-// Convert felt252 to hex
 export function feltToHex(felt: string): string;
 ```
 
@@ -607,20 +687,14 @@ export function feltToHex(felt: string): string;
 - [ ] Create provider factory
 - [ ] Implement connection management
 - [ ] Add retry logic for RPC calls
-- [ ] Create provider utilities
 
 **Files to create**:
 - `src/utils/provider.ts` - Provider utilities
 
 **Provider Functions**:
 ```typescript
-// Create provider for network
 export function createProvider(network: StarknetNetwork): RpcProvider;
-
-// Get network from chain ID
 export function getNetworkFromChainId(chainId: string): StarknetNetwork;
-
-// Retry RPC call with exponential backoff
 export async function retryRpcCall<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3
@@ -629,53 +703,49 @@ export async function retryRpcCall<T>(
 
 **Deliverables**:
 - Provider management utilities
-- Connection pooling (if needed)
 
 **Testing**: Integration tests with real RPC
 
 ---
 
-### Step 5.3: Hashing & Cryptography
+### Step 5.3: Token Balance Utilities
 
 **Tasks**:
-- [ ] Implement structured hash (Starknet equivalent of EIP-712)
-- [ ] Create authorization hash function
-- [ ] Add signature verification utilities
+- [ ] Implement token balance checking
+- [ ] Create ERC20 call utilities
+- [ ] Add token metadata fetching
 
 **Files to create**:
-- `src/utils/hash.ts` - Hashing utilities
-- `src/utils/crypto.ts` - Cryptography utilities
+- `src/utils/token.ts` - Token utilities
 
-**Hash Functions**:
+**Token Functions**:
 ```typescript
-// Create authorization hash for signing
-export function hashAuthorization(
-  from: string,
-  to: string,
-  amount: string,
-  token: string,
-  nonce: string,
-  validUntil: string,
-  chainId: string
-): string;
+/** Get ERC20 token balance */
+export async function getTokenBalance(
+  provider: RpcProvider,
+  tokenAddress: string,
+  accountAddress: string
+): Promise<string>;
 
-// Verify signature
-export function verifySignature(
-  hash: string,
-  signature: { r: string; s: string },
-  publicKey: string
-): boolean;
+/** Get token metadata (name, symbol, decimals) */
+export async function getTokenMetadata(
+  provider: RpcProvider,
+  tokenAddress: string
+): Promise<{
+  name: string;
+  symbol: string;
+  decimals: number;
+}>;
 ```
 
 **Deliverables**:
-- Hashing and crypto utilities
-- Signature verification
+- Token interaction utilities
 
-**Testing**: Unit tests for hash and signature functions
+**Testing**: Integration tests on testnet
 
 ---
 
-## Phase 6: Testing Infrastructure (Days 14-15)
+## Phase 6: Testing Infrastructure (Days 13-14)
 
 ### Step 6.1: Unit Tests
 
@@ -693,10 +763,11 @@ tests/
 │   ├── types.test.ts
 │   ├── client.test.ts
 │   ├── facilitator.test.ts
-│   ├── utils/
-│   │   ├── encoding.test.ts
-│   │   ├── hash.test.ts
-│   │   └── provider.test.ts
+│   ├── paymaster.test.ts
+│   └── utils/
+│       ├── encoding.test.ts
+│       ├── token.test.ts
+│       └── provider.test.ts
 ```
 
 **Deliverables**:
@@ -708,9 +779,9 @@ tests/
 ### Step 6.2: Integration Tests
 
 **Tasks**:
-- [ ] Set up local Starknet devnet
-- [ ] Write integration tests for contract interaction
+- [ ] Set up Starknet devnet
 - [ ] Write integration tests for payment flow
+- [ ] Test with mock paymaster (or testnet paymaster)
 - [ ] Test wallet integration
 - [ ] Test facilitator HTTP endpoints
 
@@ -719,7 +790,7 @@ tests/
 tests/
 ├── integration/
 │   ├── payment-flow.test.ts
-│   ├── contract.test.ts
+│   ├── paymaster.test.ts
 │   ├── facilitator.test.ts
 │   └── wallet.test.ts
 ```
@@ -728,46 +799,25 @@ tests/
 - Integration test suite
 - Devnet setup documentation
 
----
-
-### Step 6.3: Contract Tests
-
-**Tasks**:
-- [ ] Set up Scarb for Cairo testing
-- [ ] Write Cairo contract unit tests
-- [ ] Test edge cases (replay attacks, expired payments, etc.)
-- [ ] Test token transfer logic
-
-**Testing Structure**:
-```
-contracts/
-├── src/
-│   └── PaymentAuthorization.cairo
-└── tests/
-    └── test_payment_authorization.cairo
-```
-
-**Deliverables**:
-- Cairo contract test suite
-- Security test scenarios
+**Testing**: End-to-end payment flows
 
 ---
 
-## Phase 7: Documentation & Examples (Days 16-17)
+## Phase 7: Documentation & Examples (Days 15-16)
 
 ### Step 7.1: API Documentation
 
 **Tasks**:
-- [ ] Create comprehensive README
+- [ ] Update comprehensive README
 - [ ] Document all public APIs with JSDoc
 - [ ] Create API reference documentation
 - [ ] Add usage examples for each function
 
 **Documentation Files**:
-- `README.md` - Main project documentation
-- `API.md` - Complete API reference
-- `ARCHITECTURE.md` - System architecture
-- `CONTRACTS.md` - Cairo contract documentation
+- `README.md` - Main project documentation (update)
+- `docs/API.md` - Complete API reference
+- `docs/ARCHITECTURE.md` - System architecture
+- `docs/PAYMASTER.md` - Paymaster integration guide
 
 **Deliverables**:
 - Complete documentation set
@@ -779,23 +829,22 @@ contracts/
 
 **Tasks**:
 - [ ] Create `examples/` directory
-- [ ] Build simple payment server example
-- [ ] Build client example (browser and Node.js)
-- [ ] Build facilitator deployment example
-- [ ] Create AI agent example
+- [ ] Build simple payment client example (browser)
+- [ ] Build client example (Node.js/Bun)
+- [ ] Build facilitator server example
+- [ ] Create AI agent payment example
 
 **Example Structure**:
 ```
 examples/
-├── server/
-│   └── simple-paywall.ts
 ├── client/
 │   ├── browser/
-│   │   └── index.html
+│   │   ├── index.html
+│   │   └── app.ts
 │   └── node/
 │       └── client.ts
-├── facilitator/
-│   └── deploy-facilitator.ts
+├── server/
+│   └── facilitator.ts
 └── agent/
     └── ai-agent-payment.ts
 ```
@@ -810,11 +859,11 @@ examples/
 
 **Tasks**:
 - [ ] Create migration guide from EVM x402 to Starknet x402
-- [ ] Document differences and breaking changes
+- [ ] Document differences (paymaster vs EIP-3009)
 - [ ] Provide code comparison examples
 
 **Files to create**:
-- `MIGRATION.md` - Migration guide
+- `docs/MIGRATION.md` - Migration guide
 
 **Deliverables**:
 - Migration documentation
@@ -822,44 +871,34 @@ examples/
 
 ---
 
-## Phase 8: Package & Distribution (Days 18-19)
+## Phase 8: Package & Distribution (Days 17-18)
 
 ### Step 8.1: Package Configuration
 
 **Tasks**:
-- [ ] Configure package.json for npm publication
+- [ ] Update package.json for npm publication
 - [ ] Set up build scripts with Bun
 - [ ] Create type definition files (`.d.ts`)
-- [ ] Configure exports for different module systems (ESM, CJS)
+- [ ] Configure exports for different module systems
 
-**Package.json Configuration**:
+**Package.json Updates**:
 ```json
 {
   "name": "@x402/starknet",
   "version": "0.1.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./client": {
-      "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.js"
-    },
-    "./facilitator": {
-      "types": "./dist/facilitator/index.d.ts",
-      "import": "./dist/facilitator/index.js"
-    }
+    ".": "./dist/index.js",
+    "./client": "./dist/client/index.js",
+    "./facilitator": "./dist/facilitator/index.js",
+    "./paymaster": "./dist/paymaster/index.js",
+    "./types": "./dist/types/index.js"
   }
 }
 ```
 
 **Deliverables**:
 - Production-ready package configuration
-- Build scripts
 
 ---
 
@@ -871,116 +910,61 @@ examples/
 - [ ] Optimize bundle size
 - [ ] Test package installation
 
-**Build Commands**:
-```bash
-bun run build      # Build library
-bun run test       # Run all tests
-bun run typecheck  # Type checking
-bun run lint       # Linting
-```
-
 **Deliverables**:
 - Bundled library
 - Type definitions
-- Build documentation
 
 ---
 
 ### Step 8.3: CI/CD Pipeline
 
 **Tasks**:
-- [ ] Set up GitHub Actions (or similar)
+- [ ] Set up GitHub Actions
 - [ ] Configure automated testing
 - [ ] Set up automated publishing
 - [ ] Add code quality checks
 
-**CI/CD Workflow**:
-```yaml
-# .github/workflows/ci.yml
-- Run linter
-- Run type checker
-- Run unit tests
-- Run integration tests (on devnet)
-- Build package
-- Upload coverage reports
-```
-
 **Deliverables**:
 - Automated CI/CD pipeline
-- Quality gates
 
 ---
 
-## Phase 9: Advanced Features (Days 20-22)
+## Phase 9: Advanced Features (Days 19-20)
 
 ### Step 9.1: Batch Payments
 
 **Tasks**:
 - [ ] Add support for multiple payments in single transaction
-- [ ] Update Cairo contract for batch processing
 - [ ] Implement client-side batch API
-
-**Batch API**:
-```typescript
-export async function createBatchPaymentHeader(
-  account: Account,
-  paymentRequirements: StarknetPaymentRequirements[]
-): Promise<string>;
-```
 
 **Deliverables**:
 - Batch payment support
-- Gas optimization
 
 ---
 
-### Step 9.2: Advanced Account Support
+### Step 9.2: Fee Estimation
 
 **Tasks**:
-- [ ] Support for multisig accounts
-- [ ] Support for session keys
-- [ ] Support for account plugins
+- [ ] Implement gas estimation
+- [ ] Add fee preview for users
+- [ ] Support gasless vs paid modes
 
 **Deliverables**:
-- Extended account support
-- Documentation for advanced accounts
-
----
-
-### Step 9.3: Gas Optimization
-
-**Tasks**:
-- [ ] Optimize Cairo contract gas usage
-- [ ] Implement gas estimation for clients
-- [ ] Add fee configuration options
-
-**Deliverables**:
-- Gas-optimized implementation
 - Fee estimation utilities
 
 ---
 
-## Phase 10: Production Readiness (Days 23-25)
+## Phase 10: Production Readiness (Days 21-22)
 
-### Step 10.1: Security Audit Preparation
+### Step 10.1: Security Review
 
 **Tasks**:
 - [ ] Review all code for security issues
 - [ ] Document security assumptions
 - [ ] Create security testing checklist
-- [ ] Add security best practices documentation
-
-**Security Checklist**:
-- Signature verification
-- Replay attack protection
-- Reentrancy protection
-- Integer overflow protection
-- Access control
-- Input validation
 
 **Deliverables**:
 - Security documentation
-- Audit preparation materials
 
 ---
 
@@ -990,26 +974,21 @@ export async function createBatchPaymentHeader(
 - [ ] Benchmark client operations
 - [ ] Benchmark facilitator throughput
 - [ ] Test under load
-- [ ] Optimize bottlenecks
 
 **Deliverables**:
 - Performance benchmarks
-- Optimization documentation
 
 ---
 
-### Step 10.3: Mainnet Deployment
+### Step 10.3: Production Deployment Guide
 
 **Tasks**:
-- [ ] Deploy contracts to Starknet mainnet
-- [ ] Update network configurations
-- [ ] Create mainnet documentation
-- [ ] Set up monitoring and alerts
+- [ ] Document paymaster service selection
+- [ ] Create deployment checklist
+- [ ] Set up monitoring
 
 **Deliverables**:
-- Mainnet-ready deployment
-- Production documentation
-- Monitoring setup
+- Production deployment guide
 
 ---
 
@@ -1018,24 +997,24 @@ export async function createBatchPaymentHeader(
 Final project structure:
 ```
 x402-starknet/
-├── contracts/              # Cairo smart contracts
-│   ├── src/
-│   │   └── PaymentAuthorization.cairo
-│   ├── tests/
-│   └── Scarb.toml
 ├── src/
 │   ├── types/             # TypeScript type definitions
 │   │   ├── index.ts
 │   │   ├── payment.ts
 │   │   ├── network.ts
 │   │   ├── settlement.ts
+│   │   ├── paymaster.ts   # NEW: Paymaster types
 │   │   └── schemas.ts
 │   ├── networks/          # Network configurations
 │   │   ├── index.ts
 │   │   └── constants.ts
+│   ├── paymaster/         # NEW: Paymaster integration
+│   │   ├── index.ts
+│   │   ├── client.ts
+│   │   └── config.ts
 │   ├── client/            # Client-side API
 │   │   ├── index.ts
-│   │   ├── signer.ts
+│   │   ├── builder.ts     # Transaction building
 │   │   ├── header.ts
 │   │   ├── selector.ts
 │   │   └── wallet.ts
@@ -1049,59 +1028,49 @@ x402-starknet/
 │   │   ├── serialization.ts
 │   │   ├── starknet.ts
 │   │   ├── provider.ts
-│   │   ├── hash.ts
-│   │   └── crypto.ts
+│   │   └── token.ts       # NEW: Token utilities
 │   └── index.ts           # Main entry point
 ├── tests/
 │   ├── unit/              # Unit tests
 │   └── integration/       # Integration tests
 ├── examples/              # Example applications
-│   ├── server/
 │   ├── client/
-│   ├── facilitator/
+│   ├── server/
 │   └── agent/
-├── scripts/               # Deployment and utility scripts
-│   ├── deploy.ts
-│   └── setup-devnet.ts
 ├── docs/                  # Documentation
 │   ├── API.md
 │   ├── ARCHITECTURE.md
-│   ├── CONTRACTS.md
+│   ├── PAYMASTER.md       # NEW: Paymaster guide
 │   └── MIGRATION.md
-├── .github/               # CI/CD
-│   └── workflows/
-│       └── ci.yml
+├── .github/workflows/
+│   └── ci.yml
 ├── package.json
 ├── tsconfig.json
-├── bunfig.toml
 ├── README.md
-└── IMPLEMENTATION_PLAN.md # This file
+└── IMPLEMENTATION_PLAN.md
 ```
 
 ## Dependencies
 
 ### Core Dependencies
-- `starknet`: ^8.7.0 - Starknet.js library for blockchain interaction
+- `starknet`: ^8.7.0 - Starknet.js library
 - `@scure/base`: ^1.1.10 - Encoding utilities
 - `zod`: ^3.24.2 - Runtime validation
+- **Paymaster client** (HTTP fetch to JSON-RPC or npm package if available)
 
 ### Development Dependencies
-- `@types/bun`: latest - Bun type definitions
-- `typescript`: ^5.7.0 - TypeScript compiler
-- `vitest`: ^3.0.0 - Testing framework
-- `eslint`: ^9.0.0 - Linting
-- `prettier`: ^3.4.0 - Code formatting
-
-### Cairo Dependencies
-- `scarb`: Latest - Cairo package manager and build tool
-- `starknet-foundry`: Latest - Cairo testing framework
+- `@types/bun`: latest
+- `typescript`: ^5.7.0
+- `vitest`: ^3.0.0
+- `eslint`: ^9.0.0
+- `prettier`: ^3.4.0
 
 ## Success Criteria
 
 ### Functional Requirements
-- [ ] Clients can create signed payment authorizations
-- [ ] Servers can verify payments without execution
-- [ ] Facilitators can settle payments on-chain
+- [ ] Clients can create gasless payment transactions
+- [ ] Servers can verify payments before execution
+- [ ] Facilitators can settle payments via paymaster
 - [ ] Full compatibility with x402 protocol specification
 - [ ] Support for Starknet mainnet and testnet
 
@@ -1110,76 +1079,67 @@ x402-starknet/
 - [ ] Type-safe TypeScript implementation
 - [ ] Comprehensive documentation
 - [ ] Working examples for all use cases
-- [ ] Passing security checklist
-- [ ] Performance benchmarks meet targets
-
-### Release Criteria
-- [ ] All tests passing
-- [ ] Documentation complete
-- [ ] Examples working
-- [ ] Contracts deployed to testnet
-- [ ] CI/CD pipeline operational
-- [ ] Security review completed
-- [ ] npm package published
+- [ ] Zero gas cost for clients (paymaster-sponsored)
 
 ## Timeline
 
-**Total Duration**: 25 days
+**Total Duration**: 22 days (reduced from 25)
 
-- **Phase 1**: 2 days - Foundation
-- **Phase 2**: 3 days - Smart Contracts
+- **Phase 1**: 2 days - Foundation ✅ COMPLETE
+- **Phase 2**: 2 days - Paymaster Integration
 - **Phase 3**: 3 days - Client Implementation
 - **Phase 4**: 3 days - Facilitator Implementation
 - **Phase 5**: 2 days - Utilities
 - **Phase 6**: 2 days - Testing
 - **Phase 7**: 2 days - Documentation
 - **Phase 8**: 2 days - Package & Distribution
-- **Phase 9**: 3 days - Advanced Features
-- **Phase 10**: 3 days - Production Readiness
+- **Phase 9**: 2 days - Advanced Features
+- **Phase 10**: 2 days - Production Readiness
 
-## Risk Mitigation
+## Key Advantages of Paymaster Approach
 
-### Technical Risks
-1. **Cairo Contract Complexity**: Start with simple implementation, iterate
-2. **Starknet RPC Reliability**: Implement retry logic and fallback providers
-3. **Signature Compatibility**: Extensive testing with different wallets
-4. **Gas Costs**: Early benchmarking and optimization
+1. **No Custom Contracts** - Uses existing USDC contracts
+2. **True Gasless UX** - Clients pay zero gas fees
+3. **Production Ready** - AVNU Paymaster is audited and battle-tested
+4. **Standard Compliance** - SNIP-29 compliant
+5. **Simple Integration** - Just HTTP JSON-RPC calls
+6. **Flexible Modes** - Support both sponsored and user-paid-in-token modes
 
-### Mitigation Strategies
-- Incremental development with frequent testing
-- Use devnet extensively before testnet
-- Create comprehensive test coverage
-- Regular code reviews
-- Community feedback loops
+## Paymaster Service Options
+
+### Option A: Public Paymaster Services
+- Use existing AVNU Paymaster endpoints
+- No infrastructure to maintain
+- May have rate limits or fees
+
+### Option B: Self-Hosted Paymaster
+- Deploy own AVNU Paymaster instance
+- Full control over sponsorship rules
+- Requires infrastructure management
+- Reference: `/home/ametel/source/paymaster`
+
+**For x402, we recommend Option A (public services) for simplicity.**
 
 ## Next Steps
 
-1. **Review and Approve Plan**: Get stakeholder approval
-2. **Set Up Development Environment**: Install Bun, configure tooling
-3. **Create GitHub Repository**: Initialize version control
-4. **Begin Phase 1**: Start with project setup
+1. ✅ Phase 1 Complete
+2. **Start Phase 2**: Research and configure paymaster endpoints
+3. Implement client transaction building
+4. Build facilitator settlement logic
 
 ---
 
-## Appendix
+## References
 
-### References
 - x402 Specification: `/home/ametel/source/x402/specs/x402-specification.md`
 - Original x402 Implementation: `/home/ametel/source/x402`
 - Starknet.js Documentation: `/home/ametel/source/starknet.js`
+- AVNU Paymaster: `/home/ametel/source/paymaster`
 - Starknet Documentation: https://docs.starknet.io
-- Cairo Book: https://book.cairo-lang.org
-
-### Glossary
-- **EIP-3009**: Ethereum Improvement Proposal for transfer with authorization
-- **Account Abstraction**: All accounts on Starknet are smart contracts
-- **Felt**: Field element, basic type in Cairo (252-bit integer)
-- **RPC**: Remote Procedure Call, interface to blockchain nodes
-- **Devnet**: Local development network for testing
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 2.0 (Paymaster-Based)
 **Last Updated**: 2025-11-09
 **Author**: Claude Code
-**Status**: Ready for Review
+**Status**: Ready for Implementation
