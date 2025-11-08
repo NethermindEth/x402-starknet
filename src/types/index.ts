@@ -55,16 +55,16 @@ export { PaymasterError } from './paymaster.js';
 
 // Zod schemas
 export {
-  StarknetNetworkSchema,
-  PaymentSchemeSchema,
-  SignatureSchema,
-  PaymentAuthorizationSchema,
-  PaymentRequirementsSchema,
-  PaymentPayloadSchema,
-  PaymentRequirementsResponseSchema,
-  VerifyResponseSchema,
-  SettleResponseSchema,
-  NetworkConfigSchema,
-  AccountConfigSchema,
-  ProviderOptionsSchema,
+  STARKNET_NETWORK_SCHEMA,
+  PAYMENT_SCHEME_SCHEMA,
+  SIGNATURE_SCHEMA,
+  PAYMENT_AUTHORIZATION_SCHEMA,
+  PAYMENT_REQUIREMENTS_SCHEMA,
+  PAYMENT_PAYLOAD_SCHEMA,
+  PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA,
+  VERIFY_RESPONSE_SCHEMA,
+  SETTLE_RESPONSE_SCHEMA,
+  NETWORK_CONFIG_SCHEMA,
+  ACCOUNT_CONFIG_SCHEMA,
+  PROVIDER_OPTIONS_SCHEMA,
 } from './schemas.js';

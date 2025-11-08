@@ -7,7 +7,7 @@ import { z } from 'zod';
 /**
  * Schema for Starknet network
  */
-export const StarknetNetworkSchema = z.enum([
+export const STARKNET_NETWORK_SCHEMA = z.enum([
   'starknet-mainnet',
   'starknet-sepolia',
   'starknet-devnet',
@@ -16,12 +16,12 @@ export const StarknetNetworkSchema = z.enum([
 /**
  * Schema for payment scheme
  */
-export const PaymentSchemeSchema = z.literal('exact');
+export const PAYMENT_SCHEME_SCHEMA = z.literal('exact');
 
 /**
  * Schema for signature
  */
-export const SignatureSchema = z.object({
+export const SIGNATURE_SCHEMA = z.object({
   r: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid felt format for r'),
   s: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid felt format for s'),
 });
@@ -29,7 +29,7 @@ export const SignatureSchema = z.object({
 /**
  * Schema for payment authorization
  */
-export const PaymentAuthorizationSchema = z.object({
+export const PAYMENT_AUTHORIZATION_SCHEMA = z.object({
   from: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid address format'),
   to: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid address format'),
   amount: z.string().regex(/^\d+$/, 'Amount must be a numeric string'),
@@ -41,9 +41,9 @@ export const PaymentAuthorizationSchema = z.object({
 /**
  * Schema for payment requirements
  */
-export const PaymentRequirementsSchema = z.object({
-  scheme: PaymentSchemeSchema,
-  network: StarknetNetworkSchema,
+export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
+  scheme: PAYMENT_SCHEME_SCHEMA,
+  network: STARKNET_NETWORK_SCHEMA,
   maxAmountRequired: z
     .string()
     .regex(/^\d+$/, 'Max amount must be a numeric string'),
@@ -69,28 +69,46 @@ export const PaymentRequirementsSchema = z.object({
 /**
  * Schema for payment payload
  */
-export const PaymentPayloadSchema = z.object({
+export const PAYMENT_PAYLOAD_SCHEMA: z.ZodType<{
+  x402Version: 1;
+  scheme: 'exact';
+  network: 'starknet-mainnet' | 'starknet-sepolia' | 'starknet-devnet';
+  payload: {
+    signature: {
+      r: string;
+      s: string;
+    };
+    authorization: {
+      from: string;
+      to: string;
+      amount: string;
+      token: string;
+      nonce: string;
+      validUntil: string;
+    };
+  };
+}> = z.object({
   x402Version: z.literal(1),
-  scheme: PaymentSchemeSchema,
-  network: StarknetNetworkSchema,
+  scheme: PAYMENT_SCHEME_SCHEMA,
+  network: STARKNET_NETWORK_SCHEMA,
   payload: z.object({
-    signature: SignatureSchema,
-    authorization: PaymentAuthorizationSchema,
+    signature: SIGNATURE_SCHEMA,
+    authorization: PAYMENT_AUTHORIZATION_SCHEMA,
   }),
 });
 
 /**
  * Schema for payment requirements response
  */
-export const PaymentRequirementsResponseSchema = z.object({
+export const PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA = z.object({
   x402Version: z.literal(1),
-  paymentRequirements: z.array(PaymentRequirementsSchema).min(1),
+  paymentRequirements: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
 });
 
 /**
  * Schema for verify response
  */
-export const VerifyResponseSchema = z.object({
+export const VERIFY_RESPONSE_SCHEMA = z.object({
   isValid: z.boolean(),
   invalidReason: z
     .enum([
@@ -120,13 +138,13 @@ export const VerifyResponseSchema = z.object({
 /**
  * Schema for settle response
  */
-export const SettleResponseSchema = z.object({
+export const SETTLE_RESPONSE_SCHEMA = z.object({
   success: z.boolean(),
   errorReason: z.string().optional(),
   transaction: z
     .string()
     .regex(/^0x[0-9a-fA-F]+$/, 'Invalid transaction hash format'),
-  network: StarknetNetworkSchema,
+  network: STARKNET_NETWORK_SCHEMA,
   payer: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid payer address format'),
   status: z
     .enum(['pending', 'accepted_on_l2', 'accepted_on_l1', 'rejected'])
@@ -141,8 +159,8 @@ export const SettleResponseSchema = z.object({
 /**
  * Schema for network config
  */
-export const NetworkConfigSchema = z.object({
-  network: StarknetNetworkSchema,
+export const NETWORK_CONFIG_SCHEMA = z.object({
+  network: STARKNET_NETWORK_SCHEMA,
   chainId: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid chain ID format'),
   rpcUrl: z.string().url('RPC URL must be a valid URL'),
   explorerUrl: z.string().url('Explorer URL must be a valid URL').nullable(),
@@ -152,20 +170,20 @@ export const NetworkConfigSchema = z.object({
 /**
  * Schema for account config
  */
-export const AccountConfigSchema = z.object({
+export const ACCOUNT_CONFIG_SCHEMA = z.object({
   address: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid address format'),
   privateKey: z
     .string()
     .regex(/^0x[0-9a-fA-F]+$/, 'Invalid private key format')
     .optional(),
-  network: StarknetNetworkSchema,
+  network: STARKNET_NETWORK_SCHEMA,
 });
 
 /**
  * Schema for provider options
  */
-export const ProviderOptionsSchema = z.object({
-  network: StarknetNetworkSchema,
+export const PROVIDER_OPTIONS_SCHEMA = z.object({
+  network: STARKNET_NETWORK_SCHEMA,
   rpcUrl: z.string().url('RPC URL must be a valid URL').optional(),
   timeout: z.number().int().positive().optional(),
   retries: z.number().int().nonnegative().optional(),

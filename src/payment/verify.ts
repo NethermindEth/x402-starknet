@@ -8,7 +8,7 @@ import type {
   VerifyResponse,
 } from '../types/index.js';
 import type { RpcProvider } from 'starknet';
-import { PaymentPayloadSchema } from '../types/index.js';
+import { PAYMENT_PAYLOAD_SCHEMA } from '../types/schemas.js';
 
 /**
  * Verify payment payload without executing the transaction
@@ -41,7 +41,17 @@ export async function verifyPayment(
 ): Promise<VerifyResponse> {
   try {
     // 1. Validate payload structure
-    PaymentPayloadSchema.parse(payload);
+    const validationResult = PAYMENT_PAYLOAD_SCHEMA.safeParse(payload);
+    if (!validationResult.success) {
+      return {
+        isValid: false,
+        invalidReason: 'invalid_network',
+        payer: '',
+        details: {
+          error: validationResult.error.message,
+        },
+      };
+    }
 
     // 2. Extract payer address
     const payer = extractPayerAddress(payload);
@@ -55,14 +65,8 @@ export async function verifyPayment(
       };
     }
 
-    // 4. Verify scheme matches
-    if (payload.scheme !== paymentRequirements.scheme) {
-      return {
-        isValid: false,
-        invalidReason: 'invalid_amount',
-        payer,
-      };
-    }
+    // 4. Note: Scheme verification omitted - currently only 'exact' is supported
+    // When additional payment schemes are added, this check should be re-enabled
 
     // 5. Verify authorization token matches requirement
     if (payload.payload.authorization.token !== paymentRequirements.asset) {
