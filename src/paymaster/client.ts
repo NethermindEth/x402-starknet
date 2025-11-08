@@ -52,7 +52,7 @@ export class PaymasterClient {
 
       if (!response.ok) {
         throw new PaymasterError(
-          `HTTP error: ${response.status} ${response.statusText}`,
+          `HTTP error: ${String(response.status)} ${response.statusText}`,
           response.status
         );
       }

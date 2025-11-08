@@ -7,7 +7,7 @@ import type {
   PaymentRequirements,
   SettleResponse,
 } from '../types/index.js';
-import type { RpcProvider } from 'starknet';
+import type { RpcProvider, GetTransactionReceiptResponse } from 'starknet';
 import { verifyPayment } from './verify.js';
 
 /**
@@ -153,7 +153,7 @@ export async function waitForSettlement(
     retryInterval?: number;
     maxRetries?: number;
   }
-) {
+): Promise<GetTransactionReceiptResponse> {
   return provider.waitForTransaction(transactionHash, {
     retryInterval: options?.retryInterval ?? 2000,
     successStates: ['ACCEPTED_ON_L2', 'ACCEPTED_ON_L1'],

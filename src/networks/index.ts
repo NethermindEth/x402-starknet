@@ -19,11 +19,7 @@ import { NETWORK_CONFIGS, CHAIN_IDS, EXPLORER_URLS } from './constants.js';
  * ```
  */
 export function getNetworkConfig(network: StarknetNetwork): NetworkConfig {
-  const config = NETWORK_CONFIGS[network];
-  if (!config) {
-    throw new Error(`Unsupported network: ${network}`);
-  }
-  return config;
+  return NETWORK_CONFIGS[network];
 }
 
 /**
@@ -97,8 +93,8 @@ export function isMainnet(network: StarknetNetwork): boolean {
  * console.log(networks); // ['starknet-mainnet', 'starknet-sepolia', 'starknet-devnet']
  * ```
  */
-export function getSupportedNetworks(): StarknetNetwork[] {
-  return Object.keys(NETWORK_CONFIGS) as StarknetNetwork[];
+export function getSupportedNetworks(): Array<StarknetNetwork> {
+  return Object.keys(NETWORK_CONFIGS) as Array<StarknetNetwork>;
 }
 
 /**

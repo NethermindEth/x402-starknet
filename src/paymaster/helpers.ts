@@ -2,10 +2,11 @@
  * Helper functions for paymaster integration
  */
 
-import type { Call } from 'starknet';
+import type { Call, TypedData } from 'starknet';
 import type {
   PaymasterFeeMode,
   BuildTransactionResponse,
+  ExecuteTransactionResponse,
 } from '../types/paymaster.js';
 import type { PaymasterClient } from './client.js';
 
@@ -37,7 +38,7 @@ import type { PaymasterClient } from './client.js';
 export async function buildTransaction(
   client: PaymasterClient,
   userAddress: string,
-  calls: Call[],
+  calls: Array<Call>,
   feeMode: PaymasterFeeMode
 ): Promise<BuildTransactionResponse> {
   return client.buildTransaction({
@@ -81,10 +82,10 @@ export async function buildTransaction(
 export async function executeTransaction(
   client: PaymasterClient,
   userAddress: string,
-  calls: Call[],
+  calls: Array<Call>,
   feeMode: PaymasterFeeMode,
-  signature: string[]
-) {
+  signature: Array<string>
+): Promise<ExecuteTransactionResponse> {
   return client.executeTransaction({
     transaction: {
       type: 'invoke',
@@ -140,7 +141,9 @@ export function createTransferCall(
  * @param response - Build transaction response
  * @returns Typed data for signing
  */
-export function extractTypedData(response: BuildTransactionResponse) {
+export function extractTypedData(
+  response: BuildTransactionResponse
+): TypedData {
   if (response.type === 'invoke') {
     return response.typed_data;
   }

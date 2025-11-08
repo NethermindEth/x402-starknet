@@ -8,8 +8,8 @@
  * @param str - String to encode
  * @returns Base64-encoded string
  */
-export function encodeBase64(str: string): string {
-  return Buffer.from(str, 'utf-8').toString('base64');
+export function encodeBase64(string_: string): string {
+  return Buffer.from(string_, 'utf-8').toString('base64');
 }
 
 /**

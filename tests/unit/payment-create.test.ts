@@ -57,13 +57,13 @@ describe('Payment Creation', () => {
       expect(selected).toEqual(mockRequirements[0]);
     });
 
-    it('should throw if no compatible requirements', async () => {
+    it('should throw if no compatible requirements', () => {
       const mockAccount = {} as any;
       const mockProvider = {} as any;
 
-      await expect(
+      expect(() =>
         selectPaymentRequirements([], mockAccount, mockProvider)
-      ).rejects.toThrow('No compatible payment requirements found');
+      ).toThrow('No payment requirements provided');
     });
   });
 

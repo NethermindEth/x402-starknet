@@ -31,23 +31,23 @@ export function createProvider(network: StarknetNetwork): RpcProvider {
  * @returns Result of the function
  */
 export async function retryRpcCall<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000
+  function_: () => Promise<T>,
+  maxRetries = 3,
+  baseDelay = 1000
 ): Promise<T> {
   let lastError: Error | undefined;
 
-  for (let i = 0; i < maxRetries; i++) {
+  for (let index = 0; index < maxRetries; index++) {
     try {
-      return await fn();
+      return await function_();
     } catch (error) {
-      lastError = error as Error;
-      if (i < maxRetries - 1) {
-        const delay = baseDelay * Math.pow(2, i);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (index < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, index);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
 
-  throw lastError;
+  throw lastError ?? new Error('RPC call failed after all retries');
 }

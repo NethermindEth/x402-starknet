@@ -34,25 +34,19 @@ import {
  * );
  * ```
  */
-export async function selectPaymentRequirements(
-  requirements: PaymentRequirements[],
+export function selectPaymentRequirements(
+  requirements: Array<PaymentRequirements>,
   _account: Account,
   _provider: RpcProvider
-): Promise<PaymentRequirements> {
-  // Filter by network compatibility
-  const compatible = requirements.filter((_req) => {
-    // Network matching logic here
-    // TODO: Check network matches provider
-    return true; // Placeholder
-  });
-
-  if (compatible.length === 0) {
-    throw new Error('No compatible payment requirements found');
-  }
-
-  // Return first compatible option
+): PaymentRequirements {
+  // For now, simply return the first requirement
+  // TODO: Add network compatibility checking
   // TODO: Add balance checking
-  return compatible[0] as PaymentRequirements;
+  const firstRequirement = requirements[0];
+  if (!firstRequirement) {
+    throw new Error('No payment requirements provided');
+  }
+  return firstRequirement;
 }
 
 /**
