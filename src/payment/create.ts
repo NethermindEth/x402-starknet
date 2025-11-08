@@ -123,8 +123,8 @@ export async function createPaymentPayload(
     network: paymentRequirements.network,
     payload: {
       signature: {
-        r: Array.isArray(signature) ? signature[0] ?? '0x0' : '0x0',
-        s: Array.isArray(signature) ? signature[1] ?? '0x0' : '0x0',
+        r: Array.isArray(signature) ? (signature[0] ?? '0x0') : '0x0',
+        s: Array.isArray(signature) ? (signature[1] ?? '0x0') : '0x0',
       },
       authorization: {
         from: account.address,
