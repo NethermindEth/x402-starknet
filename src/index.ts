@@ -1,8 +1,8 @@
 /**
  * Starknet x402 Payment Protocol Library
  *
- * This library implements the x402 payment protocol for Starknet,
- * enabling seamless micropayments on the web.
+ * A pure library providing core functionality for implementing
+ * the x402 payment protocol on Starknet.
  *
  * @module @x402/starknet
  * @version 0.1.0
@@ -13,6 +13,15 @@ export * from './types/index.js';
 
 // Export network utilities
 export * from './networks/index.js';
+
+// Export payment functions
+export * from './payment/index.js';
+
+// Export paymaster utilities
+export * from './paymaster/index.js';
+
+// Export utilities
+export * from './utils/index.js';
 
 /**
  * Library version

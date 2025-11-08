@@ -1,206 +1,316 @@
 # @x402/starknet
 
-Starknet implementation of the x402 payment protocol - enabling seamless micropayments on the web.
+**Pure library for implementing the x402 payment protocol on Starknet**
+
+A TypeScript library providing core types, utilities, and functions for building x402-compatible payment systems on Starknet. This is a foundation library meant to be used by applications like [voyager-x402](https://github.com/yourusername/voyager-x402).
 
 ## Overview
 
-This library implements the [x402 payment protocol](https://github.com/x402) for Starknet, allowing developers to accept micropayments for digital resources using HTTP 402 status codes. Built with TypeScript, Bun, and starknet.js.
+This library implements the [x402 payment protocol](https://github.com/x402) for Starknet, allowing developers to build applications that accept micropayments for digital resources using HTTP 402 status codes. Built with TypeScript, Bun, and starknet.js.
 
 ## Features
 
-- 🚀 **Simple Integration** - One-line server setup, minimal client code
-- 🔗 **Starknet Native** - Full support for Starknet's account abstraction
-- 🛡️ **Type Safe** - Complete TypeScript types with Zod runtime validation
-- 🌐 **Multi-Network** - Support for mainnet, Sepolia testnet, and local devnet
-- 📦 **Modular** - Use only what you need (client, facilitator, types)
+- 🎯 **Pure Library** - No application code, just reusable building blocks
+- 🚀 **Type Safe** - Complete TypeScript types with runtime validation
+- 🔗 **Starknet Native** - Built for Starknet's unique architecture
+- 🌐 **Multi-Network** - Support for mainnet, Sepolia testnet, and devnet
+- 📦 **Modular** - Import only what you need
+- 🛡️ **Validated** - Zod schemas for runtime type checking
 
 ## Installation
 
 ```bash
-bun add @x402/starknet
+bun add @x402/starknet starknet
 # or
-npm install @x402/starknet
-# or
-pnpm add @x402/starknet
+npm install @x402/starknet starknet
 ```
+
+## What's Included
+
+This library provides:
+
+### Core Functions
+- `createPaymentPayload` - Build payment authorizations
+- `verifyPayment` - Verify payment validity
+- `settlePayment` - Execute and settle payments
+- `selectPaymentRequirements` - Choose payment options
+
+### Type System
+- Complete TypeScript definitions
+- Zod runtime validation schemas
+- Network configurations
+- Payment protocol types
+
+### Utilities
+- Token balance checking
+- Provider management
+- Encoding/decoding helpers
+- Network utilities
 
 ## Quick Start
 
-### Client Usage
-
-```typescript
-import { createPaymentHeader } from '@x402/starknet/client';
-import { Account, RpcProvider } from 'starknet';
-
-// Connect to your Starknet account
-const provider = new RpcProvider({ nodeUrl: 'https://starknet-sepolia.public.blastapi.io' });
-const account = new Account(provider, accountAddress, privateKey);
-
-// Create a payment header
-const paymentHeader = await createPaymentHeader(
-  account,
-  1, // x402 version
-  paymentRequirements // from server's 402 response
-);
-
-// Use the payment header in your request
-const response = await fetch(resourceUrl, {
-  headers: {
-    'X-PAYMENT': paymentHeader,
-  },
-});
-```
-
-### Server Usage (Coming Soon)
-
-```typescript
-import { paymentMiddleware } from '@x402/starknet/server';
-
-// Protect your endpoints with payment requirements
-app.use(paymentMiddleware({
-  payTo: '0x1234...', // Your recipient address
-  routes: {
-    '/api/data': '1000000', // 1 USDC (6 decimals)
-  },
-}));
-```
-
-## Project Status
-
-**Current Phase**: Foundation (Phase 1) ✅
-
-- [x] Project setup with Bun and TypeScript
-- [x] Core type definitions
-- [x] Network configuration
-- [x] Zod validation schemas
-- [ ] Client implementation (Phase 3)
-- [ ] Facilitator implementation (Phase 4)
-- [ ] Cairo smart contracts (Phase 2)
-
-See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the complete roadmap.
-
-## Development
-
-### Prerequisites
-
-- [Bun](https://bun.sh) >= 1.0.0
-- Node.js >= 18.0.0 (optional)
-
-### Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/x402-starknet.git
-cd x402-starknet
-
-# Install dependencies
-bun install
-
-# Build the project
-bun run build
-
-# Run type checking
-bun run typecheck
-
-# Run linting
-bun run lint
-
-# Format code
-bun run format
-```
-
-### Scripts
-
-- `bun run build` - Build TypeScript to JavaScript
-- `bun run test` - Run tests (coming soon)
-- `bun run typecheck` - Run TypeScript type checking
-- `bun run lint` - Lint source files
-- `bun run format` - Format code with Prettier
-- `bun run clean` - Remove build artifacts
-
-## Architecture
-
-This library follows the x402 protocol's three-layer architecture:
-
-### 1. Types Layer (✅ Complete)
-Transport and scheme-agnostic data structures:
-- `PaymentRequirements` - Server payment request
-- `PaymentPayload` - Client signed authorization
-- `SettlementResponse` - Transaction confirmation
-
-### 2. Logic Layer (🚧 In Progress)
-Starknet-specific verification and settlement:
-- Signature verification using STARK curves
-- Balance checking and nonce management
-- Cairo contract interaction
-
-### 3. Representation Layer (📋 Planned)
-HTTP transport implementation:
-- 402 status code handling
-- `X-PAYMENT` header processing
-- `X-PAYMENT-RESPONSE` confirmation
-
-## Network Support
-
-| Network | Status | Chain ID | RPC URL |
-|---------|--------|----------|---------|
-| Starknet Mainnet | ✅ Configured | `0x534e5f4d41494e` | `https://starknet-mainnet.public.blastapi.io` |
-| Starknet Sepolia | ✅ Configured | `0x534e5f5345504f4c4941` | `https://starknet-sepolia.public.blastapi.io` |
-| Starknet Devnet | ✅ Configured | `0x534e5f474f45524c49` | `http://localhost:5050` |
-
-## API Documentation
-
-### Types
-
-```typescript
-import type {
-  StarknetNetwork,
-  PaymentRequirements,
-  PaymentPayload,
-  VerifyResponse,
-  SettleResponse,
-} from '@x402/starknet/types';
-```
-
-### Networks
+### Basic Payment Flow
 
 ```typescript
 import {
-  getNetworkConfig,
-  getNetworkFromChainId,
-  isTestnet,
-  getSupportedNetworks,
-  NETWORK_CONFIGS,
-} from '@x402/starknet/networks';
+  createPaymentPayload,
+  verifyPayment,
+  settlePayment,
+  createProvider,
+  getTokenBalance
+} from '@x402/starknet';
+import { Account } from 'starknet';
 
-// Get network configuration
-const config = getNetworkConfig('starknet-sepolia');
-console.log(config.rpcUrl); // https://starknet-sepolia.public.blastapi.io
+// 1. Create a payment (client-side)
+const payload = await createPaymentPayload(
+  account,              // Starknet account
+  1,                    // x402 version
+  paymentRequirements,  // From server's 402 response
+  { paymasterEndpoint: 'https://paymaster.avnu.fi' }
+);
 
-// Check if network is testnet
-console.log(isTestnet('starknet-sepolia')); // true
+// 2. Verify a payment (server-side)
+const provider = createProvider('starknet-sepolia');
+const verification = await verifyPayment(
+  provider,
+  payload,
+  paymentRequirements
+);
+
+if (verification.isValid) {
+  // 3. Settle the payment
+  const result = await settlePayment(
+    provider,
+    payload,
+    paymentRequirements
+  );
+
+  console.log('Payment settled:', result.transaction);
+}
 ```
 
-For complete API documentation, see [API.md](./docs/API.md) (coming soon).
+### Using Individual Modules
 
-## Key Differences from EVM/Solana x402
+```typescript
+// Types only
+import type {
+  PaymentRequirements,
+  PaymentPayload
+} from '@x402/starknet/types';
 
-### 1. No EIP-3009 on Starknet
-Instead of EIP-3009's `transferWithAuthorization`, we use a custom Cairo contract that implements similar functionality with Starknet's native account abstraction.
+// Network utilities
+import {
+  getNetworkConfig,
+  isTestnet
+} from '@x402/starknet/networks';
 
-### 2. Different Signature Scheme
-- EVM uses ECDSA secp256k1 with EIP-712
-- Starknet uses STARK-friendly curves with structured hashing
+// Payment functions
+import {
+  createPaymentPayload,
+  encodePaymentHeader
+} from '@x402/starknet/payment';
 
-### 3. Account Abstraction
-All Starknet accounts are smart contracts, providing greater flexibility but requiring different integration patterns.
+// Utilities
+import {
+  getTokenBalance,
+  createProvider
+} from '@x402/starknet/utils';
+```
 
-### 4. Token Standards
-No USDC with EIP-3009 on Starknet. We work with standard ERC20-like tokens or custom payment tokens.
+## Library Structure
+
+```
+@x402/starknet
+├── types/          # Type definitions and schemas
+├── networks/       # Network configurations
+├── payment/        # Core payment functions
+│   ├── create      # Payment creation
+│   ├── verify      # Payment verification
+│   └── settle      # Payment settlement
+├── paymaster/      # Paymaster integration (Phase 2)
+└── utils/          # Utility functions
+    ├── provider    # RPC provider utilities
+    ├── token       # ERC20 token interactions
+    └── encoding    # Encoding/serialization
+```
+
+## API Reference
+
+### Payment Functions
+
+#### `createPaymentPayload(account, x402Version, requirements, options)`
+Create a payment authorization payload.
+
+**Parameters:**
+- `account: Account` - Starknet account for signing
+- `x402Version: number` - Protocol version (currently 1)
+- `requirements: PaymentRequirements` - Payment requirements from server
+- `options?: object` - Optional configuration (paymaster endpoint, etc.)
+
+**Returns:** `Promise<PaymentPayload>`
+
+---
+
+#### `verifyPayment(provider, payload, requirements)`
+Verify a payment without executing it.
+
+**Parameters:**
+- `provider: RpcProvider` - Starknet RPC provider
+- `payload: PaymentPayload` - Payment payload from client
+- `requirements: PaymentRequirements` - Expected payment requirements
+
+**Returns:** `Promise<VerifyResponse>`
+
+---
+
+#### `settlePayment(provider, payload, requirements, options)`
+Execute and settle a verified payment.
+
+**Parameters:**
+- `provider: RpcProvider` - Starknet RPC provider
+- `payload: PaymentPayload` - Payment payload from client
+- `requirements: PaymentRequirements` - Payment requirements
+- `options?: object` - Settlement options (paymaster config, etc.)
+
+**Returns:** `Promise<SettleResponse>`
+
+---
+
+### Network Functions
+
+#### `getNetworkConfig(network)`
+Get configuration for a Starknet network.
+
+```typescript
+const config = getNetworkConfig('starknet-sepolia');
+console.log(config.rpcUrl); // https://starknet-sepolia.public.blastapi.io
+```
+
+#### `createProvider(network)`
+Create an RPC provider for a network.
+
+```typescript
+const provider = createProvider('starknet-sepolia');
+```
+
+---
+
+### Token Utilities
+
+#### `getTokenBalance(provider, tokenAddress, accountAddress)`
+Get ERC20 token balance.
+
+```typescript
+const balance = await getTokenBalance(
+  provider,
+  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7', // ETH
+  '0x1234...'
+);
+```
+
+#### `getTokenMetadata(provider, tokenAddress)`
+Get token name, symbol, and decimals.
+
+```typescript
+const metadata = await getTokenMetadata(provider, tokenAddress);
+console.log(`${metadata.name} (${metadata.symbol})`);
+```
+
+## Type Definitions
+
+### `PaymentRequirements`
+```typescript
+interface PaymentRequirements {
+  scheme: 'exact';
+  network: StarknetNetwork;
+  maxAmountRequired: string;
+  asset: string;           // Token contract address
+  payTo: string;           // Recipient address
+  resource: string;        // Protected resource URL
+  description?: string;
+  mimeType?: string;
+  maxTimeoutSeconds?: number;
+}
+```
+
+### `PaymentPayload`
+```typescript
+interface PaymentPayload {
+  x402Version: 1;
+  scheme: 'exact';
+  network: StarknetNetwork;
+  payload: {
+    signature: Signature;
+    authorization: PaymentAuthorization;
+  };
+}
+```
+
+### `VerifyResponse`
+```typescript
+interface VerifyResponse {
+  isValid: boolean;
+  invalidReason?: InvalidPaymentReason;
+  payer: string;
+  details?: {
+    balance?: string;
+    nonceUsed?: boolean;
+    timestamp?: number;
+  };
+}
+```
+
+## Building Applications
+
+This library is designed to be used by applications. For a complete implementation example, see:
+
+**[voyager-x402](https://github.com/yourusername/voyager-x402)** - Reference implementation with:
+- Client application (browser wallet integration)
+- Server/facilitator (HTTP endpoints)
+- Example integrations
+
+## Development Status
+
+**Current Phase**: Phase 1 Complete ✅
+
+- [x] Core types and validation schemas
+- [x] Network configuration
+- [x] Utility functions (provider, token, encoding)
+- [x] Payment function stubs (create, verify, settle)
+- [ ] Paymaster integration (Phase 2)
+- [ ] Full payment implementation (Phase 3-4)
+
+See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for complete roadmap.
+
+## Development
+
+### Setup
+```bash
+git clone https://github.com/yourusername/x402-starknet.git
+cd x402-starknet
+bun install
+```
+
+### Commands
+```bash
+bun run build        # Build TypeScript
+bun run typecheck    # Type checking
+bun run lint         # Lint code
+bun run format       # Format code
+bun run test         # Run tests (Phase 6)
+```
+
+## Network Support
+
+| Network | Chain ID | Status |
+|---------|----------|--------|
+| Starknet Mainnet | `0x534e5f4d41494e` | ✅ Configured |
+| Starknet Sepolia | `0x534e5f5345504f4c4941` | ✅ Configured |
+| Starknet Devnet | `0x534e5f474f45524c49` | ✅ Configured |
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines (coming soon).
+Contributions welcome! This is a pure library - application code belongs in separate repos.
 
 ## License
 
@@ -208,18 +318,11 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 ## Resources
 
-- [x402 Protocol Specification](https://github.com/x402/specs)
+- [x402 Protocol](https://github.com/x402)
 - [Implementation Plan](./IMPLEMENTATION_PLAN.md)
-- [Starknet.js Documentation](https://www.starknetjs.com/)
-- [Cairo Book](https://book.cairo-lang.org/)
-- [Starknet Documentation](https://docs.starknet.io/)
-
-## Acknowledgments
-
-- Original x402 protocol: [x402 GitHub](https://github.com/x402)
-- Starknet.js team for the excellent Starknet library
-- Starknet ecosystem for Cairo and tooling
+- [Starknet Documentation](https://docs.starknet.io)
+- [Starknet.js](https://www.starknetjs.com/)
 
 ---
 
-**Status**: 🚧 Under Development | **Phase**: 1 of 10 | **Version**: 0.1.0
+**Version**: 0.1.0 | **Status**: 🚧 Under Development | **Phase**: 1 of 10
