@@ -373,7 +373,45 @@ export async function settlePayment(
 
 ---
 
-## Phase 4: Facilitator/Server Implementation (Days 8-10)
+## ~~Phase 4: Facilitator/Server Implementation~~ ❌ SKIPPED - Application Layer
+
+**Note**: This phase is not needed for a pure library. The verification and settlement logic from Steps 4.1 and 4.2 were implemented in Phase 3 (`verifyPayment`, `settlePayment`). HTTP server implementation (Step 4.3) belongs in the application layer (voyager-x402).
+
+---
+
+## ~~Phase 5: Utilities & Shared Code~~ ✅ COMPLETE (Done in Phase 1)
+
+**Note**: All utilities were already implemented in Phase 1:
+- ✅ `src/utils/encoding.ts` - Base64, hex/felt conversion
+- ✅ `src/utils/provider.ts` - Provider creation, retry logic
+- ✅ `src/utils/token.ts` - Balance checking, metadata
+
+---
+
+## Phase 6: Testing Infrastructure ✅ COMPLETE
+
+### Summary
+
+**Completed**:
+- ✅ Vitest testing framework setup
+- ✅ 68 unit tests with 85%+ coverage
+- ✅ Mock helpers for paymaster testing
+- ✅ Comprehensive test suite for all modules
+
+**Coverage**:
+- Overall: 85.08%
+- Payment module: 96.34%
+- Paymaster module: 95.09%
+- Utils module: 80.89%
+
+**Note**: Integration tests with live devnet/testnet would belong in the application layer or CI/CD pipeline.
+
+---
+
+## ~~Phase 4 (Original): Facilitator/Server Implementation~~ (Days 8-10) - OBSOLETE
+
+<details>
+<summary>Click to view original Phase 4 plan (kept for reference)</summary>
 
 ### Step 4.1: Payment Verification
 
@@ -625,9 +663,14 @@ const server = serve({
 
 **Testing**: Integration tests for HTTP endpoints
 
+</details>
+
 ---
 
-## Phase 5: Utilities & Shared Code (Days 11-12)
+## ~~Phase 5 (Original): Utilities & Shared Code~~ (Days 11-12) - OBSOLETE
+
+<details>
+<summary>Click to view original Phase 5 plan (kept for reference)</summary>
 
 ### Step 5.1: Encoding & Serialization
 
@@ -720,9 +763,14 @@ export async function getTokenMetadata(
 
 **Testing**: Integration tests on testnet
 
+</details>
+
 ---
 
-## Phase 6: Testing Infrastructure (Days 13-14)
+## ~~Phase 6 (Original): Testing Infrastructure~~ (Days 13-14) - OBSOLETE
+
+<details>
+<summary>Click to view original Phase 6 plan (kept for reference)</summary>
 
 ### Step 6.1: Unit Tests
 
@@ -778,9 +826,13 @@ tests/
 
 **Testing**: End-to-end payment flows
 
+</details>
+
 ---
 
-## Phase 7: Documentation & Examples (Days 15-16)
+## Phase 7: Documentation (Library-Focused)
+
+This phase focuses on documentation relevant to a pure library. Example applications belong in voyager-x402 or separate example repos.
 
 ### Step 7.1: API Documentation
 
