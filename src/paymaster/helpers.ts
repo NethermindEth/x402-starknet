@@ -152,9 +152,14 @@ export function extractTypedData(response: BuildTransactionResponse) {
 
 /**
  * Default paymaster endpoints by network
+ *
+ * Note: The old endpoints (starknet.api.avnu.fi) are deprecated.
+ * Use these SNIP-29 compatible endpoints instead.
+ *
+ * @see https://doc.avnu.fi/avnu-paymaster/cover-your-users-gas-fees
  */
 export const DEFAULT_PAYMASTER_ENDPOINTS = {
-  'starknet-mainnet': 'https://starknet.api.avnu.fi/paymaster/v1',
-  'starknet-sepolia': 'https://sepolia.api.avnu.fi/paymaster/v1',
+  'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
+  'starknet-sepolia': 'https://sepolia.paymaster.avnu.fi',
   'starknet-devnet': 'http://localhost:5555', // Local paymaster for testing
 } as const;

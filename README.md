@@ -269,16 +269,36 @@ This library is designed to be used by applications. For a complete implementati
 - Server/facilitator (HTTP endpoints)
 - Example integrations
 
+## Paymaster Configuration
+
+AVNU Paymaster endpoints (SNIP-29 compatible):
+
+- **Mainnet**: `https://starknet.paymaster.avnu.fi`
+- **Sepolia**: `https://sepolia.paymaster.avnu.fi`
+
+```typescript
+import { createPaymasterClient, DEFAULT_PAYMASTER_ENDPOINTS } from '@x402/starknet';
+
+const client = createPaymasterClient({
+  endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
+  network: 'starknet-sepolia',
+  apiKey: 'your-api-key' // Optional, for sponsored mode
+});
+```
+
+**Note**: API keys can be obtained from [AVNU Dashboard](https://app.avnu.fi).
+
 ## Development Status
 
-**Current Phase**: Phase 1 Complete ✅
+**Current Phase**: Phase 2 Complete ✅
 
 - [x] Core types and validation schemas
 - [x] Network configuration
 - [x] Utility functions (provider, token, encoding)
-- [x] Payment function stubs (create, verify, settle)
-- [ ] Paymaster integration (Phase 2)
-- [ ] Full payment implementation (Phase 3-4)
+- [x] Payment function implementation
+- [x] Paymaster integration (AVNU)
+- [ ] Full verification/settlement logic (Phase 3-4)
+- [ ] Application implementation (in voyager-x402)
 
 See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for complete roadmap.
 
