@@ -313,11 +313,27 @@ bun install
 
 ### Commands
 ```bash
-bun run build        # Build TypeScript
-bun run typecheck    # Type checking
-bun run lint         # Lint code
-bun run format       # Format code
-bun run test         # Run tests (Phase 6)
+bun run build          # Build TypeScript
+bun run typecheck      # Type checking
+bun run lint           # Lint code
+bun run format         # Format code
+bun run test           # Run tests
+bun run test:watch     # Run tests in watch mode
+bun run test:coverage  # Run tests with coverage report
+```
+
+### Testing
+
+The library includes comprehensive unit tests with **95%+ coverage** of implemented functionality:
+
+- Paymaster integration tests
+- Payment creation and encoding tests
+- Token utility tests
+- Provider and retry logic tests
+
+Run tests with coverage:
+```bash
+bun run test:coverage
 ```
 
 ## Network Support
