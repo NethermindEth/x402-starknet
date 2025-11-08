@@ -5,32 +5,18 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.js"
-    },
-    "./networks": {
-      "types": "./dist/networks/index.d.ts",
-      "import": "./dist/networks/index.js"
-    },
-    "./payment": {
-      "types": "./dist/payment/index.d.ts",
-      "import": "./dist/payment/index.js"
-    },
-    "./paymaster": {
-      "types": "./dist/paymaster/index.d.ts",
-      "import": "./dist/paymaster/index.js"
-    },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils/index.js"
     }
   },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "bun run build:ts",
     "build:ts": "tsc -p tsconfig.json",
@@ -56,8 +42,15 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/x402-starknet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/x402-starknet/issues"
+  },
+  "homepage": "https://github.com/your-org/x402-starknet#readme",
   "dependencies": {
-    "starknet": "^8.7.0",
     "@scure/base": "^1.1.10",
     "zod": "^3.24.2"
   },
@@ -72,6 +65,7 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^16.5.0",
     "prettier": "^3.4.0",
+    "starknet": "^8.7.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.46.3",
     "vitest": "^3.0.0"
@@ -80,7 +74,9 @@
     "starknet": "^8.0.0"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "bun": ">=1.0.0"
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
