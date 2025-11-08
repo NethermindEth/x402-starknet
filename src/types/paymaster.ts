@@ -39,7 +39,7 @@ export interface InvokeParameters {
   /** User's account address */
   user_address: string;
   /** Calls to execute */
-  calls: Call[];
+  calls: Array<Call>;
 }
 
 /**
@@ -139,7 +139,7 @@ export interface ExecuteTransactionRequest {
   /** Execution parameters */
   parameters: ExecutionParameters;
   /** User's signature over typed data */
-  signature: string[];
+  signature: Array<string>;
 }
 
 /**
@@ -155,7 +155,7 @@ export interface ExecuteTransactionResponse {
  */
 export interface SupportedTokensResponse {
   /** List of supported gas token addresses */
-  tokens: string[];
+  tokens: Array<string>;
 }
 
 /**

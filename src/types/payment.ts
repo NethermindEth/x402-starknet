@@ -99,12 +99,12 @@ export interface PaymentRequirementsResponse {
   /** x402 protocol version */
   x402Version: 1;
   /** Array of payment options */
-  paymentRequirements: PaymentRequirements[];
+  paymentRequirements: Array<PaymentRequirements>;
 }
 
 /**
  * Payment requirements selector function type
  */
 export type PaymentRequirementsSelector = (
-  requirements: PaymentRequirements[]
+  requirements: Array<PaymentRequirements>
 ) => Promise<PaymentRequirements> | PaymentRequirements;
