@@ -3,15 +3,37 @@ import { settlePayment } from '../../src/payment/settle.js';
 import type { PaymentPayload, PaymentRequirements } from '../../src/types/index.js';
 import type { RpcProvider } from 'starknet';
 
-// Mock the paymaster module
+// Mock the paymaster module - provide minimal mocks
 vi.mock('../../src/paymaster/index.js', () => ({
-  createPaymasterClient: vi.fn(() => ({})),
+  createPaymasterClient: vi.fn((config) => ({
+    buildTransaction: vi.fn().mockResolvedValue({
+      type: 'invoke',
+      typed_data: { domain: {}, types: {}, primaryType: 'Invoke', message: {} },
+      calls: [],
+    }),
+    executeTransaction: vi.fn(),
+    getSupportedTokens: vi.fn(),
+    isAvailable: vi.fn(),
+    getEndpoint: vi.fn(() => config.endpoint),
+    getNetwork: vi.fn(() => config.network),
+  })),
+  buildTransaction: vi.fn().mockResolvedValue({
+    type: 'invoke',
+    typed_data: { domain: {}, types: {}, primaryType: 'Invoke', message: {} },
+    calls: [],
+  }),
   executeTransaction: vi.fn(),
   createTransferCall: vi.fn(() => ({
     contractAddress: '0xtoken',
     entrypoint: 'transfer',
     calldata: [],
   })),
+  extractTypedData: vi.fn((resp) => resp.typed_data),
+  DEFAULT_PAYMASTER_ENDPOINTS: {
+    'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
+    'starknet-sepolia': 'http://localhost:12777',
+    'starknet-devnet': 'http://localhost:12777',
+  },
 }));
 
 describe('Payment Settlement', () => {
@@ -44,11 +66,17 @@ describe('Payment Settlement', () => {
     },
   };
 
-  // Add paymaster endpoint to payload
+  // Add paymaster endpoint and typed data to payload (as stored during creation)
   const payloadWithPaymaster = {
     ...mockPayload,
     paymasterEndpoint: 'https://sepolia.paymaster.avnu.fi',
-  } as PaymentPayload & { paymasterEndpoint: string };
+    typedData: {
+      domain: { name: 'Test' },
+      types: {},
+      primaryType: 'Invoke',
+      message: {},
+    },
+  } as PaymentPayload & { paymasterEndpoint: string; typedData: any };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,7 +95,7 @@ describe('Payment Settlement', () => {
 
       // Mock executeTransaction to return success
       const { executeTransaction } = await import('../../src/paymaster/index.js');
-      vi.mocked(executeTransaction).mockResolvedValue({
+      (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash123',
       });
 
@@ -127,13 +155,24 @@ describe('Payment Settlement', () => {
       } as unknown as RpcProvider;
 
       const { executeTransaction } = await import('../../src/paymaster/index.js');
-      vi.mocked(executeTransaction).mockResolvedValue({
+      (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash456',
       });
 
+      // Add typed data to payload
+      const payloadWithTypedData = {
+        ...mockPayload,
+        typedData: {
+          domain: { name: 'Test' },
+          types: {},
+          primaryType: 'Invoke',
+          message: {},
+        },
+      } as PaymentPayload & { typedData: any };
+
       const result = await settlePayment(
         mockProvider,
-        mockPayload,
+        payloadWithTypedData,
         mockPaymentRequirements,
         {
           paymasterConfig: {
@@ -152,7 +191,7 @@ describe('Payment Settlement', () => {
       } as unknown as RpcProvider;
 
       const { executeTransaction } = await import('../../src/paymaster/index.js');
-      vi.mocked(executeTransaction).mockRejectedValue(
+      (executeTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error('Paymaster rejected transaction')
       );
 
@@ -178,7 +217,7 @@ describe('Payment Settlement', () => {
       } as unknown as RpcProvider;
 
       const { executeTransaction } = await import('../../src/paymaster/index.js');
-      vi.mocked(executeTransaction).mockResolvedValue({
+      (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash789',
       });
 
@@ -200,7 +239,7 @@ describe('Payment Settlement', () => {
       } as unknown as RpcProvider;
 
       const { executeTransaction } = await import('../../src/paymaster/index.js');
-      vi.mocked(executeTransaction).mockResolvedValue({
+      (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxtimeout',
       });
 
@@ -225,13 +264,24 @@ describe('Payment Settlement', () => {
       const { executeTransaction, createPaymasterClient } = await import(
         '../../src/paymaster/index.js'
       );
-      vi.mocked(executeTransaction).mockResolvedValue({
+      (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxwithkey',
       });
 
-      const createClientSpy = vi.mocked(createPaymasterClient);
+      const createClientSpy = createPaymasterClient as ReturnType<typeof vi.fn>;
 
-      await settlePayment(mockProvider, mockPayload, mockPaymentRequirements, {
+      // Add typed data to payload
+      const payloadWithTypedData = {
+        ...mockPayload,
+        typedData: {
+          domain: { name: 'Test' },
+          types: {},
+          primaryType: 'Invoke',
+          message: {},
+        },
+      } as PaymentPayload & { typedData: any };
+
+      await settlePayment(mockProvider, payloadWithTypedData, mockPaymentRequirements, {
         paymasterConfig: {
           endpoint: 'https://paymaster.example.com',
           apiKey: 'test-api-key-123',

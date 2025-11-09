@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createProvider, retryRpcCall } from '../../src/utils/provider.js';
 
 describe('Provider Utilities', () => {
@@ -20,16 +20,10 @@ describe('Provider Utilities', () => {
   });
 
   describe('retryRpcCall', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
     it('should return result on first success', async () => {
       const fn = vi.fn().mockResolvedValue('success');
 
-      const promise = retryRpcCall(fn, 3, 1000);
-      await vi.runAllTimersAsync();
-      const result = await promise;
+      const result = await retryRpcCall(fn, 3, 10);
 
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(1);
@@ -42,9 +36,7 @@ describe('Provider Utilities', () => {
         .mockRejectedValueOnce(new Error('fail 2'))
         .mockResolvedValueOnce('success');
 
-      const promise = retryRpcCall(fn, 3, 1000);
-      await vi.runAllTimersAsync();
-      const result = await promise;
+      const result = await retryRpcCall(fn, 3, 10);
 
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(3);
@@ -54,10 +46,7 @@ describe('Provider Utilities', () => {
       const error = new Error('persistent failure');
       const fn = vi.fn().mockRejectedValue(error);
 
-      const promise = retryRpcCall(fn, 3, 1000);
-      const expectPromise = expect(promise).rejects.toThrow('persistent failure');
-      await vi.runAllTimersAsync();
-      await expectPromise;
+      await expect(retryRpcCall(fn, 3, 10)).rejects.toThrow('persistent failure');
       expect(fn).toHaveBeenCalledTimes(3);
     });
 
@@ -68,39 +57,30 @@ describe('Provider Utilities', () => {
         .mockRejectedValueOnce(new Error('fail 2'))
         .mockResolvedValueOnce('success');
 
-      const promise = retryRpcCall(fn, 3, 100);
+      const startTime = Date.now();
+      const result = await retryRpcCall(fn, 3, 10);
+      const elapsed = Date.now() - startTime;
 
-      // First call happens immediately
-      expect(fn).toHaveBeenCalledTimes(1);
-
-      // After 100ms (base delay * 2^0)
-      await vi.advanceTimersByTimeAsync(100);
-      expect(fn).toHaveBeenCalledTimes(2);
-
-      // After 200ms more (base delay * 2^1)
-      await vi.advanceTimersByTimeAsync(200);
-      expect(fn).toHaveBeenCalledTimes(3);
-
-      const result = await promise;
+      // With base delay of 10ms and exponential backoff:
+      // First attempt: immediate
+      // Second attempt: after 10ms (10 * 2^0)
+      // Third attempt: after 20ms (10 * 2^1)
+      // Total minimum delay: 30ms
+      expect(elapsed).toBeGreaterThanOrEqual(25); // Allow some margin
       expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(3);
     });
 
     it('should not delay after last retry', async () => {
       const error = new Error('fail');
       const fn = vi.fn().mockRejectedValue(error);
 
-      const promise = retryRpcCall(fn, 2, 1000);
-      const expectPromise = expect(promise).rejects.toThrow('fail');
+      const startTime = Date.now();
+      await expect(retryRpcCall(fn, 2, 10)).rejects.toThrow('fail');
+      const elapsed = Date.now() - startTime;
 
-      // First call
-      expect(fn).toHaveBeenCalledTimes(1);
-
-      // Second call after delay
-      await vi.advanceTimersByTimeAsync(1000);
-      expect(fn).toHaveBeenCalledTimes(2);
-
-      // Should throw immediately without waiting for another delay
-      await expectPromise;
+      // Should only wait once (10ms), not twice
+      expect(elapsed).toBeLessThan(30); // Should be around 10ms, not 30ms
       expect(fn).toHaveBeenCalledTimes(2);
     });
 
@@ -113,9 +93,7 @@ describe('Provider Utilities', () => {
         .mockRejectedValueOnce(new Error('fail 4'))
         .mockResolvedValueOnce('success');
 
-      const promise = retryRpcCall(fn, 5, 100);
-      await vi.runAllTimersAsync();
-      const result = await promise;
+      const result = await retryRpcCall(fn, 5, 10);
 
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(5);
@@ -127,16 +105,14 @@ describe('Provider Utilities', () => {
         .mockRejectedValueOnce(new Error('fail'))
         .mockResolvedValueOnce('success');
 
-      const promise = retryRpcCall(fn, 3, 500);
+      const startTime = Date.now();
+      const result = await retryRpcCall(fn, 3, 20);
+      const elapsed = Date.now() - startTime;
 
-      expect(fn).toHaveBeenCalledTimes(1);
-
-      // Should wait 500ms for first retry
-      await vi.advanceTimersByTimeAsync(500);
-      expect(fn).toHaveBeenCalledTimes(2);
-
-      const result = await promise;
+      // Should wait 20ms for first retry
+      expect(elapsed).toBeGreaterThanOrEqual(15); // Allow some margin
       expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -127,17 +127,23 @@ export async function createPaymentPayload(
 
   // Nonce should be hex format (0x...)
   const nonceValue = message.nonce ?? '0x0';
-  const nonce = typeof nonceValue === 'string' || typeof nonceValue === 'number' || typeof nonceValue === 'bigint'
-    ? String(nonceValue)
-    : '0x0';
+  const nonce =
+    typeof nonceValue === 'string' ||
+    typeof nonceValue === 'number' ||
+    typeof nonceValue === 'bigint'
+      ? String(nonceValue)
+      : '0x0';
 
   // Valid until should be decimal string
   const validUntilValue = message.valid_until ?? message.validUntil ?? '0x0';
-  const validUntil = typeof validUntilValue === 'string' && validUntilValue.startsWith('0x')
-    ? BigInt(validUntilValue).toString()
-    : (typeof validUntilValue === 'string' || typeof validUntilValue === 'number' || typeof validUntilValue === 'bigint'
-      ? String(validUntilValue)
-      : '0x0');
+  const validUntil =
+    typeof validUntilValue === 'string' && validUntilValue.startsWith('0x')
+      ? BigInt(validUntilValue).toString()
+      : typeof validUntilValue === 'string' ||
+          typeof validUntilValue === 'number' ||
+          typeof validUntilValue === 'bigint'
+        ? String(validUntilValue)
+        : '0x0';
 
   // 7. Create payment payload
   const payload: PaymentPayload = {

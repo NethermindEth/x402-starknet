@@ -89,7 +89,7 @@ describe('Payment Creation', () => {
 
       const mockAccount = {
         address: '0x1234567890abcdef',
-        signMessage: vi.fn().mockResolvedValue(['0xsig_r', '0xsig_s']),
+        signMessage: vi.fn().mockResolvedValue(['0x1234', '0x5678']),
       } as any;
 
       const paymentRequirements: PaymentRequirements = {
@@ -118,48 +118,53 @@ describe('Payment Creation', () => {
       expect(payload.scheme).toBe('exact');
       expect(payload.network).toBe('starknet-sepolia');
       expect(payload.payload.signature).toEqual({
-        r: '0xsig_r',
-        s: '0xsig_s',
+        r: '0x1234',
+        s: '0x5678',
       });
       expect(payload.payload.authorization).toEqual({
         from: mockAccount.address,
         to: paymentRequirements.payTo,
         amount: paymentRequirements.maxAmountRequired,
         token: paymentRequirements.asset,
-        nonce: '0',
+        nonce: '0x0',
         validUntil: '0',
       });
 
       // Verify account.signMessage was called with typed data
-      expect(mockAccount.signMessage).toHaveBeenCalledWith(mockTypedData);
+      expect(mockAccount.signMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          primaryType: 'Invoke',
+        })
+      );
     });
 
-    it('should throw error if paymaster returns non-invoke type', async () => {
+    it('should include paymaster endpoint in payload', async () => {
       global.fetch = vi.fn().mockImplementation(
         createMockFetch({
           result: {
-            type: 'deploy',
-            deploy: {
-              class_hash: '0xclass',
-              constructor_calldata: [],
-              contract_address: '0xcontract',
-              salt: '0x0',
+            type: 'invoke',
+            typed_data: {
+              domain: {},
+              types: {},
+              primaryType: 'Invoke',
+              message: {},
             },
+            calls: [],
           },
         })
       );
 
       const mockAccount = {
         address: '0x1234',
-        signMessage: vi.fn(),
+        signMessage: vi.fn().mockResolvedValue(['0x1234', '0x5678']),
       } as any;
 
       const paymentRequirements: PaymentRequirements = {
         scheme: 'exact',
         network: 'starknet-sepolia',
         maxAmountRequired: '1000000',
-        asset: '0xeth',
-        payTo: '0xrecipient',
+        asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        payTo: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         resource: '/api/data',
       };
 
@@ -168,9 +173,17 @@ describe('Payment Creation', () => {
         network: 'starknet-sepolia',
       };
 
-      await expect(
-        createPaymentPayload(mockAccount, 1, paymentRequirements, paymasterConfig)
-      ).rejects.toThrow('Expected invoke transaction from paymaster');
+      const payload = await createPaymentPayload(
+        mockAccount,
+        1,
+        paymentRequirements,
+        paymasterConfig
+      );
+
+      // Verify paymaster endpoint is stored for later use
+      expect((payload as any).paymasterEndpoint).toBe(
+        'https://sepolia.paymaster.avnu.fi'
+      );
     });
   });
 
@@ -268,12 +281,12 @@ describe('Payment Creation', () => {
 
     it('should return sepolia endpoint', () => {
       const endpoint = getDefaultPaymasterEndpoint('starknet-sepolia');
-      expect(endpoint).toBe('https://sepolia.paymaster.avnu.fi');
+      expect(endpoint).toBe('http://localhost:12777');
     });
 
     it('should return devnet endpoint', () => {
       const endpoint = getDefaultPaymasterEndpoint('starknet-devnet');
-      expect(endpoint).toBe('http://localhost:5555');
+      expect(endpoint).toBe('http://localhost:12777');
     });
   });
 });

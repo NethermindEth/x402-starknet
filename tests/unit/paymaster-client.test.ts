@@ -69,7 +69,7 @@ describe('PaymasterClient', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'api-key': 'test-api-key',
+            'x-paymaster-api-key': 'test-api-key',
           }),
         })
       );
@@ -218,7 +218,7 @@ describe('PaymasterClient', () => {
         configWithoutKey.endpoint,
         expect.objectContaining({
           headers: expect.not.objectContaining({
-            'api-key': expect.anything(),
+            'x-paymaster-api-key': expect.anything(),
           }),
         })
       );

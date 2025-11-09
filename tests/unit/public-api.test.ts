@@ -58,8 +58,8 @@ describe('Public API Surface', () => {
   it('should export DEFAULT_PAYMASTER_ENDPOINTS', () => {
     expect(publicApi.DEFAULT_PAYMASTER_ENDPOINTS).toEqual({
       'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-      'starknet-sepolia': 'https://sepolia.paymaster.avnu.fi',
-      'starknet-devnet': 'http://localhost:5555',
+      'starknet-sepolia': 'http://localhost:12777',
+      'starknet-devnet': 'http://localhost:12777',
     });
   });
 

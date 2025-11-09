@@ -65,12 +65,12 @@ export interface InvokeParametersRpc {
 }
 
 /**
- * Transaction parameters for paymaster
+ * Transaction parameters for paymaster (using RPC format)
  */
 export type TransactionParameters =
   | {
       type: 'invoke';
-      invoke: InvokeParameters;
+      invoke: InvokeParametersRpc;
     }
   | {
       type: 'deploy';
@@ -79,7 +79,7 @@ export type TransactionParameters =
   | {
       type: 'deploy_and_invoke';
       deployment: unknown;
-      invoke: InvokeParameters;
+      invoke: InvokeParametersRpc;
     };
 
 /**

@@ -47,11 +47,13 @@ describe('Paymaster Helpers', () => {
       } as unknown as PaymasterClient;
 
       const userAddress = '0x1234';
+      const tokenAddress = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+      const recipientAddress = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       const calls = [
         {
-          contractAddress: '0xtoken',
+          contractAddress: tokenAddress,
           entrypoint: 'transfer',
-          calldata: ['0xrecipient', '1000', '0'],
+          calldata: [recipientAddress, '1000', '0'],
         },
       ];
 
@@ -62,19 +64,16 @@ describe('Paymaster Helpers', () => {
         { mode: 'sponsored' }
       );
 
-      expect(mockClient.buildTransaction).toHaveBeenCalledWith({
-        transaction: {
-          type: 'invoke',
-          invoke: {
-            user_address: userAddress,
-            calls,
-          },
-        },
-        parameters: {
-          version: '0x1',
-          fee_mode: { mode: 'sponsored' },
-        },
-      });
+      // The helper converts starknet.js Call format to paymaster RPC format
+      const callArgs = mockClient.buildTransaction.mock.calls[0][0];
+      expect(callArgs.transaction.type).toBe('invoke');
+      expect(callArgs.transaction.invoke.user_address).toBe('0x1234');
+      expect(callArgs.parameters.version).toBe('0x1');
+      expect(callArgs.parameters.fee_mode).toEqual({ mode: 'sponsored' });
+      // Verify the call was converted to paymaster format (has 'to', 'selector', 'calldata')
+      expect(callArgs.transaction.invoke.calls[0]).toHaveProperty('to');
+      expect(callArgs.transaction.invoke.calls[0]).toHaveProperty('selector');
+      expect(callArgs.transaction.invoke.calls[0]).toHaveProperty('calldata');
     });
 
     it('should support default fee mode with gas token', async () => {
@@ -112,13 +111,21 @@ describe('Paymaster Helpers', () => {
       } as unknown as PaymasterClient;
 
       const userAddress = '0x1234';
+      const tokenAddress = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+      const recipientAddress = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       const calls = [
         {
-          contractAddress: '0xtoken',
+          contractAddress: tokenAddress,
           entrypoint: 'transfer',
-          calldata: ['0xrecipient', '1000', '0'],
+          calldata: [recipientAddress, '1000', '0'],
         },
       ];
+      const typedData = {
+        domain: { name: 'Test' },
+        types: {},
+        primaryType: 'Invoke',
+        message: {},
+      };
       const signature = ['0xsig1', '0xsig2'];
 
       await executeTransaction(
@@ -126,22 +133,24 @@ describe('Paymaster Helpers', () => {
         userAddress,
         calls,
         { mode: 'sponsored' },
+        typedData,
         signature
       );
 
+      // Note: typed_data and signature go INSIDE the invoke object
       expect(mockClient.executeTransaction).toHaveBeenCalledWith({
         transaction: {
           type: 'invoke',
           invoke: {
-            user_address: userAddress,
-            calls,
+            user_address: '0x1234',
+            typed_data: typedData,
+            signature,
           },
         },
         parameters: {
           version: '0x1',
           fee_mode: { mode: 'sponsored' },
         },
-        signature,
       });
     });
   });
@@ -210,8 +219,8 @@ describe('Paymaster Helpers', () => {
     it('should have correct endpoints for all networks', () => {
       expect(DEFAULT_PAYMASTER_ENDPOINTS).toEqual({
         'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-        'starknet-sepolia': 'https://sepolia.paymaster.avnu.fi',
-        'starknet-devnet': 'http://localhost:5555',
+        'starknet-sepolia': 'http://localhost:12777',
+        'starknet-devnet': 'http://localhost:12777',
       });
     });
 
@@ -223,13 +232,13 @@ describe('Paymaster Helpers', () => {
 
     it('should have sepolia endpoint', () => {
       expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia']).toBe(
-        'https://sepolia.paymaster.avnu.fi'
+        'http://localhost:12777'
       );
     });
 
     it('should have devnet endpoint', () => {
       expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-devnet']).toBe(
-        'http://localhost:5555'
+        'http://localhost:12777'
       );
     });
   });

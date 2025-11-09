@@ -81,7 +81,7 @@ export async function buildTransaction(
       type: 'invoke',
       invoke: {
         user_address: userAddressFormatted,
-        calls: paymasterCalls as unknown, // TypeScript needs this cast
+        calls: paymasterCalls,
       },
     },
     parameters: {
