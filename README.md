@@ -1,4 +1,4 @@
-# @x402/starknet
+# x402-starknet
 
 **Pure library for implementing the x402 payment protocol on Starknet**
 
@@ -24,11 +24,11 @@ This library implements the [x402 payment protocol](https://github.com/x402) for
 ## Installation
 
 ```bash
-npm install @x402/starknet starknet
+npm install x402-starknet starknet
 # or
-bun add @x402/starknet starknet
+bun add x402-starknet starknet
 # or
-yarn add @x402/starknet starknet
+yarn add x402-starknet starknet
 ```
 
 **Peer Dependencies:**
@@ -43,7 +43,7 @@ import {
   settlePayment,
   DEFAULT_PAYMASTER_ENDPOINTS,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { Account, RpcProvider } from 'starknet';
 
 // 1. Create payment payload (client-side)
@@ -135,7 +135,7 @@ import type {
   SettleResponse,
   PaymasterConfig,
   ErrorCode,
-} from '@x402/starknet';
+} from 'x402-starknet';
 ```
 
 ## Usage Examples
@@ -143,7 +143,7 @@ import type {
 ### Error Handling
 
 ```typescript
-import { PaymentError, ERROR_CODES, settlePayment } from '@x402/starknet';
+import { PaymentError, ERROR_CODES, settlePayment } from 'x402-starknet';
 
 try {
   const result = await settlePayment(provider, payload, requirements);
@@ -172,7 +172,7 @@ import {
   getTransactionUrl,
   isTestnet,
   NETWORK_CONFIGS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Get network config
 const config = getNetworkConfig('starknet-sepolia');
@@ -195,7 +195,7 @@ console.log('Available networks:', Object.keys(NETWORK_CONFIGS));
 ### Payment Header Encoding
 
 ```typescript
-import { encodePaymentHeader, decodePaymentHeader } from '@x402/starknet';
+import { encodePaymentHeader, decodePaymentHeader } from 'x402-starknet';
 
 // Encode for HTTP header
 const encoded = encodePaymentHeader(payload);
@@ -222,7 +222,7 @@ import {
   encodePaymentHeader,
   DEFAULT_PAYMASTER_ENDPOINTS,
   type PaymentRequirementsResponse,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { Account } from 'starknet';
 
 async function payForResource(url: string, account: Account) {
@@ -266,7 +266,7 @@ import {
   verifyPayment,
   settlePayment,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { RpcProvider } from 'starknet';
 
 const provider = new RpcProvider({ nodeUrl: 'https://...' });
@@ -392,12 +392,12 @@ bun run test
 
 ✅ **Do this** - Import from root:
 ```typescript
-import { createPaymentPayload, verifyPayment } from '@x402/starknet';
+import { createPaymentPayload, verifyPayment } from 'x402-starknet';
 ```
 
 ❌ **Don't do this** - Deep imports not supported:
 ```typescript
-import { verifyPayment } from '@x402/starknet/payment'; // ERROR
+import { verifyPayment } from 'x402-starknet/payment'; // ERROR
 ```
 
 ## Design Principles
