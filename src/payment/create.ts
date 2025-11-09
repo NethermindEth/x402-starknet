@@ -9,6 +9,7 @@ import type {
   PaymasterConfig,
 } from '../types/index.js';
 import type { Account, RpcProvider, TypedData } from 'starknet';
+import { num } from 'starknet';
 import {
   createPaymasterClient,
   buildTransaction,
@@ -73,7 +74,7 @@ export type { PaymentRequirementsSelector };
  *   1,
  *   paymentRequirements,
  *   {
- *     endpoint: 'https://paymaster.avnu.fi',
+ *     endpoint: 'http://localhost:12777',
  *     network: 'starknet-sepolia'
  *   }
  * );
@@ -95,7 +96,7 @@ export async function createPaymentPayload(
   // 2. Create paymaster client
   const client = createPaymasterClient(paymasterConfig);
 
-  // 3. Build transaction with paymaster (sponsored mode)
+  // 3. Build transaction with paymaster (sponsored mode - server pays gas)
   const buildResult = await buildTransaction(
     client,
     account.address,
@@ -110,23 +111,51 @@ export async function createPaymentPayload(
   // 4. Sign typed data
   const signature = await account.signMessage(buildResult.typed_data);
 
-  // 5. Create payment payload
+  // 5. Convert signature to array of hex strings
+  // Signature can be either string[] or { r: bigint, s: bigint, recovery: number }
+  let signatureArray: Array<string>;
+  if (Array.isArray(signature)) {
+    // Already an array, convert each element to hex
+    signatureArray = signature.map((s) => num.toHex(s));
+  } else {
+    // Weierstrass signature object with r, s properties (BigInts)
+    signatureArray = [num.toHex(signature.r), num.toHex(signature.s)];
+  }
+
+  // 6. Extract nonce and valid_until from typed data message
+  const message = buildResult.typed_data.message as Record<string, unknown>;
+
+  // Nonce should be hex format (0x...)
+  const nonceValue = message.nonce ?? '0x0';
+  const nonce = typeof nonceValue === 'string' || typeof nonceValue === 'number' || typeof nonceValue === 'bigint'
+    ? String(nonceValue)
+    : '0x0';
+
+  // Valid until should be decimal string
+  const validUntilValue = message.valid_until ?? message.validUntil ?? '0x0';
+  const validUntil = typeof validUntilValue === 'string' && validUntilValue.startsWith('0x')
+    ? BigInt(validUntilValue).toString()
+    : (typeof validUntilValue === 'string' || typeof validUntilValue === 'number' || typeof validUntilValue === 'bigint'
+      ? String(validUntilValue)
+      : '0x0');
+
+  // 7. Create payment payload
   const payload: PaymentPayload = {
     x402Version: x402Version as 1,
     scheme: 'exact',
     network: paymentRequirements.network,
     payload: {
       signature: {
-        r: Array.isArray(signature) ? (signature[0] ?? '0x0') : '0x0',
-        s: Array.isArray(signature) ? (signature[1] ?? '0x0') : '0x0',
+        r: signatureArray[0] ?? '0x0',
+        s: signatureArray[1] ?? '0x0',
       },
       authorization: {
         from: account.address,
         to: paymentRequirements.payTo,
         amount: paymentRequirements.maxAmountRequired,
         token: paymentRequirements.asset,
-        nonce: '0', // Will be extracted from typed data
-        validUntil: '0', // Will be extracted from typed data
+        nonce,
+        validUntil,
       },
     },
   };

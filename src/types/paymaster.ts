@@ -33,13 +33,35 @@ export type PaymasterFeeMode =
     };
 
 /**
- * Invoke transaction parameters
+ * Paymaster RPC Call format (different from starknet.js Call)
+ */
+export interface PaymasterCall {
+  /** Contract address to call */
+  to: string;
+  /** Function selector (hex-encoded hash) */
+  selector: string;
+  /** Calldata array (hex strings) */
+  calldata: Array<string>;
+}
+
+/**
+ * Invoke transaction parameters (starknet.js format - for API)
  */
 export interface InvokeParameters {
   /** User's account address */
   user_address: string;
   /** Calls to execute */
   calls: Array<Call>;
+}
+
+/**
+ * Invoke transaction parameters (RPC format - for internal use)
+ */
+export interface InvokeParametersRpc {
+  /** User's account address */
+  user_address: string;
+  /** Calls to execute in paymaster RPC format */
+  calls: Array<PaymasterCall>;
 }
 
 /**
@@ -134,13 +156,35 @@ export type BuildTransactionResponse =
  * Execute transaction request
  */
 export interface ExecuteTransactionRequest {
-  /** Transaction that was built */
-  transaction: TransactionParameters;
+  /** Transaction that was built (with typed_data and signature inside invoke) */
+  transaction: ExecutableTransactionParameters;
   /** Execution parameters */
   parameters: ExecutionParameters;
-  /** User's signature over typed data */
-  signature: Array<string>;
 }
+
+/** Executable transaction parameters (for execute endpoint) */
+export type ExecutableTransactionParameters =
+  | {
+      type: 'invoke';
+      invoke: {
+        user_address: string;
+        typed_data: TypedData;
+        signature: Array<string>;
+      };
+    }
+  | {
+      type: 'deploy';
+      deployment: unknown; // Deployment parameters (not implemented yet)
+    }
+  | {
+      type: 'deploy_and_invoke';
+      deployment: unknown; // Deployment parameters (not implemented yet)
+      invoke: {
+        user_address: string;
+        typed_data: TypedData;
+        signature: Array<string>;
+      };
+    };
 
 /**
  * Execute transaction response

@@ -40,14 +40,16 @@ export class PaymasterClient {
 
     // Add API key if provided (for sponsored mode)
     if (this.config.apiKey) {
-      headers['api-key'] = this.config.apiKey;
+      headers['x-paymaster-api-key'] = this.config.apiKey;
     }
 
     try {
+      const requestBody = JSON.stringify(request);
+
       const response = await fetch(this.config.endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify(request),
+        body: requestBody,
       });
 
       if (!response.ok) {

@@ -7,7 +7,11 @@ import type {
   PaymentRequirements,
   SettleResponse,
 } from '../types/index.js';
-import type { RpcProvider, GetTransactionReceiptResponse } from 'starknet';
+import type {
+  RpcProvider,
+  GetTransactionReceiptResponse,
+  TypedData,
+} from 'starknet';
 import { verifyPayment } from './verify.js';
 
 /**
@@ -71,16 +75,25 @@ export async function settlePayment(
   }
 
   try {
-    // 2. Get paymaster configuration
+    // 2. Get paymaster configuration and typed_data
     // Extract from payload if available, otherwise use options
     const payloadWithExtras = payload as unknown as {
       paymasterEndpoint?: string;
+      typedData?: TypedData;
     };
+
     const paymasterEndpoint =
       options?.paymasterConfig?.endpoint ?? payloadWithExtras.paymasterEndpoint;
+    const typedData = payloadWithExtras.typedData;
 
     if (!paymasterEndpoint) {
       throw new Error('Paymaster endpoint not provided');
+    }
+
+    if (!typedData) {
+      throw new Error(
+        'Typed data not found in payment payload - client must store it during payment creation'
+      );
     }
 
     // 3. Create paymaster client
@@ -102,12 +115,13 @@ export async function settlePayment(
       paymentRequirements.maxAmountRequired
     );
 
-    // 5. Execute transaction via paymaster
+    // 5. Execute transaction via paymaster with the original typed_data
     const result = await executeTransaction(
       paymasterClient,
       payload.payload.authorization.from,
       [transferCall],
       { mode: 'sponsored' }, // Facilitator pays gas
+      typedData, // Pass the typed_data that was signed
       [payload.payload.signature.r, payload.payload.signature.s]
     );
 
