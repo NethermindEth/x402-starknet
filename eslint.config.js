@@ -13,6 +13,7 @@ export default [
       'node_modules/**',
       'dist/**',
       'coverage/**',
+      'tests/**',
       '**/*.d.ts',
       '**/*.config.js',
       '**/*.config.ts',
@@ -134,20 +135,6 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'error',
       '@typescript-eslint/no-extraneous-class': 'error',
       '@typescript-eslint/no-require-imports': 'error',
-    },
-  },
-  {
-    files: ['**/*.test.ts', '**/*.spec.ts'],
-    rules: {
-      'no-console': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
   },
   {

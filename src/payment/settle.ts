@@ -13,6 +13,7 @@ import type {
   TypedData,
 } from 'starknet';
 import { verifyPayment } from './verify.js';
+import { err, wrapUnknown } from '../errors.js';
 
 /**
  * Settle payment by executing the transaction
@@ -87,11 +88,11 @@ export async function settlePayment(
     const typedData = payloadWithExtras.typedData;
 
     if (!paymasterEndpoint) {
-      throw new Error('Paymaster endpoint not provided');
+      throw err.invalid('Paymaster endpoint not provided');
     }
 
     if (!typedData) {
-      throw new Error(
+      throw err.invalid(
         'Typed data not found in payment payload - client must store it during payment creation'
       );
     }
@@ -142,9 +143,13 @@ export async function settlePayment(
       ...(blockHash !== undefined ? { blockHash } : {}),
     };
   } catch (error) {
+    const wrappedError = wrapUnknown(error);
+    // Extract the original error message if available
+    const errorMessage =
+      error instanceof Error ? error.message : wrappedError.message;
     return {
       success: false,
-      errorReason: (error as Error).message,
+      errorReason: errorMessage,
       transaction: '',
       network: paymentRequirements.network,
       payer: verification.payer,

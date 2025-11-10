@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { PaymasterClient, createPaymasterClient } from '../../src/paymaster/client.js';
-import { PaymasterError } from '../../src/types/paymaster.js';
+import {
+  PaymasterClient,
+  createPaymasterClient,
+} from '../../src/paymaster/client.js';
+import { X402Error } from '../../src/errors.js';
 import type { PaymasterConfig } from '../../src/types/paymaster.js';
 import { createMockFetch } from '../helpers/mock-fetch.js';
 
@@ -43,9 +46,9 @@ describe('PaymasterClient', () => {
         calls: [],
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.buildTransaction({
@@ -75,16 +78,16 @@ describe('PaymasterClient', () => {
       );
     });
 
-    it('should throw PaymasterError on RPC error', async () => {
+    it('should throw X402Error on RPC error', async () => {
       const mockError = {
         code: -32000,
         message: 'Test error',
         data: { details: 'error details' },
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ error: mockError })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ error: mockError }));
 
       const client = createPaymasterClient(config);
 
@@ -102,10 +105,10 @@ describe('PaymasterClient', () => {
             fee_mode: { mode: 'sponsored' },
           },
         })
-      ).rejects.toThrow(PaymasterError);
+      ).rejects.toThrow(X402Error);
     });
 
-    it('should throw PaymasterError on HTTP error', async () => {
+    it('should throw X402Error on HTTP error', async () => {
       global.fetch = vi.fn().mockResolvedValue(
         new Response('Not Found', {
           status: 404,
@@ -129,7 +132,7 @@ describe('PaymasterClient', () => {
             fee_mode: { mode: 'sponsored' },
           },
         })
-      ).rejects.toThrow(PaymasterError);
+      ).rejects.toThrow(X402Error);
     });
   });
 
@@ -139,9 +142,9 @@ describe('PaymasterClient', () => {
         transaction_hash: '0xabcdef',
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.executeTransaction({
@@ -169,9 +172,9 @@ describe('PaymasterClient', () => {
         tokens: ['0xtoken1', '0xtoken2'],
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.getSupportedTokens();
@@ -187,9 +190,9 @@ describe('PaymasterClient', () => {
         available: true,
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.isAvailable();
@@ -207,9 +210,9 @@ describe('PaymasterClient', () => {
 
       const mockResponse = { available: true };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(configWithoutKey);
       await client.isAvailable();

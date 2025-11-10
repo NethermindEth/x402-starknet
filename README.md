@@ -32,6 +32,7 @@ yarn add x402-starknet starknet
 ```
 
 **Peer Dependencies:**
+
 - `starknet` ^8.0.0
 
 ## Quick Start
@@ -48,9 +49,9 @@ import { Account, RpcProvider } from 'starknet';
 
 // 1. Create payment payload (client-side)
 const payload = await createPaymentPayload(
-  account,              // Starknet account
-  1,                    // x402 protocol version
-  paymentRequirements,  // From server's 402 response
+  account, // Starknet account
+  1, // x402 protocol version
+  paymentRequirements, // From server's 402 response
   {
     endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
     network: 'starknet-sepolia',
@@ -71,11 +72,7 @@ if (!verification.isValid) {
 }
 
 // 3. Settle payment (server-side)
-const settlement = await settlePayment(
-  provider,
-  payload,
-  paymentRequirements
-);
+const settlement = await settlePayment(provider, payload, paymentRequirements);
 
 console.log('Payment settled:', settlement.transaction);
 console.log('Status:', settlement.status);
@@ -88,15 +85,18 @@ This library exports **exactly 20 symbols** from a single entry point:
 ### Core Functions (11)
 
 **Payment Operations:**
+
 - `createPaymentPayload()` - Create signed payment payload
 - `verifyPayment()` - Verify payment validity
 - `settlePayment()` - Execute payment transaction
 
 **Encoding:**
+
 - `encodePaymentHeader()` - Encode payload to base64
 - `decodePaymentHeader()` - Decode base64 to payload
 
 **Network Utilities:**
+
 - `getNetworkConfig()` - Get network configuration
 - `getTransactionUrl()` - Get explorer URL for transaction
 - `getAddressUrl()` - Get explorer URL for address
@@ -125,6 +125,7 @@ This library exports **exactly 20 symbols** from a single entry point:
 ### TypeScript Types
 
 All types are exported for TypeScript users:
+
 ```typescript
 import type {
   StarknetNetwork,
@@ -231,19 +232,15 @@ async function payForResource(url: string, account: Account) {
 
   // 2. Handle 402 Payment Required
   if (response.status === 402) {
-    const { paymentRequirements } = await response.json() as PaymentRequirementsResponse;
+    const { paymentRequirements } =
+      (await response.json()) as PaymentRequirementsResponse;
     const requirement = paymentRequirements[0];
 
     // 3. Create payment
-    const payload = await createPaymentPayload(
-      account,
-      1,
-      requirement,
-      {
-        endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
-        network: requirement.network,
-      }
-    );
+    const payload = await createPaymentPayload(account, 1, requirement, {
+      endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
+      network: requirement.network,
+    });
 
     // 4. Retry with payment
     response = await fetch(url, {
@@ -299,20 +296,18 @@ async function handleRequest(request: Request) {
   const verification = await verifyPayment(provider, payload, requirements);
 
   if (!verification.isValid) {
-    return new Response(
-      JSON.stringify({ error: verification.invalidReason }),
-      { status: 400 }
-    );
+    return new Response(JSON.stringify({ error: verification.invalidReason }), {
+      status: 400,
+    });
   }
 
   // Settle payment
   const settlement = await settlePayment(provider, payload, requirements);
 
   if (!settlement.success) {
-    return new Response(
-      JSON.stringify({ error: settlement.errorReason }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: settlement.errorReason }), {
+      status: 500,
+    });
   }
 
   // Return resource
@@ -353,11 +348,11 @@ For API design and best practices, see [API_SURFACE.md](./API_SURFACE.md).
 
 ## Network Support
 
-| Network | Chain ID | Status |
-|---------|----------|--------|
-| Starknet Mainnet | `0x534e5f4d41494e` | ✅ Supported |
+| Network          | Chain ID                 | Status       |
+| ---------------- | ------------------------ | ------------ |
+| Starknet Mainnet | `0x534e5f4d41494e`       | ✅ Supported |
 | Starknet Sepolia | `0x534e5f5345504f4c4941` | ✅ Supported |
-| Starknet Devnet | `0x534e5f474f45524c49` | ✅ Supported |
+| Starknet Devnet  | `0x534e5f474f45524c49`   | ✅ Supported |
 
 ## Development
 
@@ -391,11 +386,13 @@ bun run test
 ## Import Rules
 
 ✅ **Do this** - Import from root:
+
 ```typescript
 import { createPaymentPayload, verifyPayment } from 'x402-starknet';
 ```
 
 ❌ **Don't do this** - Deep imports not supported:
+
 ```typescript
 import { verifyPayment } from 'x402-starknet/payment'; // ERROR
 ```

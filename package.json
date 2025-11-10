@@ -1,6 +1,6 @@
 {
   "name": "x402-starknet",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Starknet implementation of the x402 payment protocol",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,14 +20,13 @@
   "scripts": {
     "build": "bun run build:ts",
     "build:ts": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\"",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . -w",
+    "format:check": "prettier . -c",
     "dev": "bun run --watch src/index.ts",
     "clean": "rm -rf dist"
   },
@@ -78,5 +77,14 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix",
+      "prettier -w"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier -w"
+    ]
   }
 }

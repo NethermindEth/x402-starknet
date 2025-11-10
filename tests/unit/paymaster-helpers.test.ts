@@ -12,7 +12,8 @@ import type { BuildTransactionResponse } from '../../src/types/paymaster.js';
 describe('Paymaster Helpers', () => {
   describe('createTransferCall', () => {
     it('should create a valid transfer call', () => {
-      const tokenAddress = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+      const tokenAddress =
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
       const recipient = '0x1234567890abcdef';
       const amount = '1000000';
 
@@ -41,14 +42,21 @@ describe('Paymaster Helpers', () => {
       const mockClient = {
         buildTransaction: vi.fn().mockResolvedValue({
           type: 'invoke',
-          typed_data: { domain: {}, types: {}, primaryType: 'Invoke', message: {} },
+          typed_data: {
+            domain: {},
+            types: {},
+            primaryType: 'Invoke',
+            message: {},
+          },
           calls: [],
         }),
       } as unknown as PaymasterClient;
 
       const userAddress = '0x1234';
-      const tokenAddress = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
-      const recipientAddress = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+      const tokenAddress =
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+      const recipientAddress =
+        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       const calls = [
         {
           contractAddress: tokenAddress,
@@ -57,12 +65,9 @@ describe('Paymaster Helpers', () => {
         },
       ];
 
-      await buildTransaction(
-        mockClient,
-        userAddress,
-        calls,
-        { mode: 'sponsored' }
-      );
+      await buildTransaction(mockClient, userAddress, calls, {
+        mode: 'sponsored',
+      });
 
       // The helper converts starknet.js Call format to paymaster RPC format
       const callArgs = mockClient.buildTransaction.mock.calls[0][0];
@@ -80,17 +85,20 @@ describe('Paymaster Helpers', () => {
       const mockClient = {
         buildTransaction: vi.fn().mockResolvedValue({
           type: 'invoke',
-          typed_data: { domain: {}, types: {}, primaryType: 'Invoke', message: {} },
+          typed_data: {
+            domain: {},
+            types: {},
+            primaryType: 'Invoke',
+            message: {},
+          },
           calls: [],
         }),
       } as unknown as PaymasterClient;
 
-      await buildTransaction(
-        mockClient,
-        '0x1234',
-        [],
-        { mode: 'default', gas_token: '0xeth' }
-      );
+      await buildTransaction(mockClient, '0x1234', [], {
+        mode: 'default',
+        gas_token: '0xeth',
+      });
 
       expect(mockClient.buildTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -111,8 +119,10 @@ describe('Paymaster Helpers', () => {
       } as unknown as PaymasterClient;
 
       const userAddress = '0x1234';
-      const tokenAddress = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
-      const recipientAddress = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+      const tokenAddress =
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+      const recipientAddress =
+        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       const calls = [
         {
           contractAddress: tokenAddress,

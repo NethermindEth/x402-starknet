@@ -51,8 +51,6 @@ export type {
   JsonRpcResponse,
 } from './paymaster.js';
 
-export { PaymasterError } from './paymaster.js';
-
 // Zod schemas
 export {
   STARKNET_NETWORK_SCHEMA,

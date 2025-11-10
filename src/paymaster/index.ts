@@ -17,5 +17,3 @@ export type {
   SupportedTokensResponse,
   IsAvailableResponse,
 } from '../types/paymaster.js';
-
-export { PaymasterError } from '../types/paymaster.js';

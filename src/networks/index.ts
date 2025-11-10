@@ -5,6 +5,7 @@
 
 import type { NetworkConfig, StarknetNetwork } from '../types/index.js';
 import { NETWORK_CONFIGS, CHAIN_IDS, EXPLORER_URLS } from './constants.js';
+import { err } from '../errors.js';
 
 /**
  * Get network configuration for a given network
@@ -50,7 +51,7 @@ export function getNetworkFromChainId(chainId: string): StarknetNetwork {
     }
   }
 
-  throw new Error(`Unknown chain ID: ${chainId}`);
+  throw err.notFound(`Network with chain ID ${chainId}`);
 }
 
 /**
@@ -152,17 +153,20 @@ export function validateNetworkConfig(network: StarknetNetwork): void {
   const config = getNetworkConfig(network);
 
   if (!config.chainId) {
-    throw new Error(`Network ${network} missing chain ID`);
+    throw err.invalid(`Network ${network} missing chain ID`, { network });
   }
 
   if (!config.rpcUrl) {
-    throw new Error(`Network ${network} missing RPC URL`);
+    throw err.invalid(`Network ${network} missing RPC URL`, { network });
   }
 
   try {
     new URL(config.rpcUrl);
   } catch {
-    throw new Error(`Network ${network} has invalid RPC URL: ${config.rpcUrl}`);
+    throw err.invalid(`Network ${network} has invalid RPC URL`, {
+      network,
+      rpcUrl: config.rpcUrl,
+    });
   }
 }
 

@@ -11,6 +11,7 @@ import type {
   PaymasterCall,
 } from '../types/paymaster.js';
 import type { PaymasterClient } from './client.js';
+import { err } from '../errors.js';
 
 /**
  * Format address - normalize by removing leading zeros
@@ -195,7 +196,9 @@ export function extractTypedData(
   if (response.type === 'deploy_and_invoke') {
     return response.typed_data;
   }
-  throw new Error('No typed data in deploy-only transaction');
+  throw err.internal('No typed data in deploy-only transaction', {
+    details: { type: response.type },
+  });
 }
 
 /**

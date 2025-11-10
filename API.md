@@ -31,6 +31,7 @@ yarn add @x402/starknet starknet
 ```
 
 **Peer Dependencies:**
+
 - `starknet` ^8.0.0
 
 ---
@@ -71,11 +72,7 @@ if (!verification.isValid) {
 }
 
 // 3. Settle payment (server-side)
-const settlement = await settlePayment(
-  provider,
-  payload,
-  paymentRequirements
-);
+const settlement = await settlePayment(provider, payload, paymentRequirements);
 
 console.log('Payment settled:', settlement.transaction);
 ```
@@ -94,10 +91,11 @@ function createPaymentPayload(
   x402Version: number,
   paymentRequirements: PaymentRequirements,
   paymasterConfig: PaymasterConfig
-): Promise<PaymentPayload>
+): Promise<PaymentPayload>;
 ```
 
 **Parameters:**
+
 - `account` - User's Starknet account (from starknet.js)
 - `x402Version` - x402 protocol version (currently `1`)
 - `paymentRequirements` - Payment requirements from server's 402 response
@@ -109,22 +107,22 @@ function createPaymentPayload(
 **Returns:** `Promise<PaymentPayload>` - Signed payment payload to send to server
 
 **Throws:**
+
 - `PaymentError` - If payload creation fails
 - `PaymasterError` - If paymaster interaction fails
 
 **Example:**
-```typescript
-import { createPaymentPayload, DEFAULT_PAYMASTER_ENDPOINTS } from '@x402/starknet';
 
-const payload = await createPaymentPayload(
-  account,
-  1,
-  paymentRequirements,
-  {
-    endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
-    network: 'starknet-sepolia',
-  }
-);
+```typescript
+import {
+  createPaymentPayload,
+  DEFAULT_PAYMASTER_ENDPOINTS,
+} from '@x402/starknet';
+
+const payload = await createPaymentPayload(account, 1, paymentRequirements, {
+  endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
+  network: 'starknet-sepolia',
+});
 ```
 
 ---
@@ -138,10 +136,11 @@ function verifyPayment(
   provider: RpcProvider,
   payload: PaymentPayload,
   paymentRequirements: PaymentRequirements
-): Promise<VerifyResponse>
+): Promise<VerifyResponse>;
 ```
 
 **Parameters:**
+
 - `provider` - Starknet RPC provider
 - `payload` - Payment payload from client
 - `paymentRequirements` - Payment requirements to verify against
@@ -149,6 +148,7 @@ function verifyPayment(
 **Returns:** `Promise<VerifyResponse>` - Verification result
 
 **VerifyResponse:**
+
 ```typescript
 {
   isValid: boolean;
@@ -162,6 +162,7 @@ function verifyPayment(
 ```
 
 **Invalid Reasons:**
+
 - `'invalid_signature'` - Signature verification failed
 - `'insufficient_balance'` - Payer has insufficient token balance
 - `'invalid_network'` - Network mismatch
@@ -169,6 +170,7 @@ function verifyPayment(
 - `'unknown_error'` - Unexpected error (check `details.error`)
 
 **Example:**
+
 ```typescript
 const verification = await verifyPayment(provider, payload, requirements);
 
@@ -199,10 +201,11 @@ function settlePayment(
       apiKey?: string;
     };
   }
-): Promise<SettleResponse>
+): Promise<SettleResponse>;
 ```
 
 **Parameters:**
+
 - `provider` - Starknet RPC provider
 - `payload` - Payment payload from client
 - `paymentRequirements` - Payment requirements
@@ -212,6 +215,7 @@ function settlePayment(
 **Returns:** `Promise<SettleResponse>` - Settlement result
 
 **SettleResponse:**
+
 ```typescript
 {
   success: boolean;
@@ -226,10 +230,12 @@ function settlePayment(
 ```
 
 **Throws:**
+
 - `PaymentError` - If settlement fails
 - `PaymasterError` - If paymaster execution fails
 
 **Example:**
+
 ```typescript
 const settlement = await settlePayment(provider, payload, requirements);
 
@@ -252,15 +258,17 @@ console.log('Block:', settlement.blockNumber);
 Get network configuration for a Starknet network.
 
 ```typescript
-function getNetworkConfig(network: StarknetNetwork): NetworkConfig
+function getNetworkConfig(network: StarknetNetwork): NetworkConfig;
 ```
 
 **Parameters:**
+
 - `network` - Network identifier
 
 **Returns:** `NetworkConfig` - Network configuration
 
 **Example:**
+
 ```typescript
 import { getNetworkConfig } from '@x402/starknet';
 
@@ -280,16 +288,18 @@ Get block explorer URL for a transaction.
 function getTransactionUrl(
   network: StarknetNetwork,
   txHash: string
-): string | null
+): string | null;
 ```
 
 **Parameters:**
+
 - `network` - Network identifier
 - `txHash` - Transaction hash
 
 **Returns:** `string | null` - Explorer URL or null if no explorer available
 
 **Example:**
+
 ```typescript
 const url = getTransactionUrl('starknet-sepolia', '0x1234...');
 // Returns: 'https://sepolia.starkscan.co/tx/0x1234...'
@@ -305,16 +315,18 @@ Get block explorer URL for an address.
 function getAddressUrl(
   network: StarknetNetwork,
   address: string
-): string | null
+): string | null;
 ```
 
 **Parameters:**
+
 - `network` - Network identifier
 - `address` - Contract or account address
 
 **Returns:** `string | null` - Explorer URL or null if no explorer available
 
 **Example:**
+
 ```typescript
 const url = getAddressUrl('starknet-sepolia', '0xabcd...');
 // Returns: 'https://sepolia.starkscan.co/contract/0xabcd...'
@@ -327,10 +339,11 @@ const url = getAddressUrl('starknet-sepolia', '0xabcd...');
 Check if a network is a testnet.
 
 ```typescript
-function isTestnet(network: StarknetNetwork): boolean
+function isTestnet(network: StarknetNetwork): boolean;
 ```
 
 **Example:**
+
 ```typescript
 console.log(isTestnet('starknet-sepolia')); // true
 console.log(isTestnet('starknet-mainnet')); // false
@@ -343,7 +356,7 @@ console.log(isTestnet('starknet-mainnet')); // false
 Check if a network is mainnet.
 
 ```typescript
-function isMainnet(network: StarknetNetwork): boolean
+function isMainnet(network: StarknetNetwork): boolean;
 ```
 
 ---
@@ -353,12 +366,13 @@ function isMainnet(network: StarknetNetwork): boolean
 Get all supported Starknet networks.
 
 ```typescript
-function getSupportedNetworks(): Array<StarknetNetwork>
+function getSupportedNetworks(): Array<StarknetNetwork>;
 ```
 
 **Returns:** `Array<StarknetNetwork>` - Array of network identifiers
 
 **Example:**
+
 ```typescript
 const networks = getSupportedNetworks();
 // Returns: ['starknet-mainnet', 'starknet-sepolia', 'starknet-devnet']
@@ -373,15 +387,17 @@ const networks = getSupportedNetworks();
 Encode payment payload to base64 for HTTP `X-Payment` header.
 
 ```typescript
-function encodePaymentHeader(payload: PaymentPayload): string
+function encodePaymentHeader(payload: PaymentPayload): string;
 ```
 
 **Parameters:**
+
 - `payload` - Payment payload
 
 **Returns:** `string` - Base64-encoded payload
 
 **Example:**
+
 ```typescript
 import { encodePaymentHeader } from '@x402/starknet';
 
@@ -402,18 +418,21 @@ fetch(url, {
 Decode base64 payment header back to payload.
 
 ```typescript
-function decodePaymentHeader(encoded: string): PaymentPayload
+function decodePaymentHeader(encoded: string): PaymentPayload;
 ```
 
 **Parameters:**
+
 - `encoded` - Base64-encoded payment header
 
 **Returns:** `PaymentPayload` - Decoded payment payload
 
 **Throws:**
+
 - `PaymentError` - If decoding or validation fails
 
 **Example:**
+
 ```typescript
 import { decodePaymentHeader } from '@x402/starknet';
 
@@ -430,7 +449,7 @@ const payload = decodePaymentHeader(header);
 Library version.
 
 ```typescript
-const VERSION: string = '0.1.0'
+const VERSION: string = '0.1.0';
 ```
 
 ---
@@ -440,7 +459,7 @@ const VERSION: string = '0.1.0'
 Supported x402 protocol version.
 
 ```typescript
-const X402_VERSION: number = 1
+const X402_VERSION: number = 1;
 ```
 
 ---
@@ -454,10 +473,11 @@ const DEFAULT_PAYMASTER_ENDPOINTS: {
   readonly 'starknet-mainnet': 'https://starknet.paymaster.avnu.fi';
   readonly 'starknet-sepolia': 'https://sepolia.paymaster.avnu.fi';
   readonly 'starknet-devnet': 'http://localhost:5555';
-}
+};
 ```
 
 **Example:**
+
 ```typescript
 import { DEFAULT_PAYMASTER_ENDPOINTS } from '@x402/starknet';
 
@@ -473,10 +493,11 @@ Network configurations for all supported networks.
 ```typescript
 const NETWORK_CONFIGS: {
   readonly [K in StarknetNetwork]: NetworkConfig;
-}
+};
 ```
 
 **Example:**
+
 ```typescript
 import { NETWORK_CONFIGS } from '@x402/starknet';
 
@@ -623,7 +644,11 @@ interface SettleResponse {
   readonly transaction: string;
   readonly network: StarknetNetwork;
   readonly payer: string;
-  readonly status?: 'pending' | 'accepted_on_l2' | 'accepted_on_l1' | 'rejected';
+  readonly status?:
+    | 'pending'
+    | 'accepted_on_l2'
+    | 'accepted_on_l1'
+    | 'rejected';
   readonly blockNumber?: number;
   readonly blockHash?: string;
 }
@@ -696,12 +721,14 @@ class PaymentError extends X402Error {
 ```
 
 **Error Codes:**
+
 - `INVALID_PAYLOAD` - Payment payload validation failed
 - `INSUFFICIENT_BALANCE` - Payer has insufficient balance
 - `VERIFICATION_FAILED` - Payment verification failed
 - `SETTLEMENT_FAILED` - Payment settlement failed
 
 **Example:**
+
 ```typescript
 try {
   const payload = await createPaymentPayload(...);
@@ -731,6 +758,7 @@ class NetworkError extends X402Error {
 ```
 
 **Error Codes:**
+
 - `UNSUPPORTED_NETWORK` - Network is not supported
 - `NETWORK_MISMATCH` - Network mismatch between payload and requirements
 - `RPC_FAILED` - RPC call failed
@@ -765,7 +793,7 @@ const ERROR_CODES: {
   readonly RPC_FAILED: 'RPC_FAILED';
   readonly PAYMASTER_ERROR: 'PAYMASTER_ERROR';
   readonly PAYMASTER_UNAVAILABLE: 'PAYMASTER_UNAVAILABLE';
-}
+};
 ```
 
 ---
@@ -793,15 +821,10 @@ async function payForResource(url: string, account: Account) {
       const requirement = paymentRequirements[0];
 
       // 3. Create payment payload
-      const payload = await createPaymentPayload(
-        account,
-        1,
-        requirement,
-        {
-          endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
-          network: requirement.network,
-        }
-      );
+      const payload = await createPaymentPayload(account, 1, requirement, {
+        endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
+        network: requirement.network,
+      });
 
       // 4. Retry request with payment
       response = await fetch(url, {
@@ -883,10 +906,9 @@ async function handleRequest(request: Request) {
     // Settle payment
     const settlement = await settlePayment(provider, payload, requirements);
     if (!settlement.success) {
-      return new Response(
-        JSON.stringify({ error: settlement.errorReason }),
-        { status: 500 }
-      );
+      return new Response(JSON.stringify({ error: settlement.errorReason }), {
+        status: 500,
+      });
     }
 
     // Payment successful - return resource

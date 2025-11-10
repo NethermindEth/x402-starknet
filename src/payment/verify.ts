@@ -9,6 +9,7 @@ import type {
 } from '../types/index.js';
 import type { RpcProvider } from 'starknet';
 import { PAYMENT_PAYLOAD_SCHEMA } from '../types/schemas.js';
+import { normalizeAddress } from '../utils/encoding.js';
 
 /**
  * Verify payment payload without executing the transaction
@@ -69,7 +70,11 @@ export async function verifyPayment(
     // When additional payment schemes are added, this check should be re-enabled
 
     // 5. Verify authorization token matches requirement
-    if (payload.payload.authorization.token !== paymentRequirements.asset) {
+    // Normalize addresses for comparison to handle different formats (0x1 vs 0x0001)
+    if (
+      normalizeAddress(payload.payload.authorization.token) !==
+      normalizeAddress(paymentRequirements.asset)
+    ) {
       return {
         isValid: false,
         invalidReason: 'invalid_network',
@@ -78,7 +83,11 @@ export async function verifyPayment(
     }
 
     // 6. Verify authorization recipient matches requirement
-    if (payload.payload.authorization.to !== paymentRequirements.payTo) {
+    // Normalize addresses for comparison to handle different formats (0x1 vs 0x0001)
+    if (
+      normalizeAddress(payload.payload.authorization.to) !==
+      normalizeAddress(paymentRequirements.payTo)
+    ) {
       return {
         isValid: false,
         invalidReason: 'invalid_amount',
