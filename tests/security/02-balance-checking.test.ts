@@ -60,7 +60,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('insufficient_balance');
@@ -82,7 +86,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('insufficient_balance');
@@ -135,7 +143,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('insufficient_balance');
@@ -170,7 +182,8 @@ describe('Security: Balance Checking', () => {
       (mockProvider.callContract as any).mockResolvedValue(['100000', '0']); // Balance dropped!
 
       // Step 3: Try to settle - balance check was passed but funds are gone
-      (basePayload as any).paymasterEndpoint = 'https://sepolia.paymaster.avnu.fi';
+      (basePayload as any).paymasterEndpoint =
+        'https://sepolia.paymaster.avnu.fi';
       (basePayload as any).typedData = {
         types: {},
         primaryType: 'Transfer',
@@ -272,7 +285,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
       expect(result.payer).toBe(
@@ -354,7 +371,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('insufficient_balance');
@@ -373,7 +394,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
       expect(result.details?.balance).toBe('1000001');
@@ -397,7 +422,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
       expect(result.details?.balance).toBeDefined();
@@ -406,7 +435,10 @@ describe('Security: Balance Checking', () => {
 
     it('should handle maximum Uint256 balance', async () => {
       const MAX_U128 = '0xffffffffffffffffffffffffffffffff';
-      (mockProvider.callContract as any).mockResolvedValue([MAX_U128, MAX_U128]);
+      (mockProvider.callContract as any).mockResolvedValue([
+        MAX_U128,
+        MAX_U128,
+      ]);
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
@@ -417,7 +449,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
       // Should handle max u256 without overflow
@@ -435,7 +471,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
       expect(result.details?.balance).toBe('2000000');
@@ -453,7 +493,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
       // Balance = 2^128 * 1 which is > 1000000
@@ -475,7 +519,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('unknown_error');
@@ -494,7 +542,11 @@ describe('Security: Balance Checking', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       // Should handle gracefully, might fail or treat as zero
       // Behavior depends on implementation

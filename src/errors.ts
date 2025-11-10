@@ -50,8 +50,8 @@ export class X402Error extends Error {
     this.code = code;
     if (opts?.cause !== undefined) this.cause = opts.cause;
     if (opts?.details !== undefined) this.details = opts.details;
-    // Maintains proper stack trace for where our error was thrown
-    if (Error.captureStackTrace) {
+    // Maintains proper stack trace for where our error was thrown (Node.js only)
+    if (typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(this, this.constructor);
     }
   }
@@ -88,7 +88,7 @@ export const err = {
    * @param ms - Timeout duration in milliseconds
    */
   timeout(ms: number): X402Error {
-    return new X402Error('ETIMEOUT', `Timed out after ${ms} ms`, {
+    return new X402Error('ETIMEOUT', `Timed out after ${ms.toString()} ms`, {
       details: { ms },
     });
   },

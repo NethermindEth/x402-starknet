@@ -184,11 +184,10 @@ describe('Security: RPC Provider Trust', () => {
       const balances = results.map((r) => r.details?.balance);
 
       // Implement consensus logic
-      const consensusBalance = balances.filter(
-        (b) => b === balances[0]
-      ).length >= 2
-        ? balances[0]
-        : null;
+      const consensusBalance =
+        balances.filter((b) => b === balances[0]).length >= 2
+          ? balances[0]
+          : null;
 
       expect(consensusBalance).toBe('2000000');
       // Outlier (provider3) is detected
@@ -260,7 +259,7 @@ describe('Security: RPC Provider Trust', () => {
 
     it('should rate limit RPC requests', () => {
       const rateLimiter = {
-        requests: new Map<string, number[]>(),
+        requests: new Map<string, Array<number>>(),
         maxRequests: 10,
         window: 60000, // 1 minute
       };
@@ -349,7 +348,7 @@ describe('Security: RPC Provider Trust', () => {
     });
 
     it('should log RPC requests for audit trail', () => {
-      const logRpcRequest = (method: string, params: any[]) => {
+      const logRpcRequest = (method: string, params: Array<any>) => {
         return {
           timestamp: new Date().toISOString(),
           method,
@@ -439,7 +438,9 @@ describe('Security: RPC Provider Trust', () => {
       ];
 
       // Inconsistent responses from same RPC
-      const detectInconsistency = (responses: string[][]): boolean => {
+      const detectInconsistency = (
+        responses: Array<Array<string>>
+      ): boolean => {
         const balances = responses.map((r) => r[0]);
         const unique = new Set(balances);
         return unique.size > 1; // More than one unique value = inconsistent

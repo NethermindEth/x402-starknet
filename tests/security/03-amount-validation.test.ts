@@ -201,7 +201,11 @@ describe('Security: Amount Validation', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
     });
@@ -414,7 +418,11 @@ describe('Security: Amount Validation', () => {
       };
 
       // Payload has non-zero amount but requirement is zero
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('invalid_amount');
@@ -628,7 +636,11 @@ describe('Security: Amount Validation', () => {
       };
 
       // Correct payload with consistent amounts
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
     });
@@ -643,7 +655,11 @@ describe('Security: Amount Validation', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('invalid_amount');

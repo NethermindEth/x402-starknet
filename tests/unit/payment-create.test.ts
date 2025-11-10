@@ -25,7 +25,7 @@ describe('Payment Creation', () => {
   });
 
   describe('selectPaymentRequirements', () => {
-    const mockRequirements: PaymentRequirements[] = [
+    const mockRequirements: Array<PaymentRequirements> = [
       {
         scheme: 'exact',
         network: 'starknet-sepolia',
@@ -96,7 +96,8 @@ describe('Payment Creation', () => {
         scheme: 'exact',
         network: 'starknet-sepolia',
         maxAmountRequired: '1000000',
-        asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        asset:
+          '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
         payTo: '0xrecipient',
         resource: '/api/data',
       };
@@ -163,8 +164,10 @@ describe('Payment Creation', () => {
         scheme: 'exact',
         network: 'starknet-sepolia',
         maxAmountRequired: '1000000',
-        asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
-        payTo: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+        asset:
+          '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        payTo:
+          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         resource: '/api/data',
       };
 

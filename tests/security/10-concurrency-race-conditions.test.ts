@@ -375,7 +375,12 @@ describe('Security: Concurrency and Race Conditions', () => {
         const payload = {
           ...basePayload,
           paymasterEndpoint: 'https://sepolia.paymaster.avnu.fi',
-          typedData: { types: {}, primaryType: 'Transfer', domain: {}, message: {} },
+          typedData: {
+            types: {},
+            primaryType: 'Transfer',
+            domain: {},
+            message: {},
+          },
         } as any;
 
         await settlePayment(mockProvider, payload, requirements, {
@@ -502,10 +507,7 @@ describe('Security: Concurrency and Race Conditions', () => {
     it('should prevent double-spend via nonce tracking', () => {
       const processedNonces = new Map<string, Set<string>>();
 
-      const hasBeenProcessed = (
-        account: string,
-        nonce: string
-      ): boolean => {
+      const hasBeenProcessed = (account: string, nonce: string): boolean => {
         return processedNonces.get(account)?.has(nonce) || false;
       };
 

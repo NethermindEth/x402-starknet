@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createProvider, retryRpcCall } from '../../src/utils/provider.js';
 
 describe('Provider Utilities', () => {
@@ -46,7 +46,9 @@ describe('Provider Utilities', () => {
       const error = new Error('persistent failure');
       const fn = vi.fn().mockRejectedValue(error);
 
-      await expect(retryRpcCall(fn, 3, 10)).rejects.toThrow('RPC call failed after all retries');
+      await expect(retryRpcCall(fn, 3, 10)).rejects.toThrow(
+        'RPC call failed after all retries'
+      );
       expect(fn).toHaveBeenCalledTimes(3);
     });
 

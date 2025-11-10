@@ -170,7 +170,9 @@ describe('Security: Error Message Security', () => {
   describe('Test 7.2: Error Stack Trace Disclosure', () => {
     it('should not expose stack traces in error responses', async () => {
       const mockProvider: RpcProvider = {
-        callContract: vi.fn().mockRejectedValue(new Error('RPC connection failed')),
+        callContract: vi
+          .fn()
+          .mockRejectedValue(new Error('RPC connection failed')),
       } as unknown as RpcProvider;
 
       const requirements: PaymentRequirements = {
@@ -242,9 +244,11 @@ describe('Security: Error Message Security', () => {
 
     it('should not leak internal paths or file names in errors', async () => {
       const mockProvider: RpcProvider = {
-        callContract: vi.fn().mockRejectedValue(
-          new Error('Failed at /usr/app/src/payment/verify.ts:123')
-        ),
+        callContract: vi
+          .fn()
+          .mockRejectedValue(
+            new Error('Failed at /usr/app/src/payment/verify.ts:123')
+          ),
       } as unknown as RpcProvider;
 
       const requirements: PaymentRequirements = {

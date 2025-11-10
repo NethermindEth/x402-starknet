@@ -35,7 +35,8 @@ describe('Security: Signature Verification', () => {
         from: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
         to: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         amount: '1000000',
-        token: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        token:
+          '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
         nonce: '0x0',
         validUntil: '9999999999',
       },
@@ -90,7 +91,8 @@ describe('Security: Signature Verification', () => {
       };
 
       // Add required paymaster data for settlement
-      (invalidPayload as any).paymasterEndpoint = 'https://sepolia.paymaster.avnu.fi';
+      (invalidPayload as any).paymasterEndpoint =
+        'https://sepolia.paymaster.avnu.fi';
       (invalidPayload as any).typedData = {
         types: {},
         primaryType: 'Transfer',
@@ -127,7 +129,8 @@ describe('Security: Signature Verification', () => {
         },
       };
 
-      (zeroSignaturePayload as any).paymasterEndpoint = 'https://sepolia.paymaster.avnu.fi';
+      (zeroSignaturePayload as any).paymasterEndpoint =
+        'https://sepolia.paymaster.avnu.fi';
       (zeroSignaturePayload as any).typedData = {
         types: {},
         primaryType: 'Transfer',
@@ -162,7 +165,8 @@ describe('Security: Signature Verification', () => {
         },
       };
 
-      (tamperedRPayload as any).paymasterEndpoint = 'https://sepolia.paymaster.avnu.fi';
+      (tamperedRPayload as any).paymasterEndpoint =
+        'https://sepolia.paymaster.avnu.fi';
       (tamperedRPayload as any).typedData = {
         types: {},
         primaryType: 'Transfer',
@@ -197,7 +201,8 @@ describe('Security: Signature Verification', () => {
         },
       };
 
-      (tamperedSPayload as any).paymasterEndpoint = 'https://sepolia.paymaster.avnu.fi';
+      (tamperedSPayload as any).paymasterEndpoint =
+        'https://sepolia.paymaster.avnu.fi';
       (tamperedSPayload as any).typedData = {
         types: {},
         primaryType: 'Transfer',

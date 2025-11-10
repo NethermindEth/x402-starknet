@@ -87,7 +87,11 @@ describe('Security: Token and Recipient Validation', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
     });
@@ -108,7 +112,8 @@ describe('Security: Token and Recipient Validation', () => {
           ...basePayload.payload,
           authorization: {
             ...basePayload.payload.authorization,
-            token: '0x049D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7', // Different case
+            token:
+              '0x049D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7', // Different case
           },
         },
       };
@@ -256,7 +261,11 @@ describe('Security: Token and Recipient Validation', () => {
         resource: 'https://example.com/resource',
       };
 
-      const result = await verifyPayment(mockProvider, basePayload, requirements);
+      const result = await verifyPayment(
+        mockProvider,
+        basePayload,
+        requirements
+      );
 
       expect(result.isValid).toBe(true);
     });
@@ -420,8 +429,10 @@ describe('Security: Token and Recipient Validation', () => {
         scheme: 'exact',
         network: 'starknet-sepolia',
         maxAmountRequired: '1000000',
-        asset: '0x000000000000000000000000000000000000000000000000000000000000001',
-        payTo: '0x000000000000000000000000000000000000000000000000000000000000002',
+        asset:
+          '0x000000000000000000000000000000000000000000000000000000000000001',
+        payTo:
+          '0x000000000000000000000000000000000000000000000000000000000000002',
         resource: 'https://example.com/resource',
       };
 
@@ -431,7 +442,8 @@ describe('Security: Token and Recipient Validation', () => {
           ...basePayload.payload,
           authorization: {
             ...basePayload.payload.authorization,
-            token: '0x000000000000000000000000000000000000000000000000000000000000001',
+            token:
+              '0x000000000000000000000000000000000000000000000000000000000000001',
             to: '0x000000000000000000000000000000000000000000000000000000000000002',
           },
         },

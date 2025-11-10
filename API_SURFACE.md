@@ -20,15 +20,18 @@ This document outlines the public API surface of `@x402/starknet` following libr
 ### Core Functions (11)
 
 Payment operations:
+
 - `createPaymentPayload()` - Create signed payment
 - `verifyPayment()` - Verify payment validity
 - `settlePayment()` - Execute payment transaction
 
 Encoding:
+
 - `encodePaymentHeader()` - Encode to base64
 - `decodePaymentHeader()` - Decode from base64
 
 Network utilities:
+
 - `getNetworkConfig()` - Get network configuration
 - `getTransactionUrl()` - Get explorer URL for transaction
 - `getAddressUrl()` - Get explorer URL for address
@@ -57,6 +60,7 @@ Network utilities:
 ### Types (Exported as TypeScript types)
 
 All TypeScript types are exported:
+
 - `StarknetNetwork`, `NetworkConfig`
 - `PaymentScheme`, `Signature`, `PaymentAuthorization`
 - `PaymentRequirements`, `PaymentPayload`, `PaymentRequirementsResponse`
@@ -102,6 +106,7 @@ The following are implementation details and NOT exported:
 ```
 
 **Key points:**
+
 - ESM-only (no CJS)
 - `sideEffects: false` enables optimal tree-shaking
 - Single entry point (no subpath exports)
@@ -160,6 +165,7 @@ try {
 ```
 
 **Stable Error Codes:**
+
 - `INVALID_PAYLOAD`
 - `INSUFFICIENT_BALANCE`
 - `VERIFICATION_FAILED`
@@ -177,11 +183,13 @@ try {
 **Current version:** 0.1.0 (experimental)
 
 **Versioning:**
+
 - **MAJOR** - Breaking API changes
 - **MINOR** - New features (backwards-compatible)
 - **PATCH** - Bug fixes
 
 **Deprecation Policy:**
+
 1. Mark as `@deprecated` in JSDoc for one minor version
 2. Log warnings in console
 3. Remove in next major version
@@ -249,19 +257,19 @@ All public APIs are now available from the root export.
 
 ## Comparison with Library Best Practices
 
-| Practice | Status | Notes |
-|----------|--------|-------|
-| Small surface | ✅ | 20 named exports |
-| Named exports only | ✅ | No `export *` |
-| No deep imports | ✅ | Single entry point |
-| Tree-shakeable | ✅ | `sideEffects: false` |
-| Minimal deps | ✅ | Only 2 runtime deps |
-| Peer deps | ✅ | `starknet` as peer |
-| Type-safe | ✅ | Full TypeScript support |
-| Stable errors | ✅ | Error codes + classes |
-| ESM-first | ✅ | `"type": "module"` |
-| Documented | ✅ | API.md + JSDoc |
-| Tested | ✅ | 78 tests, 100% public API coverage |
+| Practice           | Status | Notes                              |
+| ------------------ | ------ | ---------------------------------- |
+| Small surface      | ✅     | 20 named exports                   |
+| Named exports only | ✅     | No `export *`                      |
+| No deep imports    | ✅     | Single entry point                 |
+| Tree-shakeable     | ✅     | `sideEffects: false`               |
+| Minimal deps       | ✅     | Only 2 runtime deps                |
+| Peer deps          | ✅     | `starknet` as peer                 |
+| Type-safe          | ✅     | Full TypeScript support            |
+| Stable errors      | ✅     | Error codes + classes              |
+| ESM-first          | ✅     | `"type": "module"`                 |
+| Documented         | ✅     | API.md + JSDoc                     |
+| Tested             | ✅     | 78 tests, 100% public API coverage |
 
 ---
 

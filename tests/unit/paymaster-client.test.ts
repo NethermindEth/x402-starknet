@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { PaymasterClient, createPaymasterClient } from '../../src/paymaster/client.js';
+import {
+  PaymasterClient,
+  createPaymasterClient,
+} from '../../src/paymaster/client.js';
 import { X402Error } from '../../src/errors.js';
 import type { PaymasterConfig } from '../../src/types/paymaster.js';
 import { createMockFetch } from '../helpers/mock-fetch.js';
@@ -43,9 +46,9 @@ describe('PaymasterClient', () => {
         calls: [],
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.buildTransaction({
@@ -82,9 +85,9 @@ describe('PaymasterClient', () => {
         data: { details: 'error details' },
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ error: mockError })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ error: mockError }));
 
       const client = createPaymasterClient(config);
 
@@ -139,9 +142,9 @@ describe('PaymasterClient', () => {
         transaction_hash: '0xabcdef',
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.executeTransaction({
@@ -169,9 +172,9 @@ describe('PaymasterClient', () => {
         tokens: ['0xtoken1', '0xtoken2'],
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.getSupportedTokens();
@@ -187,9 +190,9 @@ describe('PaymasterClient', () => {
         available: true,
       };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(config);
       const result = await client.isAvailable();
@@ -207,9 +210,9 @@ describe('PaymasterClient', () => {
 
       const mockResponse = { available: true };
 
-      global.fetch = vi.fn().mockImplementation(
-        createMockFetch({ result: mockResponse })
-      );
+      global.fetch = vi
+        .fn()
+        .mockImplementation(createMockFetch({ result: mockResponse }));
 
       const client = createPaymasterClient(configWithoutKey);
       await client.isAvailable();

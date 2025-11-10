@@ -8,7 +8,9 @@ import * as publicApi from '../../src/index.js';
 
 describe('Public API Surface', () => {
   it('should export only intended symbols', () => {
-    const allExports = Object.keys(publicApi).filter((key) => key !== 'default');
+    const allExports = Object.keys(publicApi).filter(
+      (key) => key !== 'default'
+    );
 
     const expectedExports = [
       // Payment operations
@@ -41,7 +43,9 @@ describe('Public API Surface', () => {
   });
 
   it('should export correct number of symbols', () => {
-    const allExports = Object.keys(publicApi).filter((key) => key !== 'default');
+    const allExports = Object.keys(publicApi).filter(
+      (key) => key !== 'default'
+    );
     // 11 functions + 4 constants + 3 error classes + 1 ERROR_CODES = 19
     expect(allExports).toHaveLength(19);
   });
@@ -101,20 +105,28 @@ describe('Public API Surface', () => {
   });
 
   it('should have stable error factories', () => {
-    const insufficientBalance = publicApi.PaymentError.insufficientBalance('100', '50');
+    const insufficientBalance = publicApi.PaymentError.insufficientBalance(
+      '100',
+      '50'
+    );
     expect(insufficientBalance.code).toBe('ECONFLICT');
     expect(insufficientBalance.message).toContain('required 100');
     expect(insufficientBalance.message).toContain('available 50');
 
-    const invalidPayload = publicApi.PaymentError.invalidPayload('missing field');
+    const invalidPayload =
+      publicApi.PaymentError.invalidPayload('missing field');
     expect(invalidPayload.code).toBe('EINVALID_INPUT');
     expect(invalidPayload.message).toContain('missing field');
 
-    const unsupportedNetwork = publicApi.NetworkError.unsupportedNetwork('starknet-foo');
+    const unsupportedNetwork =
+      publicApi.NetworkError.unsupportedNetwork('starknet-foo');
     expect(unsupportedNetwork.code).toBe('EINVALID_INPUT');
     expect(unsupportedNetwork.message).toContain('starknet-foo');
 
-    const networkMismatch = publicApi.NetworkError.networkMismatch('sepolia', 'mainnet');
+    const networkMismatch = publicApi.NetworkError.networkMismatch(
+      'sepolia',
+      'mainnet'
+    );
     expect(networkMismatch.code).toBe('ECONFLICT');
     expect(networkMismatch.message).toContain('sepolia');
     expect(networkMismatch.message).toContain('mainnet');

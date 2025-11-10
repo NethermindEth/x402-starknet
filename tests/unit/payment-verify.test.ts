@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
-import { verifyPayment, extractPayerAddress } from '../../src/payment/verify.js';
-import type { PaymentPayload, PaymentRequirements } from '../../src/types/index.js';
+import {
+  verifyPayment,
+  extractPayerAddress,
+} from '../../src/payment/verify.js';
+import type {
+  PaymentPayload,
+  PaymentRequirements,
+} from '../../src/types/index.js';
 import type { RpcProvider } from 'starknet';
 
 describe('Payment Verification', () => {
@@ -26,7 +32,8 @@ describe('Payment Verification', () => {
         from: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
         to: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         amount: '1000000',
-        token: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        token:
+          '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
         nonce: '0x0',
         validUntil: '9999999999',
       },
@@ -36,7 +43,9 @@ describe('Payment Verification', () => {
   describe('extractPayerAddress', () => {
     it('should extract payer from authorization', () => {
       const payer = extractPayerAddress(mockPayload);
-      expect(payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
     });
   });
 
@@ -53,7 +62,9 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(true);
-      expect(result.payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(result.payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
       expect(result.details?.balance).toBe('2000000');
     });
 
@@ -70,7 +81,9 @@ describe('Payment Verification', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.invalidReason).toBe('insufficient_balance');
-      expect(result.payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(result.payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
       expect(result.details?.balance).toBe('500000');
     });
 
@@ -122,7 +135,8 @@ describe('Payment Verification', () => {
           ...mockPayload.payload,
           authorization: {
             ...mockPayload.payload.authorization,
-            token: '0x999999999999999999999999999999999999999999999999999999999999999', // Different token
+            token:
+              '0x999999999999999999999999999999999999999999999999999999999999999', // Different token
           },
         },
       };
@@ -231,15 +245,16 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(true);
-      expect(result.payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(result.payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
     });
 
     it('should handle large Uint256 balances', async () => {
       const mockProvider = {
-        callContract: vi.fn().mockResolvedValue([
-          '0xffffffffffffffffffffffffffffffff',
-          '0x1',
-        ]),
+        callContract: vi
+          .fn()
+          .mockResolvedValue(['0xffffffffffffffffffffffffffffffff', '0x1']),
       } as unknown as RpcProvider;
 
       const result = await verifyPayment(
@@ -249,7 +264,9 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(true);
-      expect(result.payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(result.payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
       expect(result.details?.balance).toBeDefined();
     });
   });

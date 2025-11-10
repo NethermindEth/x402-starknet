@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { settlePayment } from '../../src/payment/settle.js';
-import type { PaymentPayload, PaymentRequirements } from '../../src/types/index.js';
+import type {
+  PaymentPayload,
+  PaymentRequirements,
+} from '../../src/types/index.js';
 import type { RpcProvider } from 'starknet';
 
 // Mock the paymaster module - provide minimal mocks
@@ -59,7 +62,8 @@ describe('Payment Settlement', () => {
         from: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
         to: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         amount: '1000000',
-        token: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        token:
+          '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
         nonce: '0x0',
         validUntil: '9999999999',
       },
@@ -94,7 +98,9 @@ describe('Payment Settlement', () => {
       } as unknown as RpcProvider;
 
       // Mock executeTransaction to return success
-      const { executeTransaction } = await import('../../src/paymaster/index.js');
+      const { executeTransaction } = await import(
+        '../../src/paymaster/index.js'
+      );
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash123',
       });
@@ -108,7 +114,9 @@ describe('Payment Settlement', () => {
       expect(result.success).toBe(true);
       expect(result.transaction).toBe('0xtxhash123');
       expect(result.network).toBe('starknet-sepolia');
-      expect(result.payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(result.payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
     });
 
     it('should fail if verification fails (insufficient balance)', async () => {
@@ -125,7 +133,9 @@ describe('Payment Settlement', () => {
       expect(result.success).toBe(false);
       expect(result.errorReason).toBe('insufficient_balance');
       expect(result.transaction).toBe('');
-      expect(result.payer).toBe('0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
+      expect(result.payer).toBe(
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+      );
     });
 
     it('should fail if paymaster endpoint is missing', async () => {
@@ -154,7 +164,9 @@ describe('Payment Settlement', () => {
         }),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import('../../src/paymaster/index.js');
+      const { executeTransaction } = await import(
+        '../../src/paymaster/index.js'
+      );
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash456',
       });
@@ -190,7 +202,9 @@ describe('Payment Settlement', () => {
         callContract: vi.fn().mockResolvedValue(['2000000', '0']),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import('../../src/paymaster/index.js');
+      const { executeTransaction } = await import(
+        '../../src/paymaster/index.js'
+      );
       (executeTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error('Paymaster rejected transaction')
       );
@@ -216,7 +230,9 @@ describe('Payment Settlement', () => {
         }),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import('../../src/paymaster/index.js');
+      const { executeTransaction } = await import(
+        '../../src/paymaster/index.js'
+      );
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash789',
       });
@@ -235,10 +251,14 @@ describe('Payment Settlement', () => {
     it('should handle transaction wait timeout', async () => {
       const mockProvider = {
         callContract: vi.fn().mockResolvedValue(['2000000', '0']),
-        waitForTransaction: vi.fn().mockRejectedValue(new Error('Transaction timeout')),
+        waitForTransaction: vi
+          .fn()
+          .mockRejectedValue(new Error('Transaction timeout')),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import('../../src/paymaster/index.js');
+      const { executeTransaction } = await import(
+        '../../src/paymaster/index.js'
+      );
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxtimeout',
       });
@@ -281,12 +301,17 @@ describe('Payment Settlement', () => {
         },
       } as PaymentPayload & { typedData: any };
 
-      await settlePayment(mockProvider, payloadWithTypedData, mockPaymentRequirements, {
-        paymasterConfig: {
-          endpoint: 'https://paymaster.example.com',
-          apiKey: 'test-api-key-123',
-        },
-      });
+      await settlePayment(
+        mockProvider,
+        payloadWithTypedData,
+        mockPaymentRequirements,
+        {
+          paymasterConfig: {
+            endpoint: 'https://paymaster.example.com',
+            apiKey: 'test-api-key-123',
+          },
+        }
+      );
 
       // Verify createPaymasterClient was called with API key
       expect(createClientSpy).toHaveBeenCalledWith(

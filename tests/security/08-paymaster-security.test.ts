@@ -59,7 +59,9 @@ describe('Security: Paymaster Security', () => {
       expect(() => validateEndpoint(goodConfig)).not.toThrow();
 
       // Bad config fails validation
-      expect(() => validateEndpoint(badConfig)).toThrow('Untrusted paymaster endpoint');
+      expect(() => validateEndpoint(badConfig)).toThrow(
+        'Untrusted paymaster endpoint'
+      );
     });
 
     it('should provide default trusted paymaster endpoints', () => {
@@ -112,7 +114,7 @@ describe('Security: Paymaster Security', () => {
           const url = new URL(endpoint);
           return (
             url.protocol === 'https:' &&
-            !url.hostname.match(/^(localhost|127\.0\.0\.1|192\.168\.)/)
+            !/^(localhost|127\.0\.0\.1|192\.168\.)/.exec(url.hostname)
           );
         } catch {
           return false;
@@ -236,8 +238,8 @@ describe('Security: Paymaster Security', () => {
 
       const getPaymasterEndpoint = (
         primary: string,
-        fallbacks: string[]
-      ): string[] => {
+        fallbacks: Array<string>
+      ): Array<string> => {
         return [primary, ...fallbacks];
       };
 
@@ -261,7 +263,9 @@ describe('Security: Paymaster Security', () => {
         return Promise.race([
           promise,
           new Promise<T>((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout')), timeoutMs)
+            setTimeout(() => {
+              reject(new Error('Timeout'));
+            }, timeoutMs)
           ),
         ]);
       };
