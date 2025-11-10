@@ -4,7 +4,7 @@
 
 A TypeScript library providing core functions for building x402-compatible payment systems on Starknet. Designed as a foundation library with a minimal, stable API surface.
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/NethermindEth/starknet-x402)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/NethermindEth/starknet-x402)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 
 ## Overview
