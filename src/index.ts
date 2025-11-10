@@ -97,5 +97,3 @@ export {
   ERROR_CODES,
   type ErrorCode,
 } from './errors.js';
-
-export { PaymasterError } from './types/paymaster.js';

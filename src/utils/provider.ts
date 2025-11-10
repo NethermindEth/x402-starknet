@@ -5,6 +5,7 @@
 import { RpcProvider } from 'starknet';
 import type { StarknetNetwork } from '../types/index.js';
 import { getNetworkConfig } from '../networks/index.js';
+import { err, wrapUnknown } from '../errors.js';
 
 /**
  * Create RPC provider for a network
@@ -35,13 +36,13 @@ export async function retryRpcCall<T>(
   maxRetries = 3,
   baseDelay = 1000
 ): Promise<T> {
-  let lastError: Error | undefined;
+  let lastError: unknown;
 
   for (let index = 0; index < maxRetries; index++) {
     try {
       return await function_();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error;
       if (index < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, index);
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -49,5 +50,7 @@ export async function retryRpcCall<T>(
     }
   }
 
-  throw lastError ?? new Error('RPC call failed after all retries');
+  throw lastError
+    ? wrapUnknown(lastError, 'ENETWORK', 'RPC call failed after all retries')
+    : err.network('RPC call failed after all retries');
 }

@@ -16,6 +16,7 @@ import {
   createTransferCall,
   DEFAULT_PAYMASTER_ENDPOINTS,
 } from '../paymaster/index.js';
+import { err } from '../errors.js';
 
 /**
  * Select appropriate payment requirements from available options
@@ -45,7 +46,7 @@ export function selectPaymentRequirements(
   // TODO: Add balance checking
   const firstRequirement = requirements[0];
   if (!firstRequirement) {
-    throw new Error('No payment requirements provided');
+    throw err.invalid('No payment requirements provided');
   }
   return firstRequirement;
 }
@@ -105,7 +106,9 @@ export async function createPaymentPayload(
   );
 
   if (buildResult.type !== 'invoke') {
-    throw new Error('Expected invoke transaction from paymaster');
+    throw err.internal('Expected invoke transaction from paymaster', {
+      details: { receivedType: buildResult.type },
+    });
   }
 
   // 4. Sign typed data
@@ -232,7 +235,7 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
   // This prevents prototype pollution and ensures proper payload structure
   // See SECURITY.md:194-214 for details
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new Error('Invalid payment payload: must be an object');
+    throw err.invalid('Invalid payment payload: must be an object');
   }
 
   return parsed as PaymentPayload;

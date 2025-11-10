@@ -1,133 +1,325 @@
 /**
  * Custom error classes for x402-starknet
+ *
+ * This module provides typed errors with stable codes and predictable shapes.
+ * All errors extend X402Error with a fixed ErrorCode enum.
  */
 
 /**
- * Base error class for all x402-starknet errors
+ * Standard error codes following EINVALID_INPUT pattern.
+ * These codes are part of the public API and must remain stable.
+ */
+export type ErrorCode =
+  | 'EINVALID_INPUT' // Input validation failed
+  | 'ENOT_FOUND' // Resource not found
+  | 'ETIMEOUT' // Operation timed out
+  | 'ECONFLICT' // Conflicting state or data
+  | 'ECANCELLED' // Operation cancelled by user/signal
+  | 'EINTERNAL' // Internal error or unexpected failure
+  | 'ENETWORK' // Network-related error
+  | 'EPAYMASTER'; // Paymaster-specific error
+
+/**
+ * Base error class for all x402-starknet errors.
+ * Never throw plain Error objects at public boundaries - always use X402Error.
  */
 export class X402Error extends Error {
   /**
    * Stable error code for programmatic error handling
    */
-  public readonly code: string;
+  public readonly code: ErrorCode;
 
-  constructor(message: string, code: string) {
+  /**
+   * Original error cause (if wrapping another error)
+   */
+  public override readonly cause?: unknown;
+
+  /**
+   * Additional structured details (safe for serialization)
+   * Never include secrets, tokens, or PII in details.
+   */
+  public readonly details?: Record<string, unknown>;
+
+  constructor(
+    code: ErrorCode,
+    message: string,
+    opts?: { cause?: unknown; details?: Record<string, unknown> }
+  ) {
     super(message);
     this.name = 'X402Error';
     this.code = code;
+    if (opts?.cause !== undefined) this.cause = opts.cause;
+    if (opts?.details !== undefined) this.details = opts.details;
     // Maintains proper stack trace for where our error was thrown
-    Error.captureStackTrace(this, this.constructor);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 }
 
 /**
- * Payment-related errors
+ * Error factory functions for common error scenarios.
+ * These provide consistent error creation across the library.
+ */
+export const err = {
+  /**
+   * Input validation failed.
+   * @param msg - Short, specific message describing what's invalid
+   * @param details - Machine-readable details (no secrets!)
+   */
+  invalid(msg: string, details?: Record<string, unknown>): X402Error {
+    return new X402Error(
+      'EINVALID_INPUT',
+      msg,
+      details ? { details } : undefined
+    );
+  },
+
+  /**
+   * Resource not found.
+   * @param what - Description of what wasn't found
+   */
+  notFound(what: string): X402Error {
+    return new X402Error('ENOT_FOUND', `${what} not found`);
+  },
+
+  /**
+   * Operation timed out.
+   * @param ms - Timeout duration in milliseconds
+   */
+  timeout(ms: number): X402Error {
+    return new X402Error('ETIMEOUT', `Timed out after ${ms} ms`, {
+      details: { ms },
+    });
+  },
+
+  /**
+   * Conflicting state or data.
+   * @param msg - Description of the conflict
+   */
+  conflict(msg: string, details?: Record<string, unknown>): X402Error {
+    return new X402Error('ECONFLICT', msg, details ? { details } : undefined);
+  },
+
+  /**
+   * Operation cancelled (e.g., via AbortSignal).
+   */
+  cancelled(): X402Error {
+    return new X402Error('ECANCELLED', 'Operation cancelled');
+  },
+
+  /**
+   * Internal error or unexpected failure.
+   * @param msg - Brief description of what failed
+   * @param cause - Original error (if wrapping)
+   */
+  internal(msg: string, cause?: unknown): X402Error {
+    return new X402Error('EINTERNAL', msg, { cause });
+  },
+
+  /**
+   * Network-related error (RPC, HTTP, etc.).
+   * @param msg - Description of network failure
+   * @param cause - Original error
+   */
+  network(
+    msg: string,
+    cause?: unknown,
+    details?: Record<string, unknown>
+  ): X402Error {
+    const opts: { cause?: unknown; details?: Record<string, unknown> } = {};
+    if (cause !== undefined) opts.cause = cause;
+    if (details !== undefined) opts.details = details;
+    return new X402Error(
+      'ENETWORK',
+      msg,
+      Object.keys(opts).length > 0 ? opts : undefined
+    );
+  },
+
+  /**
+   * Paymaster-specific error.
+   * @param msg - Description of paymaster failure
+   * @param cause - Original error
+   */
+  paymaster(
+    msg: string,
+    cause?: unknown,
+    details?: Record<string, unknown>
+  ): X402Error {
+    const opts: { cause?: unknown; details?: Record<string, unknown> } = {};
+    if (cause !== undefined) opts.cause = cause;
+    if (details !== undefined) opts.details = details;
+    return new X402Error(
+      'EPAYMASTER',
+      msg,
+      Object.keys(opts).length > 0 ? opts : undefined
+    );
+  },
+};
+
+/**
+ * Wraps unknown errors into X402Error for consistent error handling.
+ * If the error is already an X402Error, returns it unchanged.
+ *
+ * @param e - The error to wrap
+ * @param code - Error code to use if wrapping (default: EINTERNAL)
+ * @param note - Message for wrapped error
+ */
+export function wrapUnknown(
+  e: unknown,
+  code: ErrorCode = 'EINTERNAL',
+  note = 'Unexpected failure'
+): X402Error {
+  if (e instanceof X402Error) return e;
+  if (e instanceof Error) return new X402Error(code, note, { cause: e });
+  return new X402Error(code, note, { cause: e });
+}
+
+/**
+ * Result type for APIs that prefer explicit error handling over exceptions.
+ * Use this for workflows where exceptions are undesirable.
+ */
+export type Result<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: X402Error };
+
+/**
+ * Wraps a promise to return a Result instead of throwing.
+ * @param p - Promise to wrap
+ */
+export async function safe<T>(p: Promise<T>): Promise<Result<T>> {
+  try {
+    return { ok: true, value: await p };
+  } catch (e) {
+    return { ok: false, error: wrapUnknown(e) };
+  }
+}
+
+/**
+ * Serializable error shape for wire transmission.
+ * Never includes error.cause to avoid leaking internal details.
+ */
+export interface ErrorDTO {
+  name: string;
+  code: ErrorCode;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Converts any error to a safe serializable DTO.
+ * @param e - Error to convert
+ */
+export function toDTO(e: unknown): ErrorDTO {
+  const x402Error = e instanceof X402Error ? e : wrapUnknown(e);
+  const dto: ErrorDTO = {
+    name: 'X402Error',
+    code: x402Error.code,
+    message: x402Error.message,
+  };
+  if (x402Error.details !== undefined) {
+    dto.details = x402Error.details;
+  }
+  return dto;
+}
+
+/**
+ * Type guard to check if an error is an X402Error.
+ */
+export function isX402Error(e: unknown): e is X402Error {
+  return (
+    !!e &&
+    typeof e === 'object' &&
+    'code' in e &&
+    'message' in e &&
+    e instanceof X402Error
+  );
+}
+
+/**
+ * Asserts unreachable code (for exhaustive switch checks).
+ */
+export function assertNever(_x: never): never {
+  throw err.internal('Unreachable code executed');
+}
+
+// ============================================================================
+// Public error classes with static factory methods
+// ============================================================================
+
+/**
+ * Payment-related error class with convenient static factory methods.
+ * All methods return X402Error with appropriate error codes.
  */
 export class PaymentError extends X402Error {
-  constructor(message: string, code: string) {
-    super(message, code);
+  constructor(message: string, code: ErrorCode = 'EINVALID_INPUT') {
+    super(code, message);
     this.name = 'PaymentError';
   }
 
-  /**
-   * Payment payload validation failed
-   */
-  static invalidPayload(details?: string): PaymentError {
-    return new PaymentError(
-      `Invalid payment payload${details ? `: ${details}` : ''}`,
-      'INVALID_PAYLOAD'
+  static invalidPayload(details?: string): X402Error {
+    return err.invalid(
+      `Invalid payment payload${details ? `: ${details}` : ''}`
     );
   }
 
-  /**
-   * Insufficient balance to make payment
-   */
-  static insufficientBalance(
-    required: string,
-    available: string
-  ): PaymentError {
-    return new PaymentError(
+  static insufficientBalance(required: string, available: string): X402Error {
+    return err.conflict(
       `Insufficient balance: required ${required}, available ${available}`,
-      'INSUFFICIENT_BALANCE'
+      { required, available }
     );
   }
 
-  /**
-   * Payment verification failed
-   */
-  static verificationFailed(reason: string): PaymentError {
-    return new PaymentError(
-      `Payment verification failed: ${reason}`,
-      'VERIFICATION_FAILED'
-    );
+  static verificationFailed(reason: string): X402Error {
+    return err.invalid(`Payment verification failed: ${reason}`);
   }
 
-  /**
-   * Payment settlement failed
-   */
-  static settlementFailed(reason: string): PaymentError {
-    return new PaymentError(
-      `Payment settlement failed: ${reason}`,
-      'SETTLEMENT_FAILED'
-    );
+  static settlementFailed(reason: string): X402Error {
+    return err.internal(`Payment settlement failed: ${reason}`);
   }
 }
 
 /**
- * Network-related errors
+ * Network-related error class with convenient static factory methods.
+ * All methods return X402Error with appropriate error codes.
  */
 export class NetworkError extends X402Error {
-  constructor(message: string, code: string) {
-    super(message, code);
+  constructor(message: string, code: ErrorCode = 'ENETWORK') {
+    super(code, message);
     this.name = 'NetworkError';
   }
 
-  /**
-   * Unsupported network
-   */
-  static unsupportedNetwork(network: string): NetworkError {
-    return new NetworkError(
-      `Unsupported network: ${network}`,
-      'UNSUPPORTED_NETWORK'
-    );
+  static unsupportedNetwork(network: string): X402Error {
+    return err.invalid(`Unsupported network: ${network}`, { network });
   }
 
-  /**
-   * Network mismatch between payload and requirements
-   */
-  static networkMismatch(expected: string, actual: string): NetworkError {
-    return new NetworkError(
+  static networkMismatch(expected: string, actual: string): X402Error {
+    return err.conflict(
       `Network mismatch: expected ${expected}, got ${actual}`,
-      'NETWORK_MISMATCH'
+      {
+        expected,
+        actual,
+      }
     );
   }
 
-  /**
-   * RPC call failed
-   */
-  static rpcFailed(details: string): NetworkError {
-    return new NetworkError(`RPC call failed: ${details}`, 'RPC_FAILED');
+  static rpcFailed(details: string, cause?: unknown): X402Error {
+    return err.network(`RPC call failed: ${details}`, cause);
   }
 }
 
 /**
- * Error code constants for stable programmatic handling
+ * Error code constants for programmatic error handling.
+ * These codes are stable and part of the public API.
  */
 export const ERROR_CODES = {
-  // Payment errors
-  INVALID_PAYLOAD: 'INVALID_PAYLOAD',
-  INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
-  VERIFICATION_FAILED: 'VERIFICATION_FAILED',
-  SETTLEMENT_FAILED: 'SETTLEMENT_FAILED',
-
-  // Network errors
-  UNSUPPORTED_NETWORK: 'UNSUPPORTED_NETWORK',
-  NETWORK_MISMATCH: 'NETWORK_MISMATCH',
-  RPC_FAILED: 'RPC_FAILED',
-
-  // Paymaster errors
-  PAYMASTER_ERROR: 'PAYMASTER_ERROR',
-  PAYMASTER_UNAVAILABLE: 'PAYMASTER_UNAVAILABLE',
+  EINVALID_INPUT: 'EINVALID_INPUT',
+  ENOT_FOUND: 'ENOT_FOUND',
+  ETIMEOUT: 'ETIMEOUT',
+  ECONFLICT: 'ECONFLICT',
+  ECANCELLED: 'ECANCELLED',
+  EINTERNAL: 'EINTERNAL',
+  ENETWORK: 'ENETWORK',
+  EPAYMASTER: 'EPAYMASTER',
 } as const;
-
-export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

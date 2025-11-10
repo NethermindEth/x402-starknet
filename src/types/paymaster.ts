@@ -235,17 +235,3 @@ export interface JsonRpcResponse<T = unknown> {
   };
   id: number | string;
 }
-
-/**
- * Paymaster error
- */
-export class PaymasterError extends Error {
-  constructor(
-    message: string,
-    public code?: number,
-    public data?: unknown
-  ) {
-    super(message);
-    this.name = 'PaymasterError';
-  }
-}

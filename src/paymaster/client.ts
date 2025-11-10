@@ -13,7 +13,7 @@ import type {
   JsonRpcRequest,
   JsonRpcResponse,
 } from '../types/paymaster.js';
-import { PaymasterError } from '../types/paymaster.js';
+import { err, wrapUnknown, isX402Error } from '../errors.js';
 
 /**
  * Paymaster RPC client for interacting with AVNU Paymaster
@@ -53,36 +53,32 @@ export class PaymasterClient {
       });
 
       if (!response.ok) {
-        throw new PaymasterError(
+        throw err.paymaster(
           `HTTP error: ${String(response.status)} ${response.statusText}`,
-          response.status
+          undefined,
+          { status: response.status, statusText: response.statusText }
         );
       }
 
       const jsonResponse = (await response.json()) as JsonRpcResponse<T>;
 
       if (jsonResponse.error) {
-        throw new PaymasterError(
-          jsonResponse.error.message,
-          jsonResponse.error.code,
-          jsonResponse.error.data
-        );
+        throw err.paymaster(jsonResponse.error.message, undefined, {
+          code: jsonResponse.error.code,
+          data: jsonResponse.error.data,
+        });
       }
 
       if (jsonResponse.result === undefined) {
-        throw new PaymasterError('No result in RPC response');
+        throw err.paymaster('No result in RPC response');
       }
 
       return jsonResponse.result;
     } catch (error) {
-      if (error instanceof PaymasterError) {
+      if (isX402Error(error)) {
         throw error;
       }
-      throw new PaymasterError(
-        `RPC call failed: ${(error as Error).message}`,
-        undefined,
-        error
-      );
+      throw wrapUnknown(error, 'EPAYMASTER', 'RPC call failed');
     }
   }
 

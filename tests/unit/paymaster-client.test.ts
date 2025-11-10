@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PaymasterClient, createPaymasterClient } from '../../src/paymaster/client.js';
-import { PaymasterError } from '../../src/types/paymaster.js';
+import { X402Error } from '../../src/errors.js';
 import type { PaymasterConfig } from '../../src/types/paymaster.js';
 import { createMockFetch } from '../helpers/mock-fetch.js';
 
@@ -75,7 +75,7 @@ describe('PaymasterClient', () => {
       );
     });
 
-    it('should throw PaymasterError on RPC error', async () => {
+    it('should throw X402Error on RPC error', async () => {
       const mockError = {
         code: -32000,
         message: 'Test error',
@@ -102,10 +102,10 @@ describe('PaymasterClient', () => {
             fee_mode: { mode: 'sponsored' },
           },
         })
-      ).rejects.toThrow(PaymasterError);
+      ).rejects.toThrow(X402Error);
     });
 
-    it('should throw PaymasterError on HTTP error', async () => {
+    it('should throw X402Error on HTTP error', async () => {
       global.fetch = vi.fn().mockResolvedValue(
         new Response('Not Found', {
           status: 404,
@@ -129,7 +129,7 @@ describe('PaymasterClient', () => {
             fee_mode: { mode: 'sponsored' },
           },
         })
-      ).rejects.toThrow(PaymasterError);
+      ).rejects.toThrow(X402Error);
     });
   });
 
