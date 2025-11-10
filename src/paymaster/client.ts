@@ -24,7 +24,14 @@ export class PaymasterClient {
   constructor(private config: PaymasterConfig) {}
 
   /**
-   * Make a JSON-RPC request to the paymaster
+   * Sleep for a given number of milliseconds
+   */
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Make a JSON-RPC request to the paymaster with retry logic
    */
   private async rpcCall<T>(method: string, params: unknown): Promise<T> {
     const request: JsonRpcRequest = {
@@ -43,43 +50,92 @@ export class PaymasterClient {
       headers['x-paymaster-api-key'] = this.config.apiKey;
     }
 
-    try {
-      const requestBody = JSON.stringify(request);
+    const maxRetries = 10;
+    let lastError: unknown;
 
-      const response = await fetch(this.config.endpoint, {
-        method: 'POST',
-        headers,
-        body: requestBody,
-      });
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const requestBody = JSON.stringify(request);
 
-      if (!response.ok) {
-        throw err.paymaster(
-          `HTTP error: ${String(response.status)} ${response.statusText}`,
-          undefined,
-          { status: response.status, statusText: response.statusText }
-        );
-      }
-
-      const jsonResponse = (await response.json()) as JsonRpcResponse<T>;
-
-      if (jsonResponse.error) {
-        throw err.paymaster(jsonResponse.error.message, undefined, {
-          code: jsonResponse.error.code,
-          data: jsonResponse.error.data,
+        const response = await fetch(this.config.endpoint, {
+          method: 'POST',
+          headers,
+          body: requestBody,
+          // Add timeout to prevent hanging forever
+          signal: AbortSignal.timeout(30000), // 30 second timeout per request
         });
-      }
 
-      if (jsonResponse.result === undefined) {
-        throw err.paymaster('No result in RPC response');
-      }
+        if (!response.ok) {
+          // 5xx errors might recover after paymaster failover, retry them
+          const shouldRetry = response.status >= 500;
 
-      return jsonResponse.result;
-    } catch (error) {
-      if (isX402Error(error)) {
-        throw error;
+          const error = err.paymaster(
+            `HTTP error: ${String(response.status)} ${response.statusText}`,
+            undefined,
+            { status: response.status, statusText: response.statusText }
+          );
+
+          if (!shouldRetry) {
+            throw error; // Don't retry 4xx errors (client errors)
+          }
+
+          throw error; // Will be caught and retried
+        }
+
+        const jsonResponse = (await response.json()) as JsonRpcResponse<T>;
+
+        if (jsonResponse.error) {
+          throw err.paymaster(jsonResponse.error.message, undefined, {
+            code: jsonResponse.error.code,
+            data: jsonResponse.error.data,
+          });
+        }
+
+        if (jsonResponse.result === undefined) {
+          throw err.paymaster('No result in RPC response');
+        }
+
+        // Success - return result
+        return jsonResponse.result;
+      } catch (error) {
+        lastError = error;
+
+        // Don't retry on X402 errors (application-level errors like validation failures)
+        if (isX402Error(error)) {
+          throw error;
+        }
+
+        // If this was the last attempt, throw
+        if (attempt === maxRetries) {
+          throw wrapUnknown(
+            error,
+            'EPAYMASTER',
+            `RPC call '${method}' failed after ${String(maxRetries + 1)} retries`
+          );
+        }
+
+        // Optimized backoff strategy for paymaster with circuit breaker:
+        // - Quick retries initially (1s, 2s, 4s) for transient network errors
+        // - Longer delays after 3 failures (8s, 15s, 30s, 45s, 60s, 60s, 60s)
+        //   to allow paymaster circuit breaker to trip and failover (10-60s)
+        let backoffMs: number;
+        if (attempt < 3) {
+          // Fast retries for quick recovery from transient errors
+          backoffMs = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s
+        } else if (attempt < 6) {
+          // Medium delays to allow circuit breaker to trip
+          backoffMs = 8000 + (attempt - 3) * 7000; // 8s, 15s, 22s
+        } else {
+          // Long delays to allow full failover and recovery
+          backoffMs = 30000 + Math.min((attempt - 6) * 15000, 30000); // 30s, 45s, 60s, 60s
+        }
+
+        await this.sleep(backoffMs);
       }
-      throw wrapUnknown(error, 'EPAYMASTER', 'RPC call failed');
     }
+
+    // This should never be reached, but TypeScript needs it
+    throw wrapUnknown(lastError, 'EPAYMASTER', 'RPC call failed after retries');
   }
 
   /**
