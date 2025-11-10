@@ -1,6 +1,6 @@
 {
   "name": "x402-starknet",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Starknet implementation of the x402 payment protocol",
   "type": "module",
   "main": "./dist/index.js",
