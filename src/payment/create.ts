@@ -217,6 +217,7 @@ export function encodePaymentHeader(payload: PaymentPayload): string {
  *
  * @param encoded - Base64-encoded payment header
  * @returns Decoded payment payload
+ * @throws Error if decoded value is not a valid object
  *
  * @example
  * ```typescript
@@ -225,5 +226,14 @@ export function encodePaymentHeader(payload: PaymentPayload): string {
  */
 export function decodePaymentHeader(encoded: string): PaymentPayload {
   const json = Buffer.from(encoded, 'base64').toString('utf-8');
-  return JSON.parse(json) as PaymentPayload;
+  const parsed: unknown = JSON.parse(json);
+
+  // Validate that decoded value is an object (not null, array, string, number, etc.)
+  // This prevents prototype pollution and ensures proper payload structure
+  // See SECURITY.md:194-214 for details
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('Invalid payment payload: must be an object');
+  }
+
+  return parsed as PaymentPayload;
 }

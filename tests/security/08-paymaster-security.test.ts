@@ -47,17 +47,29 @@ describe('Security: Paymaster Security', () => {
       expect(isAllowed(badConfig.endpoint)).toBe(false);
 
       // Applications should validate before using
-      if (!isAllowed(badConfig.endpoint)) {
-        throw new Error('Untrusted paymaster endpoint');
-      }
+      // This demonstrates the pattern - actual implementation should reject
+      const validateEndpoint = (config: PaymasterConfig) => {
+        if (!isAllowed(config.endpoint)) {
+          throw new Error('Untrusted paymaster endpoint');
+        }
+        return true;
+      };
+
+      // Good config passes validation
+      expect(() => validateEndpoint(goodConfig)).not.toThrow();
+
+      // Bad config fails validation
+      expect(() => validateEndpoint(badConfig)).toThrow('Untrusted paymaster endpoint');
     });
 
     it('should provide default trusted paymaster endpoints', () => {
-      // Library provides default trusted endpoints
+      // Library provides default endpoints
+      // Sepolia uses localhost for testing (to avoid requiring API keys)
       expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia']).toBe(
-        'https://sepolia.paymaster.avnu.fi'
+        'http://localhost:12777'
       );
 
+      // Mainnet uses production AVNU endpoint
       expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-mainnet']).toBe(
         'https://starknet.paymaster.avnu.fi'
       );
@@ -240,7 +252,7 @@ describe('Security: Paymaster Security', () => {
     });
 
     it('should timeout on slow paymaster responses', async () => {
-      const timeout = 5000; // 5 seconds
+      const timeout = 1000; // 1 second
 
       const withTimeout = <T>(
         promise: Promise<T>,
@@ -254,9 +266,9 @@ describe('Security: Paymaster Security', () => {
         ]);
       };
 
-      // Simulate slow paymaster
+      // Simulate slow paymaster (2 seconds, longer than timeout)
       const slowPaymaster = new Promise((resolve) => {
-        setTimeout(resolve, 10000); // 10 seconds
+        setTimeout(resolve, 2000);
       });
 
       await expect(withTimeout(slowPaymaster, timeout)).rejects.toThrow(
@@ -388,10 +400,21 @@ describe('Security: Paymaster Security', () => {
       expect(isTrusted(trustedPaymasters[0])).toBe(true);
       expect(isTrusted(untrustedPaymaster)).toBe(false);
 
-      if (!isTrusted(untrustedPaymaster)) {
-        // Should not send signatures to untrusted paymasters
-        throw new Error('Untrusted paymaster - signature theft risk');
-      }
+      // Demonstrate that untrusted paymasters should be rejected
+      const validatePaymaster = (endpoint: string) => {
+        if (!isTrusted(endpoint)) {
+          throw new Error('Untrusted paymaster - signature theft risk');
+        }
+        return true;
+      };
+
+      // Trusted paymaster passes validation
+      expect(() => validatePaymaster(trustedPaymasters[0])).not.toThrow();
+
+      // Untrusted paymaster fails validation
+      expect(() => validatePaymaster(untrustedPaymaster)).toThrow(
+        'Untrusted paymaster - signature theft risk'
+      );
     });
   });
 });

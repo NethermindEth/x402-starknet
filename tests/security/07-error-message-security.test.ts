@@ -325,26 +325,30 @@ describe('Security: Error Message Security', () => {
       const errorScenarios = [
         {
           name: 'insufficient balance',
+          mockType: 'resolve',
           mockResponse: ['100', '0'],
           expectedReason: 'insufficient_balance',
         },
         {
           name: 'RPC error',
-          mockResponse: Promise.reject(new Error('Network timeout')),
+          mockType: 'reject',
+          mockResponse: new Error('Network timeout'),
           expectedReason: 'unknown_error',
         },
       ];
 
       for (const scenario of errorScenarios) {
         const mockProvider: RpcProvider = {
-          callContract: vi.fn().mockImplementation(() =>
-            Promise.resolve(scenario.mockResponse)
-          ),
+          callContract: vi.fn(),
         } as unknown as RpcProvider;
 
-        if (scenario.mockResponse instanceof Promise) {
+        if (scenario.mockType === 'reject') {
           (mockProvider.callContract as any).mockRejectedValue(
-            new Error('Network timeout')
+            scenario.mockResponse
+          );
+        } else {
+          (mockProvider.callContract as any).mockResolvedValue(
+            scenario.mockResponse
           );
         }
 

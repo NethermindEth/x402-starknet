@@ -43,3 +43,42 @@ export function feltToHex(felt: string | bigint): string {
   const value = typeof felt === 'string' ? BigInt(felt) : felt;
   return '0x' + value.toString(16);
 }
+
+/**
+ * Normalize Starknet address for comparison
+ * Converts addresses to lowercase and removes leading zeros
+ *
+ * @param address - Address to normalize (with or without 0x prefix)
+ * @returns Normalized address with 0x prefix
+ *
+ * @example
+ * ```typescript
+ * normalizeAddress('0x0001') // '0x1'
+ * normalizeAddress('0x1') // '0x1'
+ * normalizeAddress('0X1') // '0x1'
+ * ```
+ */
+export function normalizeAddress(address: string): string {
+  // Handle empty or invalid addresses
+  if (!address || typeof address !== 'string') {
+    return address;
+  }
+
+  // Convert to lowercase for case-insensitive comparison
+  const lowerAddress = address.toLowerCase();
+
+  // Remove 0x prefix if present
+  const withoutPrefix = lowerAddress.startsWith('0x')
+    ? lowerAddress.slice(2)
+    : lowerAddress;
+
+  // Convert to BigInt and back to remove leading zeros
+  // This normalizes 0x0001 to 0x1
+  try {
+    const normalized = BigInt('0x' + withoutPrefix);
+    return '0x' + normalized.toString(16);
+  } catch {
+    // If conversion fails, return original (might be malformed)
+    return address;
+  }
+}
