@@ -68,34 +68,28 @@ export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
 
 /**
  * Schema for payment payload
+ * Note: Using passthrough() to allow extra fields for forward compatibility
  */
-export const PAYMENT_PAYLOAD_SCHEMA: z.ZodType<{
-  x402Version: 1;
-  scheme: 'exact';
-  network: 'starknet-mainnet' | 'starknet-sepolia' | 'starknet-devnet';
-  payload: {
-    signature: {
-      r: string;
-      s: string;
-    };
-    authorization: {
-      from: string;
-      to: string;
-      amount: string;
-      token: string;
-      nonce: string;
-      validUntil: string;
-    };
-  };
-}> = z.object({
-  x402Version: z.literal(1),
-  scheme: PAYMENT_SCHEME_SCHEMA,
-  network: STARKNET_NETWORK_SCHEMA,
-  payload: z.object({
-    signature: SIGNATURE_SCHEMA,
-    authorization: PAYMENT_AUTHORIZATION_SCHEMA,
-  }),
-});
+export const PAYMENT_PAYLOAD_SCHEMA = z
+  .object({
+    x402Version: z.literal(1),
+    scheme: PAYMENT_SCHEME_SCHEMA,
+    network: STARKNET_NETWORK_SCHEMA,
+    payload: z.object({
+      signature: SIGNATURE_SCHEMA,
+      authorization: PAYMENT_AUTHORIZATION_SCHEMA,
+    }),
+    settlementTransaction: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]+$/, 'Invalid transaction hash format')
+      .optional(),
+    typedData: z.unknown().optional(),
+    paymasterEndpoint: z
+      .string()
+      .url('Invalid paymaster endpoint URL')
+      .optional(),
+  })
+  .passthrough(); // Allow additional fields for forward compatibility
 
 /**
  * Schema for payment requirements response

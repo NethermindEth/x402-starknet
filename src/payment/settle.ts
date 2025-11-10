@@ -78,14 +78,9 @@ export async function settlePayment(
   try {
     // 2. Get paymaster configuration and typed_data
     // Extract from payload if available, otherwise use options
-    const payloadWithExtras = payload as unknown as {
-      paymasterEndpoint?: string;
-      typedData?: TypedData;
-    };
-
     const paymasterEndpoint =
-      options?.paymasterConfig?.endpoint ?? payloadWithExtras.paymasterEndpoint;
-    const typedData = payloadWithExtras.typedData;
+      options?.paymasterConfig?.endpoint ?? payload.paymasterEndpoint;
+    const typedData = payload.typedData as TypedData | undefined;
 
     if (!paymasterEndpoint) {
       throw err.invalid('Paymaster endpoint not provided');

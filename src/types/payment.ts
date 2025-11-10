@@ -90,6 +90,12 @@ export interface PaymentPayload {
     /** Authorization details */
     authorization: PaymentAuthorization;
   };
+  /** Settlement transaction hash (added after calling /facilitator/settle) */
+  settlementTransaction?: string;
+  /** Typed data used for signature (required for settlement) */
+  typedData?: unknown;
+  /** Paymaster endpoint for settlement (optional) */
+  paymasterEndpoint?: string;
 }
 
 /**
