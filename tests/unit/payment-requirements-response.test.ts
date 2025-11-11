@@ -3,7 +3,7 @@
  * Validates spec compliance with x402 v0.2 Section 5.1
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from 'vitest';
 import { PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA } from '../../src/types/schemas.js';
 import type { PaymentRequirementsResponse } from '../../src/types/payment.js';
 
@@ -22,7 +22,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
-            maxTimeoutSeconds: 60,
             description: 'Access to premium data',
             maxTimeoutSeconds: 60,
           },
@@ -48,7 +47,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
             maxTimeoutSeconds: 60,
-            maxTimeoutSeconds: 60,
           },
           {
             scheme: 'exact',
@@ -58,7 +56,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8',
             payTo: '0xabcdef1234567890abcdef1234567890abcdef12',
             resource: 'https://api.example.com/data',
-            maxTimeoutSeconds: 60,
             maxTimeoutSeconds: 120,
           },
         ],
@@ -175,7 +172,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
             maxTimeoutSeconds: 60,
-            maxTimeoutSeconds: 60,
             outputSchema: {
               type: 'object',
               properties: {
@@ -204,7 +200,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
-            maxTimeoutSeconds: 60,
             maxTimeoutSeconds: 60,
             outputSchema: null,
           },
@@ -257,7 +252,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
-            maxTimeoutSeconds: 60,
             maxTimeoutSeconds: 0, // Must be positive
           },
         ],
@@ -281,7 +275,6 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
-            maxTimeoutSeconds: 60,
             maxTimeoutSeconds: -10, // Must be positive
           },
         ],
@@ -472,7 +465,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
 
       expect(response.x402Version).toBe(1);
       expect(response.error).toBe('Payment required');
-      expect(response.accepts).toBeArrayOfSize(1);
+      expect(response.accepts).toHaveLength(1);
     });
   });
 
