@@ -452,6 +452,89 @@ const payload = decodePaymentHeader(header);
 
 ---
 
+### `encodePaymentResponseHeader`
+
+Encode payment requirements response to base64 for HTTP `X-Payment-Response` header.
+
+This function is used by facilitators to encode the 402 response when using header-based
+transport instead of JSON body.
+
+```typescript
+function encodePaymentResponseHeader(
+  response: PaymentRequirementsResponse
+): string;
+```
+
+**Parameters:**
+
+- `response` - Payment requirements response to encode
+
+**Returns:** `string` - Base64-encoded response
+
+**Example:**
+
+```typescript
+import { encodePaymentResponseHeader } from '@x402/starknet';
+
+const response: PaymentRequirementsResponse = {
+  x402Version: 1,
+  error: 'Payment required',
+  accepts: [requirement1, requirement2],
+};
+
+const encoded = encodePaymentResponseHeader(response);
+
+// Use in HTTP response header
+return new Response(resource, {
+  status: 402,
+  headers: {
+    'X-Payment-Response': encoded,
+  },
+});
+```
+
+---
+
+### `decodePaymentResponseHeader`
+
+Decode base64 payment response header back to PaymentRequirementsResponse.
+
+This function is used by clients to decode the 402 response when the facilitator
+uses header-based transport.
+
+```typescript
+function decodePaymentResponseHeader(
+  encoded: string
+): PaymentRequirementsResponse;
+```
+
+**Parameters:**
+
+- `encoded` - Base64-encoded payment response header
+
+**Returns:** `PaymentRequirementsResponse` - Decoded payment requirements response
+
+**Throws:**
+
+- Error if decoding or validation fails
+
+**Example:**
+
+```typescript
+import { decodePaymentResponseHeader } from '@x402/starknet';
+
+const response = await fetch(url);
+if (response.status === 402) {
+  const header = response.headers.get('X-Payment-Response');
+  if (header) {
+    const requirements = decodePaymentResponseHeader(header);
+    // Use requirements.accepts to create payment
+  }
+}
+```
+
+---
+
 ## Constants
 
 ### `VERSION`

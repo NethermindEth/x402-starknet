@@ -4,7 +4,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-✅ **Small, stable surface** - Only 20 named exports
+✅ **Small, stable surface** - Only 21 named exports
 ✅ **No wildcard exports** - Explicit named exports only
 ✅ **No deep imports** - Single entry point via `@x402/starknet`
 ✅ **Tree-shakeable** - `sideEffects: false` in package.json
@@ -15,9 +15,9 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ---
 
-## Public Exports (20 total)
+## Public Exports (21 total)
 
-### Core Functions (11)
+### Core Functions (13)
 
 Payment operations:
 
@@ -27,8 +27,10 @@ Payment operations:
 
 Encoding:
 
-- `encodePaymentHeader()` - Encode to base64
-- `decodePaymentHeader()` - Decode from base64
+- `encodePaymentHeader()` - Encode payment payload to base64
+- `decodePaymentHeader()` - Decode payment payload from base64
+- `encodePaymentResponseHeader()` - Encode payment response to base64
+- `decodePaymentResponseHeader()` - Decode payment response from base64
 
 Network utilities:
 
@@ -222,7 +224,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(20); // Enforced!
+  expect(allExports).toHaveLength(21); // Enforced!
 });
 ```
 
@@ -257,19 +259,19 @@ All public APIs are now available from the root export.
 
 ## Comparison with Library Best Practices
 
-| Practice           | Status | Notes                              |
-| ------------------ | ------ | ---------------------------------- |
-| Small surface      | ✅     | 20 named exports                   |
-| Named exports only | ✅     | No `export *`                      |
-| No deep imports    | ✅     | Single entry point                 |
-| Tree-shakeable     | ✅     | `sideEffects: false`               |
-| Minimal deps       | ✅     | Only 2 runtime deps                |
-| Peer deps          | ✅     | `starknet` as peer                 |
-| Type-safe          | ✅     | Full TypeScript support            |
-| Stable errors      | ✅     | Error codes + classes              |
-| ESM-first          | ✅     | `"type": "module"`                 |
-| Documented         | ✅     | API.md + JSDoc                     |
-| Tested             | ✅     | 78 tests, 100% public API coverage |
+| Practice           | Status | Notes                               |
+| ------------------ | ------ | ----------------------------------- |
+| Small surface      | ✅     | 21 named exports                    |
+| Named exports only | ✅     | No `export *`                       |
+| No deep imports    | ✅     | Single entry point                  |
+| Tree-shakeable     | ✅     | `sideEffects: false`                |
+| Minimal deps       | ✅     | Only 2 runtime deps                 |
+| Peer deps          | ✅     | `starknet` as peer                  |
+| Type-safe          | ✅     | Full TypeScript support             |
+| Stable errors      | ✅     | Error codes + classes               |
+| ESM-first          | ✅     | `"type": "module"`                  |
+| Documented         | ✅     | API.md + JSDoc + Scheme spec        |
+| Tested             | ✅     | 306 tests, 100% public API coverage |
 
 ---
 
@@ -277,11 +279,12 @@ All public APIs are now available from the root export.
 
 The `@x402/starknet` library now follows industry best practices for library design:
 
-- **Minimal, stable API** with only 20 exports
+- **Minimal, stable API** with only 21 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
 - **Predictable errors** with stable error codes
-- **Well-documented** with comprehensive API reference
-- **Fully tested** with public API surface verification
+- **Well-documented** with comprehensive API reference and protocol specification
+- **Fully tested** with public API surface verification (306 tests)
+- **Spec-compliant** with x402 v0.2 protocol
 
 This ensures a great developer experience and long-term API stability.
