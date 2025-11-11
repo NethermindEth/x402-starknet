@@ -33,6 +33,7 @@ describe('Payment Creation', () => {
         asset: '0xeth',
         payTo: '0xrecipient',
         resource: '/api/data',
+        maxTimeoutSeconds: 300,
       },
       {
         scheme: 'exact',
@@ -41,12 +42,18 @@ describe('Payment Creation', () => {
         asset: '0xusdc',
         payTo: '0xrecipient2',
         resource: '/api/data',
+        maxTimeoutSeconds: 600,
       },
     ];
 
-    it('should select first compatible requirement', async () => {
-      const mockAccount = {} as any;
-      const mockProvider = {} as any;
+    it('should select compatible requirement with sufficient balance', async () => {
+      const mockAccount = {
+        address: '0x1234',
+      } as any;
+      const mockProvider = {
+        getChainId: vi.fn().mockResolvedValue('0x534e5f5345504f4c4941'), // SN_SEPOLIA
+        callContract: vi.fn().mockResolvedValue(['2000000', '0']), // Sufficient balance
+      } as any;
 
       const selected = await selectPaymentRequirements(
         mockRequirements,
@@ -54,16 +61,16 @@ describe('Payment Creation', () => {
         mockProvider
       );
 
-      expect(selected).toEqual(mockRequirements[0]);
+      expect(selected.network).toBe('starknet-sepolia');
     });
 
-    it('should throw if no compatible requirements', () => {
+    it('should throw if no compatible requirements', async () => {
       const mockAccount = {} as any;
       const mockProvider = {} as any;
 
-      expect(() =>
+      await expect(
         selectPaymentRequirements([], mockAccount, mockProvider)
-      ).toThrow('No payment requirements provided');
+      ).rejects.toThrow('No payment requirements provided');
     });
   });
 
