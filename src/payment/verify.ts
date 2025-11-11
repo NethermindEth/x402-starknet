@@ -115,6 +115,7 @@ export async function verifyPayment(
 
     // 8. Verify payment hasn't expired (validUntil timestamp check)
     // validUntil is a Unix timestamp (seconds since epoch) as a string
+    // NOTE: validUntil of 0 means "never expires" (common with AVNU paymaster)
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const validUntil = parseInt(payload.payload.authorization.validUntil, 10);
 
@@ -129,7 +130,8 @@ export async function verifyPayment(
       };
     }
 
-    if (currentTimestamp > validUntil) {
+    // validUntil of 0 means "never expires"
+    if (validUntil !== 0 && currentTimestamp > validUntil) {
       return {
         isValid: false,
         invalidReason: 'expired',

@@ -211,7 +211,7 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       expect(result.payer).toBe(PAYER_ADDRESS);
     });
 
-    it('should reject payment with validUntil = 0 (Unix epoch)', async () => {
+    it('should accept payment with validUntil = 0 (no expiration)', async () => {
       const payload: PaymentPayload = {
         x402Version: 1,
         scheme: 'exact',
@@ -238,8 +238,8 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
         baseRequirements
       );
 
-      expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('expired');
+      // validUntil = 0 means no expiration, so payment should be valid
+      expect(result.isValid).toBe(true);
       expect(result.payer).toBe(PAYER_ADDRESS);
     });
 
