@@ -562,7 +562,8 @@ interface PaymentRequirements {
   readonly resource: string;
   readonly description?: string;
   readonly mimeType?: string;
-  readonly maxTimeoutSeconds?: number;
+  readonly outputSchema?: object | null;
+  readonly maxTimeoutSeconds: number; // REQUIRED per spec §5.1
   readonly extra?: {
     readonly tokenName?: string;
     readonly tokenSymbol?: string;
@@ -571,6 +572,25 @@ interface PaymentRequirements {
   };
 }
 ```
+
+**Spec compliance:** x402 v0.2 Section 5.1 - PaymentRequirements Schema
+
+**Required Fields:**
+
+- `scheme`: Payment scheme identifier ("exact")
+- `network`: Starknet network identifier
+- `maxAmountRequired`: Payment amount in smallest token unit (string)
+- `asset`: Token contract address
+- `payTo`: Recipient address
+- `resource`: Protected resource identifier (supports HTTP, MCP, A2A, IPFS, and custom schemes)
+- `maxTimeoutSeconds`: Maximum time (seconds) for payment settlement
+
+**Optional Fields:**
+
+- `description`: Human-readable payment description
+- `mimeType`: Expected MIME type of response
+- `outputSchema`: JSON schema describing response format (can be null)
+- `extra`: Scheme-specific metadata (token info, payment contract)
 
 ---
 
@@ -880,6 +900,7 @@ const requirements: PaymentRequirements = {
   payTo: '0x1234...', // Your address
   resource: 'https://api.example.com/data',
   description: 'Premium API access',
+  maxTimeoutSeconds: 60, // Required per spec §5.1
 };
 
 async function handleRequest(request: Request) {

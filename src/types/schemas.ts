@@ -40,6 +40,7 @@ export const PAYMENT_AUTHORIZATION_SCHEMA = z.object({
 
 /**
  * Schema for payment requirements
+ * Spec compliance: x402 v0.2 Section 5.1 - PaymentRequirements Schema
  */
 export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
   scheme: PAYMENT_SCHEME_SCHEMA,
@@ -49,10 +50,19 @@ export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
     .regex(/^\d+$/, 'Max amount must be a numeric string'),
   asset: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid asset address format'),
   payTo: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid payTo address format'),
-  resource: z.string().url('Resource must be a valid URL'),
+  resource: z
+    .string()
+    .min(
+      1,
+      'Resource must be a non-empty string (supports HTTP, MCP, A2A, etc.)'
+    ),
   description: z.string().optional(),
   mimeType: z.string().optional(),
-  maxTimeoutSeconds: z.number().int().positive().optional(),
+  outputSchema: z.object({}).passthrough().nullable().optional(),
+  maxTimeoutSeconds: z
+    .number()
+    .int()
+    .positive('maxTimeoutSeconds must be a positive integer'),
   extra: z
     .object({
       tokenName: z.string().optional(),

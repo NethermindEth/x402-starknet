@@ -274,6 +274,7 @@ const requirements: PaymentRequirements = {
   asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
   payTo: '0x1234...', // Your address
   resource: 'https://api.example.com/data',
+  maxTimeoutSeconds: 60, // Required per spec §5.1
 };
 
 async function handleRequest(request: Request) {

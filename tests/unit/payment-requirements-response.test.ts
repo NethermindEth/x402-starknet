@@ -22,6 +22,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
             description: 'Access to premium data',
             maxTimeoutSeconds: 60,
           },
@@ -46,6 +47,8 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
+            maxTimeoutSeconds: 60,
           },
           {
             scheme: 'exact',
@@ -55,6 +58,8 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8',
             payTo: '0xabcdef1234567890abcdef1234567890abcdef12',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
+            maxTimeoutSeconds: 120,
           },
         ],
       };
@@ -77,6 +82,131 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'mcp://example-server/premium-tool',
+            maxTimeoutSeconds: 60,
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(validResponse);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept response with a2a:// resource URL', () => {
+      const validResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'a2a://agent-123/service',
+            maxTimeoutSeconds: 60,
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(validResponse);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept response with custom scheme resource URL', () => {
+      const validResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'custom-protocol://resource/identifier',
+            maxTimeoutSeconds: 60,
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(validResponse);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept response with ipfs:// resource URL', () => {
+      const validResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'ipfs://QmX123abc/data.json',
+            maxTimeoutSeconds: 60,
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(validResponse);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept response with outputSchema field', () => {
+      const validResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
+            maxTimeoutSeconds: 60,
+            outputSchema: {
+              type: 'object',
+              properties: {
+                result: { type: 'string' },
+              },
+            },
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(validResponse);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept response with null outputSchema', () => {
+      const validResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
+            maxTimeoutSeconds: 60,
+            outputSchema: null,
           },
         ],
       };
@@ -88,6 +218,80 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
   });
 
   describe('Invalid PaymentRequirementsResponse objects', () => {
+    it('should reject response missing maxTimeoutSeconds field', () => {
+      const invalidResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'https://api.example.com/data',
+            // Missing maxTimeoutSeconds - now required per spec §5.1
+          } as any, // Type assertion to allow missing required field in test
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(invalidResponse);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.path).toContain('maxTimeoutSeconds');
+      }
+    });
+
+    it('should reject response with zero maxTimeoutSeconds', () => {
+      const invalidResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
+            maxTimeoutSeconds: 0, // Must be positive
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(invalidResponse);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject response with negative maxTimeoutSeconds', () => {
+      const invalidResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
+            maxTimeoutSeconds: -10, // Must be positive
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(invalidResponse);
+      expect(result.success).toBe(false);
+    });
+
     it('should reject response missing error field', () => {
       const invalidResponse = {
         x402Version: 1,
@@ -101,6 +305,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
           },
         ],
       };
@@ -126,6 +331,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
           },
         ],
       };
@@ -180,6 +386,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
           },
         ],
       };
@@ -203,6 +410,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
           },
         ],
       };
@@ -212,6 +420,32 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0]?.path).toContain('accepts');
+      }
+    });
+
+    it('should reject response with empty resource string', () => {
+      const invalidResponse = {
+        x402Version: 1,
+        error: 'Payment required',
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'starknet-sepolia',
+            maxAmountRequired: '1000000',
+            asset:
+              '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            payTo: '0x1234567890abcdef1234567890abcdef12345678',
+            resource: '', // Empty string not allowed
+            maxTimeoutSeconds: 60,
+          },
+        ],
+      };
+
+      const result =
+        PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA.safeParse(invalidResponse);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.path).toContain('resource');
       }
     });
   });
@@ -231,6 +465,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
           },
         ],
       };
@@ -264,6 +499,7 @@ describe('PaymentRequirementsResponse Schema Compliance', () => {
               '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
             payTo: '0x1234567890abcdef1234567890abcdef12345678',
             resource: 'https://api.example.com/data',
+            maxTimeoutSeconds: 60,
           },
         ],
       };

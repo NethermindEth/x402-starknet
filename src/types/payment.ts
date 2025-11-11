@@ -40,6 +40,7 @@ export interface PaymentAuthorization {
 
 /**
  * Payment requirements sent by server
+ * Spec compliance: x402 v0.2 Section 5.1 - PaymentRequirements Schema
  */
 export interface PaymentRequirements {
   /** Payment scheme */
@@ -52,14 +53,16 @@ export interface PaymentRequirements {
   asset: string;
   /** Recipient address (felt252) */
   payTo: string;
-  /** Protected resource URL */
+  /** Protected resource identifier (supports HTTP, MCP, A2A, IPFS, and other schemes) */
   resource: string;
   /** Human-readable description of what payment is for */
   description?: string;
   /** MIME type of the resource */
   mimeType?: string;
-  /** Maximum timeout in seconds for payment settlement */
-  maxTimeoutSeconds?: number;
+  /** JSON schema describing the response format */
+  outputSchema?: object | null;
+  /** Maximum timeout in seconds for payment settlement (REQUIRED per spec §5.1) */
+  maxTimeoutSeconds: number;
   /** Additional scheme-specific data */
   extra?: {
     /** Token name (e.g., "USD Coin") */
