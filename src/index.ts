@@ -20,7 +20,12 @@ export { settlePayment } from './payment/settle.js';
 // Encoding Utilities
 // ============================================================================
 
-export { encodePaymentHeader, decodePaymentHeader } from './payment/create.js';
+export {
+  encodePaymentHeader,
+  decodePaymentHeader,
+  encodePaymentResponseHeader,
+  decodePaymentResponseHeader,
+} from './payment/create.js';
 
 // ============================================================================
 // Network Utilities

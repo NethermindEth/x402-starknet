@@ -6,6 +6,7 @@ import type {
   PaymentRequirements,
   PaymentPayload,
   PaymentRequirementsSelector,
+  PaymentRequirementsResponse,
   PaymasterConfig,
 } from '../types/index.js';
 import type { Account, RpcProvider, TypedData } from 'starknet';
@@ -16,10 +17,16 @@ import {
   createTransferCall,
   DEFAULT_PAYMASTER_ENDPOINTS,
 } from '../paymaster/index.js';
-import { err } from '../errors.js';
+import { err, PaymentError, NetworkError } from '../errors.js';
 
 /**
  * Select appropriate payment requirements from available options
+ *
+ * This function intelligently selects the best payment requirement based on:
+ * - Network compatibility (matches account's network)
+ * - Balance availability (user has sufficient funds)
+ * - Cost optimization (prefers lower amounts)
+ * - Timeout constraints (respects maxTimeoutSeconds)
  *
  * @param requirements - Array of payment requirement options
  * @param account - User's account
@@ -36,19 +43,114 @@ import { err } from '../errors.js';
  * );
  * ```
  */
-export function selectPaymentRequirements(
+export async function selectPaymentRequirements(
   requirements: Array<PaymentRequirements>,
-  _account: Account,
-  _provider: RpcProvider
-): PaymentRequirements {
-  // For now, simply return the first requirement
-  // TODO: Add network compatibility checking
-  // TODO: Add balance checking
-  const firstRequirement = requirements[0];
-  if (!firstRequirement) {
+  account: Account,
+  provider: RpcProvider
+): Promise<PaymentRequirements> {
+  if (requirements.length === 0) {
     throw err.invalid('No payment requirements provided');
   }
-  return firstRequirement;
+
+  // Get account network from provider
+  const accountNetwork = await getAccountNetwork(provider);
+
+  // Filter by network compatibility
+  const compatibleRequirements = requirements.filter(
+    (req) => req.network === accountNetwork
+  );
+
+  if (compatibleRequirements.length === 0) {
+    throw NetworkError.networkMismatch(
+      accountNetwork,
+      requirements.map((r) => r.network).join(', ')
+    );
+  }
+
+  // Check balances for compatible requirements
+  const { getTokenBalance } = await import('../utils/token.js');
+  const requirementsWithBalance = await Promise.all(
+    compatibleRequirements.map(async (req) => {
+      try {
+        const balance = await getTokenBalance(
+          provider,
+          req.asset,
+          account.address
+        );
+        const hasBalance = BigInt(balance) >= BigInt(req.maxAmountRequired);
+        return { requirement: req, balance, hasBalance };
+      } catch {
+        // If balance check fails, assume insufficient balance
+        return { requirement: req, balance: '0', hasBalance: false };
+      }
+    })
+  );
+
+  // Filter to only requirements with sufficient balance
+  const affordableRequirements = requirementsWithBalance.filter(
+    (r) => r.hasBalance
+  );
+
+  if (affordableRequirements.length === 0) {
+    // No affordable options - use the first requirement for error message
+    const first = requirementsWithBalance[0];
+    if (first) {
+      throw PaymentError.insufficientFunds(
+        first.requirement.maxAmountRequired,
+        first.balance
+      );
+    }
+    throw err.internal('No requirements with balance info');
+  }
+
+  // Select the best option: lowest cost that meets timeout constraints
+  // Sort by amount (lowest first)
+  const sorted = affordableRequirements.sort((a, b) => {
+    const amountA = BigInt(a.requirement.maxAmountRequired);
+    const amountB = BigInt(b.requirement.maxAmountRequired);
+    if (amountA < amountB) return -1;
+    if (amountA > amountB) return 1;
+    // If amounts are equal, prefer shorter timeout (faster settlement)
+    return a.requirement.maxTimeoutSeconds - b.requirement.maxTimeoutSeconds;
+  });
+
+  // At this point sorted is guaranteed to have at least one element
+  // because we checked affordableRequirements.length > 0 above
+  const selected = sorted[0];
+  if (!selected) {
+    // This should never happen due to the length check above
+    throw err.internal(
+      'Unexpected: no affordable requirements after filtering'
+    );
+  }
+  return selected.requirement;
+}
+
+/**
+ * Get the network identifier from the provider
+ *
+ * @param provider - RPC provider
+ * @returns Network identifier (e.g., 'starknet-sepolia')
+ */
+async function getAccountNetwork(provider: RpcProvider): Promise<string> {
+  try {
+    const chainId = await provider.getChainId();
+
+    // Map chain IDs to network identifiers
+    // See: https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/network-architecture/
+    switch (chainId) {
+      case '0x534e5f4d41494e': // SN_MAIN
+        return 'starknet-mainnet';
+      case '0x534e5f5345504f4c4941': // SN_SEPOLIA
+        return 'starknet-sepolia';
+      default:
+        // For devnet or unknown networks, assume devnet
+        return 'starknet-devnet';
+    }
+  } catch {
+    // If we can't determine the network, assume sepolia (most common testnet)
+    return 'starknet-sepolia';
+  }
 }
 
 /**
@@ -239,4 +341,67 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
   }
 
   return parsed as PaymentPayload;
+}
+
+/**
+ * Encode PaymentRequirementsResponse to base64 string for X-PAYMENT-RESPONSE header
+ *
+ * This function is used by facilitators to encode the payment requirements response
+ * when using header-based transport instead of JSON body.
+ *
+ * @param response - Payment requirements response to encode
+ * @returns Base64-encoded string
+ *
+ * @example
+ * ```typescript
+ * const response: PaymentRequirementsResponse = {
+ *   x402Version: 1,
+ *   error: 'Payment required',
+ *   accepts: [paymentRequirement1, paymentRequirement2]
+ * };
+ * const header = encodePaymentResponseHeader(response);
+ * // Use in HTTP response:
+ * // headers: { 'X-PAYMENT-RESPONSE': header }
+ * ```
+ */
+export function encodePaymentResponseHeader(
+  response: PaymentRequirementsResponse
+): string {
+  const json = JSON.stringify(response);
+  return Buffer.from(json).toString('base64');
+}
+
+/**
+ * Decode PaymentRequirementsResponse from base64 X-PAYMENT-RESPONSE header
+ *
+ * This function is used by clients to decode the payment requirements response
+ * when the facilitator uses header-based transport.
+ *
+ * @param encoded - Base64-encoded payment response header
+ * @returns Decoded payment requirements response
+ * @throws Error if decoded value is not a valid object
+ *
+ * @example
+ * ```typescript
+ * // In client code:
+ * const responseHeader = response.headers.get('x-payment-response');
+ * if (responseHeader) {
+ *   const paymentResponse = decodePaymentResponseHeader(responseHeader);
+ *   // Use paymentResponse.accepts to create payment
+ * }
+ * ```
+ */
+export function decodePaymentResponseHeader(
+  encoded: string
+): PaymentRequirementsResponse {
+  const json = Buffer.from(encoded, 'base64').toString('utf-8');
+  const parsed: unknown = JSON.parse(json);
+
+  // Validate that decoded value is an object (not null, array, string, number, etc.)
+  // This prevents prototype pollution and ensures proper response structure
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw err.invalid('Invalid payment response: must be an object');
+  }
+
+  return parsed as PaymentRequirementsResponse;
 }

@@ -6,10 +6,11 @@ import type { StarknetNetwork } from './network.js';
 
 /**
  * Reason for invalid payment
+ * Spec compliance: x402 v0.2 Section 9 - Error Handling
  */
 export type InvalidPaymentReason =
   | 'invalid_signature'
-  | 'insufficient_balance'
+  | 'insufficient_funds' // Renamed from insufficient_balance per spec §9
   | 'nonce_used'
   | 'expired'
   | 'invalid_network'
@@ -17,7 +18,7 @@ export type InvalidPaymentReason =
   | 'token_not_approved'
   | 'invalid_recipient'
   | 'contract_error'
-  | 'unknown_error';
+  | 'unexpected_verify_error'; // Renamed from unknown_error per spec §9
 
 /**
  * Verification response from facilitator
@@ -37,8 +38,12 @@ export interface VerifyResponse {
     nonceUsed?: boolean;
     /** Current timestamp */
     timestamp?: number;
-    /** Error message for debugging (when invalidReason is unknown_error) */
+    /** Error message for debugging (when invalidReason is unexpected_verify_error) */
     error?: string;
+    /** Valid until timestamp (included when payment is expired) */
+    validUntil?: string;
+    /** Current timestamp at verification (included when payment is expired) */
+    currentTimestamp?: string;
   };
 }
 

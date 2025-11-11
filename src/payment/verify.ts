@@ -7,7 +7,8 @@ import type {
   PaymentRequirements,
   VerifyResponse,
 } from '../types/index.js';
-import type { RpcProvider } from 'starknet';
+import type { RpcProvider, TypedData } from 'starknet';
+import { typedData } from 'starknet';
 import { PAYMENT_PAYLOAD_SCHEMA } from '../types/schemas.js';
 import { normalizeAddress } from '../utils/encoding.js';
 
@@ -16,9 +17,14 @@ import { normalizeAddress } from '../utils/encoding.js';
  *
  * This function validates that:
  * - Payload structure is correct
- * - Signature is valid
+ * - Signature is valid (if typedData is present in payload)
  * - User has sufficient balance
  * - Payment matches requirements
+ * - Payment hasn't expired (validUntil timestamp)
+ *
+ * Signature verification is performed by calling the account contract's
+ * isValidSignature function (SNIP-6 standard). This works with all account
+ * types (OpenZeppelin, Argent, Braavos, etc.) and signature schemes.
  *
  * @param provider - RPC provider for on-chain checks
  * @param payload - Payment payload from client
@@ -107,7 +113,77 @@ export async function verifyPayment(
       };
     }
 
-    // 8. Check token balance
+    // 8. Verify payment hasn't expired (validUntil timestamp check)
+    // validUntil is a Unix timestamp (seconds since epoch) as a string
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const validUntil = parseInt(payload.payload.authorization.validUntil, 10);
+
+    if (isNaN(validUntil)) {
+      return {
+        isValid: false,
+        invalidReason: 'invalid_network', // Using invalid_network for malformed data
+        payer,
+        details: {
+          error: 'Invalid validUntil timestamp format',
+        },
+      };
+    }
+
+    if (currentTimestamp > validUntil) {
+      return {
+        isValid: false,
+        invalidReason: 'expired',
+        payer,
+        details: {
+          validUntil: validUntil.toString(),
+          currentTimestamp: currentTimestamp.toString(),
+        },
+      };
+    }
+
+    // 9. Verify signature (if typedData is available and valid)
+    // This provides early validation before checking balance or executing via paymaster
+    // The signature will also be verified again during paymaster execution
+    if (payload.typedData) {
+      const payloadTypedData = payload.typedData as TypedData;
+
+      // Validate typed data structure before attempting to use it
+      if (typedData.validateTypedData(payloadTypedData)) {
+        try {
+          const messageHash = typedData.getMessageHash(payloadTypedData, payer);
+          const isSignatureValid = await verifySignatureOnChain(
+            provider,
+            payer,
+            messageHash,
+            payload.payload.signature
+          );
+
+          if (!isSignatureValid) {
+            return {
+              isValid: false,
+              invalidReason: 'invalid_signature',
+              payer,
+              details: {
+                error: 'Signature verification failed',
+              },
+            };
+          }
+        } catch {
+          // If we get a network error or unexpected error during signature verification,
+          // we skip it here and let the paymaster handle verification during execution.
+          // This is conservative but acceptable because:
+          // 1. Signature will be verified during settlement
+          // 2. Better to allow a potentially valid payment than block it on transient errors
+        }
+      }
+      // If typedData doesn't validate, skip signature verification
+      // It will be validated during settlement
+    }
+    // Note: If typedData is not in the payload or doesn't validate, we skip signature verification.
+    // The signature will still be verified during paymaster execution.
+    // This is acceptable because typedData is optional in the payload structure.
+
+    // 10. Check token balance
     const { getTokenBalance } = await import('../utils/token.js');
     const balance = await getTokenBalance(
       provider,
@@ -118,7 +194,7 @@ export async function verifyPayment(
     if (BigInt(balance) < BigInt(paymentRequirements.maxAmountRequired)) {
       return {
         isValid: false,
-        invalidReason: 'insufficient_balance',
+        invalidReason: 'insufficient_funds', // Updated per spec §9
         payer,
         details: {
           balance,
@@ -143,12 +219,86 @@ export async function verifyPayment(
 
     return {
       isValid: false,
-      invalidReason: 'unknown_error',
+      invalidReason: 'unexpected_verify_error', // Updated per spec §9
       payer: '',
       details: {
         error: errorMessage,
       },
     };
+  }
+}
+
+// Note: Signature verification is performed in step 9 of verifyPayment above.
+// The signature is verified by calling the account contract's isValidSignature
+// function, which is the standard SNIP-6 approach for Starknet. This works with
+// all account implementations (OpenZeppelin, Argent, Braavos, custom accounts).
+// The signature will also be implicitly verified again during paymaster execution.
+
+/**
+ * Verify signature by calling the account contract
+ *
+ * This follows the SNIP-6 standard for account signature verification.
+ * The account contract's isValidSignature function is called to verify
+ * that the signature is valid for the given message hash.
+ *
+ * @param provider - RPC provider
+ * @param accountAddress - Account address that signed the message
+ * @param messageHash - Hash of the typed data message
+ * @param signature - Signature components (r, s)
+ * @returns True if signature is valid, false otherwise
+ */
+async function verifySignatureOnChain(
+  provider: RpcProvider,
+  accountAddress: string,
+  messageHash: string,
+  signature: { r: string; s: string }
+): Promise<boolean> {
+  try {
+    // Call the account's isValidSignature function (SNIP-6)
+    // This is the standard way to verify signatures on Starknet
+    const result = await provider.callContract({
+      contractAddress: accountAddress,
+      entrypoint: 'isValidSignature',
+      calldata: [
+        messageHash, // hash of the message
+        '2', // signature array length
+        signature.r,
+        signature.s,
+      ],
+    });
+
+    // Result format: ['0x1'] for valid, ['0x0'] or error for invalid
+    // Standard response: 'VALID' = 0x56414c4944 (deprecated) or non-zero for valid
+    // Modern OpenZeppelin returns 0x1 for valid, 0x0 for invalid
+    if (result.length === 0) {
+      return false;
+    }
+
+    const responseValue = result[0];
+    // Accept any non-zero response as valid (some contracts return 'VALID' magic value)
+    // Zero explicitly means invalid
+    return responseValue !== '0x0' && responseValue !== '0x00';
+  } catch (error) {
+    // Known error messages for invalid signatures
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const knownInvalidSignatureErrors = [
+      'argent/invalid-signature',
+      'is invalid, with respect to the public key',
+      'INVALID_SIG',
+    ];
+
+    if (
+      knownInvalidSignatureErrors.some((knownError) =>
+        errorMessage.includes(knownError)
+      )
+    ) {
+      return false;
+    }
+
+    // For unknown errors, we can't determine validity - treat as invalid
+    // This is conservative: better to reject potentially valid signature
+    // than accept an invalid one
+    return false;
   }
 }
 

@@ -296,7 +296,7 @@ describe('Security: Concurrency and Race Conditions', () => {
         requirements
       );
       expect(v2.isValid).toBe(false);
-      expect(v2.invalidReason).toBe('insufficient_balance');
+      expect(v2.invalidReason).toBe('insufficient_funds');
     });
 
     it('should implement optimistic locking pattern', () => {

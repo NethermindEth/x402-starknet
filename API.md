@@ -131,6 +131,13 @@ const payload = await createPaymentPayload(account, 1, paymentRequirements, {
 
 Verify a payment payload without executing the transaction.
 
+This function validates:
+
+- Payload structure (schema compliance)
+- Network, asset, recipient, and amount matching
+- **Payment expiration (validUntil timestamp)**
+- Payer token balance sufficiency
+
 ```typescript
 function verifyPayment(
   provider: RpcProvider,
@@ -156,6 +163,8 @@ function verifyPayment(
   payer: string;
   details?: {
     balance?: string;
+    validUntil?: string;       // Included when payment expired
+    currentTimestamp?: string;  // Included when payment expired
     error?: string;
   };
 }
@@ -164,10 +173,11 @@ function verifyPayment(
 **Invalid Reasons:**
 
 - `'invalid_signature'` - Signature verification failed
-- `'insufficient_balance'` - Payer has insufficient token balance
-- `'invalid_network'` - Network mismatch
+- `'insufficient_funds'` - Payer has insufficient token balance (spec §9)
+- `'expired'` - Payment has expired (current time > validUntil)
+- `'invalid_network'` - Network mismatch or malformed payload
 - `'invalid_amount'` - Amount mismatch
-- `'unknown_error'` - Unexpected error (check `details.error`)
+- `'unexpected_verify_error'` - Unexpected error during verification (spec §9, check `details.error`)
 
 **Example:**
 
@@ -442,6 +452,89 @@ const payload = decodePaymentHeader(header);
 
 ---
 
+### `encodePaymentResponseHeader`
+
+Encode payment requirements response to base64 for HTTP `X-Payment-Response` header.
+
+This function is used by facilitators to encode the 402 response when using header-based
+transport instead of JSON body.
+
+```typescript
+function encodePaymentResponseHeader(
+  response: PaymentRequirementsResponse
+): string;
+```
+
+**Parameters:**
+
+- `response` - Payment requirements response to encode
+
+**Returns:** `string` - Base64-encoded response
+
+**Example:**
+
+```typescript
+import { encodePaymentResponseHeader } from '@x402/starknet';
+
+const response: PaymentRequirementsResponse = {
+  x402Version: 1,
+  error: 'Payment required',
+  accepts: [requirement1, requirement2],
+};
+
+const encoded = encodePaymentResponseHeader(response);
+
+// Use in HTTP response header
+return new Response(resource, {
+  status: 402,
+  headers: {
+    'X-Payment-Response': encoded,
+  },
+});
+```
+
+---
+
+### `decodePaymentResponseHeader`
+
+Decode base64 payment response header back to PaymentRequirementsResponse.
+
+This function is used by clients to decode the 402 response when the facilitator
+uses header-based transport.
+
+```typescript
+function decodePaymentResponseHeader(
+  encoded: string
+): PaymentRequirementsResponse;
+```
+
+**Parameters:**
+
+- `encoded` - Base64-encoded payment response header
+
+**Returns:** `PaymentRequirementsResponse` - Decoded payment requirements response
+
+**Throws:**
+
+- Error if decoding or validation fails
+
+**Example:**
+
+```typescript
+import { decodePaymentResponseHeader } from '@x402/starknet';
+
+const response = await fetch(url);
+if (response.status === 402) {
+  const header = response.headers.get('X-Payment-Response');
+  if (header) {
+    const requirements = decodePaymentResponseHeader(header);
+    // Use requirements.accepts to create payment
+  }
+}
+```
+
+---
+
 ## Constants
 
 ### `VERSION`
@@ -562,7 +655,8 @@ interface PaymentRequirements {
   readonly resource: string;
   readonly description?: string;
   readonly mimeType?: string;
-  readonly maxTimeoutSeconds?: number;
+  readonly outputSchema?: object | null;
+  readonly maxTimeoutSeconds: number; // REQUIRED per spec §5.1
   readonly extra?: {
     readonly tokenName?: string;
     readonly tokenSymbol?: string;
@@ -571,6 +665,25 @@ interface PaymentRequirements {
   };
 }
 ```
+
+**Spec compliance:** x402 v0.2 Section 5.1 - PaymentRequirements Schema
+
+**Required Fields:**
+
+- `scheme`: Payment scheme identifier ("exact")
+- `network`: Starknet network identifier
+- `maxAmountRequired`: Payment amount in smallest token unit (string)
+- `asset`: Token contract address
+- `payTo`: Recipient address
+- `resource`: Protected resource identifier (supports HTTP, MCP, A2A, IPFS, and custom schemes)
+- `maxTimeoutSeconds`: Maximum time (seconds) for payment settlement
+
+**Optional Fields:**
+
+- `description`: Human-readable payment description
+- `mimeType`: Expected MIME type of response
+- `outputSchema`: JSON schema describing response format (can be null)
+- `extra`: Scheme-specific metadata (token info, payment contract)
 
 ---
 
@@ -606,12 +719,21 @@ interface PaymentPayload {
 
 Server's 402 response with payment requirements.
 
+**Spec compliance:** x402 v0.2 Section 5.1 - PaymentRequirementsResponse Schema
+
 ```typescript
 interface PaymentRequirementsResponse {
   readonly x402Version: 1;
-  readonly paymentRequirements: ReadonlyArray<PaymentRequirements>;
+  readonly error: string;
+  readonly accepts: ReadonlyArray<PaymentRequirements>;
 }
 ```
+
+**Fields:**
+
+- `x402Version`: Protocol version (always 1)
+- `error`: Human-readable error message explaining why payment is required
+- `accepts`: Array of acceptable payment options (renamed from `paymentRequirements` per spec)
 
 ---
 
@@ -677,7 +799,7 @@ Reasons why a payment might be invalid.
 ```typescript
 type InvalidPaymentReason =
   | 'invalid_signature'
-  | 'insufficient_balance'
+  | 'insufficient_funds' // Spec compliance: x402 v0.2 §9
   | 'nonce_used'
   | 'expired'
   | 'invalid_network'
@@ -685,7 +807,7 @@ type InvalidPaymentReason =
   | 'token_not_approved'
   | 'invalid_recipient'
   | 'contract_error'
-  | 'unknown_error';
+  | 'unexpected_verify_error'; // Spec compliance: x402 v0.2 §9
 ```
 
 ---
@@ -871,6 +993,7 @@ const requirements: PaymentRequirements = {
   payTo: '0x1234...', // Your address
   resource: 'https://api.example.com/data',
   description: 'Premium API access',
+  maxTimeoutSeconds: 60, // Required per spec §5.1
 };
 
 async function handleRequest(request: Request) {

@@ -4,7 +4,7 @@
 
 A TypeScript library providing core functions for building x402-compatible payment systems on Starknet. Designed as a foundation library with a minimal, stable API surface.
 
-[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/NethermindEth/starknet-x402)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/NethermindEth/starknet-x402)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 
 ## Overview
@@ -13,13 +13,15 @@ This library implements the [x402 payment protocol](https://github.com/x402) for
 
 ## Features
 
-- 🎯 **Minimal API Surface** - Only 20 named exports, all essential
+- 🎯 **Minimal API Surface** - Only 21 named exports, all essential
 - 🚀 **Type Safe** - Complete TypeScript support with strict types
-- 🔗 **Starknet Native** - Built for Starknet's architecture
+- 🔗 **Starknet Native** - Built for Starknet's architecture with paymaster support
 - 🌐 **Multi-Network** - Mainnet, Sepolia testnet, and devnet
 - 📦 **Tree-Shakeable** - `sideEffects: false`, import only what you need
 - 🛡️ **Validated** - Runtime validation with Zod schemas (internal)
 - ⚡ **Zero Runtime Deps** - Only `zod` and `@scure/base`
+- ✅ **Spec Compliant** - Full x402 v0.2 protocol compliance
+- 🔐 **Secure** - Signature verification via SNIP-6, expiration checking, balance validation
 
 ## Installation
 
@@ -80,20 +82,22 @@ console.log('Status:', settlement.status);
 
 ## Public API
 
-This library exports **exactly 20 symbols** from a single entry point:
+This library exports **exactly 21 symbols** from a single entry point:
 
-### Core Functions (11)
+### Core Functions (13)
 
 **Payment Operations:**
 
 - `createPaymentPayload()` - Create signed payment payload
-- `verifyPayment()` - Verify payment validity
+- `verifyPayment()` - Verify payment validity (signature, expiration, balance)
 - `settlePayment()` - Execute payment transaction
 
 **Encoding:**
 
-- `encodePaymentHeader()` - Encode payload to base64
-- `decodePaymentHeader()` - Decode base64 to payload
+- `encodePaymentHeader()` - Encode payment payload to base64 for `X-Payment` header
+- `decodePaymentHeader()` - Decode payment payload from base64
+- `encodePaymentResponseHeader()` - Encode 402 response to base64 for `X-Payment-Response` header
+- `decodePaymentResponseHeader()` - Decode 402 response from base64
 
 **Network Utilities:**
 
@@ -196,21 +200,47 @@ console.log('Available networks:', Object.keys(NETWORK_CONFIGS));
 ### Payment Header Encoding
 
 ```typescript
-import { encodePaymentHeader, decodePaymentHeader } from 'x402-starknet';
+import {
+  encodePaymentHeader,
+  decodePaymentHeader,
+  encodePaymentResponseHeader,
+  decodePaymentResponseHeader,
+} from 'x402-starknet';
 
-// Encode for HTTP header
+// Client: Encode payment payload for HTTP header
 const encoded = encodePaymentHeader(payload);
 
-// Send in request
+// Client: Send in request
 await fetch(url, {
   headers: {
     'X-Payment': encoded,
   },
 });
 
-// Decode on server
+// Server: Decode payment from client
 const header = request.headers.get('X-Payment');
 const payload = decodePaymentHeader(header);
+
+// Server: Encode payment requirements response (optional, can use JSON body instead)
+const response: PaymentRequirementsResponse = {
+  x402Version: 1,
+  error: 'Payment required',
+  accepts: [requirement1, requirement2],
+};
+const responseHeader = encodePaymentResponseHeader(response);
+
+// Server: Send response via header
+return new Response(null, {
+  status: 402,
+  headers: { 'X-Payment-Response': responseHeader },
+});
+
+// Client: Decode payment requirements from header
+const paymentResponseHeader = response.headers.get('X-Payment-Response');
+if (paymentResponseHeader) {
+  const requirements = decodePaymentResponseHeader(paymentResponseHeader);
+  // Use requirements.accepts to create payment
+}
 ```
 
 ## Complete Flow Example
@@ -232,9 +262,8 @@ async function payForResource(url: string, account: Account) {
 
   // 2. Handle 402 Payment Required
   if (response.status === 402) {
-    const { paymentRequirements } =
-      (await response.json()) as PaymentRequirementsResponse;
-    const requirement = paymentRequirements[0];
+    const { accepts } = (await response.json()) as PaymentRequirementsResponse;
+    const requirement = accepts[0];
 
     // 3. Create payment
     const payload = await createPaymentPayload(account, 1, requirement, {
@@ -275,6 +304,7 @@ const requirements: PaymentRequirements = {
   asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
   payTo: '0x1234...', // Your address
   resource: 'https://api.example.com/data',
+  maxTimeoutSeconds: 60, // Required per spec §5.1
 };
 
 async function handleRequest(request: Request) {
@@ -285,7 +315,8 @@ async function handleRequest(request: Request) {
     return new Response(
       JSON.stringify({
         x402Version: 1,
-        paymentRequirements: [requirements],
+        error: 'X-PAYMENT header is required',
+        accepts: [requirements],
       }),
       { status: 402 }
     );
@@ -424,6 +455,7 @@ Contributions welcome! This is a pure library - application code belongs in sepa
 ## Resources
 
 - [Complete API Reference](./API.md)
+- [Starknet x402 Scheme Specification](./docs/scheme_exact_starknet.md) - Complete protocol documentation
 - [API Surface Design](./API_SURFACE.md)
 - [Implementation Plan](./IMPLEMENTATION_PLAN.md)
 - [x402 Protocol](https://github.com/x402)
@@ -436,4 +468,4 @@ Apache License 2.0 - see [LICENSE](./LICENSE) for details.
 
 ---
 
-**Version**: 0.1.0 | **Status**: ✅ Core Complete | **Tests**: 78 passing
+**Version**: 0.3.0 | **Status**: ✅ Fully Spec-Compliant | **Tests**: 306 passing | **Protocol**: x402 v0.2

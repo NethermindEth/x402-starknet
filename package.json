@@ -1,6 +1,6 @@
 {
   "name": "x402-starknet",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Starknet implementation of the x402 payment protocol",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,6 +27,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . -w",
     "format:check": "prettier . -c",
+    "check": "bun run format:check && bun run typecheck && bun run lint",
     "dev": "bun run --watch src/index.ts",
     "clean": "rm -rf dist"
   },
