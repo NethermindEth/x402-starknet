@@ -6,6 +6,7 @@ import type {
   PaymentRequirements,
   PaymentPayload,
   PaymentRequirementsSelector,
+  PaymentRequirementsResponse,
   PaymasterConfig,
 } from '../types/index.js';
 import type { Account, RpcProvider, TypedData } from 'starknet';
@@ -239,4 +240,67 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
   }
 
   return parsed as PaymentPayload;
+}
+
+/**
+ * Encode PaymentRequirementsResponse to base64 string for X-PAYMENT-RESPONSE header
+ *
+ * This function is used by facilitators to encode the payment requirements response
+ * when using header-based transport instead of JSON body.
+ *
+ * @param response - Payment requirements response to encode
+ * @returns Base64-encoded string
+ *
+ * @example
+ * ```typescript
+ * const response: PaymentRequirementsResponse = {
+ *   x402Version: 1,
+ *   error: 'Payment required',
+ *   accepts: [paymentRequirement1, paymentRequirement2]
+ * };
+ * const header = encodePaymentResponseHeader(response);
+ * // Use in HTTP response:
+ * // headers: { 'X-PAYMENT-RESPONSE': header }
+ * ```
+ */
+export function encodePaymentResponseHeader(
+  response: PaymentRequirementsResponse
+): string {
+  const json = JSON.stringify(response);
+  return Buffer.from(json).toString('base64');
+}
+
+/**
+ * Decode PaymentRequirementsResponse from base64 X-PAYMENT-RESPONSE header
+ *
+ * This function is used by clients to decode the payment requirements response
+ * when the facilitator uses header-based transport.
+ *
+ * @param encoded - Base64-encoded payment response header
+ * @returns Decoded payment requirements response
+ * @throws Error if decoded value is not a valid object
+ *
+ * @example
+ * ```typescript
+ * // In client code:
+ * const responseHeader = response.headers.get('x-payment-response');
+ * if (responseHeader) {
+ *   const paymentResponse = decodePaymentResponseHeader(responseHeader);
+ *   // Use paymentResponse.accepts to create payment
+ * }
+ * ```
+ */
+export function decodePaymentResponseHeader(
+  encoded: string
+): PaymentRequirementsResponse {
+  const json = Buffer.from(encoded, 'base64').toString('utf-8');
+  const parsed: unknown = JSON.parse(json);
+
+  // Validate that decoded value is an object (not null, array, string, number, etc.)
+  // This prevents prototype pollution and ensures proper response structure
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw err.invalid('Invalid payment response: must be an object');
+  }
+
+  return parsed as PaymentRequirementsResponse;
 }

@@ -196,21 +196,47 @@ console.log('Available networks:', Object.keys(NETWORK_CONFIGS));
 ### Payment Header Encoding
 
 ```typescript
-import { encodePaymentHeader, decodePaymentHeader } from 'x402-starknet';
+import {
+  encodePaymentHeader,
+  decodePaymentHeader,
+  encodePaymentResponseHeader,
+  decodePaymentResponseHeader,
+} from 'x402-starknet';
 
-// Encode for HTTP header
+// Client: Encode payment payload for HTTP header
 const encoded = encodePaymentHeader(payload);
 
-// Send in request
+// Client: Send in request
 await fetch(url, {
   headers: {
     'X-Payment': encoded,
   },
 });
 
-// Decode on server
+// Server: Decode payment from client
 const header = request.headers.get('X-Payment');
 const payload = decodePaymentHeader(header);
+
+// Server: Encode payment requirements response (optional, can use JSON body instead)
+const response: PaymentRequirementsResponse = {
+  x402Version: 1,
+  error: 'Payment required',
+  accepts: [requirement1, requirement2],
+};
+const responseHeader = encodePaymentResponseHeader(response);
+
+// Server: Send response via header
+return new Response(null, {
+  status: 402,
+  headers: { 'X-Payment-Response': responseHeader },
+});
+
+// Client: Decode payment requirements from header
+const paymentResponseHeader = response.headers.get('X-Payment-Response');
+if (paymentResponseHeader) {
+  const requirements = decodePaymentResponseHeader(paymentResponseHeader);
+  // Use requirements.accepts to create payment
+}
 ```
 
 ## Complete Flow Example

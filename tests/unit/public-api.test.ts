@@ -20,6 +20,8 @@ describe('Public API Surface', () => {
       // Encoding
       'encodePaymentHeader',
       'decodePaymentHeader',
+      'encodePaymentResponseHeader',
+      'decodePaymentResponseHeader',
       // Network utilities
       'getNetworkConfig',
       'getTransactionUrl',
@@ -46,8 +48,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 11 functions + 4 constants + 3 error classes + 1 ERROR_CODES = 19
-    expect(allExports).toHaveLength(19);
+    // 13 functions + 4 constants + 3 error classes + 1 ERROR_CODES = 21
+    expect(allExports).toHaveLength(21);
   });
 
   it('should export VERSION constant', () => {
