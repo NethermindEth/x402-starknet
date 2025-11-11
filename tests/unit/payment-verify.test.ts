@@ -80,7 +80,7 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
       expect(result.payer).toBe(
         '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
       );
@@ -213,7 +213,7 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('unknown_error');
+      expect(result.invalidReason).toBe('unexpected_verify_error');
       expect(result.details?.error).toBe('RPC error');
     });
 
@@ -229,7 +229,7 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
       expect(result.details?.balance).toBe('0');
     });
 

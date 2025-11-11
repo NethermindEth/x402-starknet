@@ -131,7 +131,7 @@ describe('Payment Settlement', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.errorReason).toBe('insufficient_balance');
+      expect(result.errorReason).toBe('insufficient_funds');
       expect(result.transaction).toBe('');
       expect(result.payer).toBe(
         '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'

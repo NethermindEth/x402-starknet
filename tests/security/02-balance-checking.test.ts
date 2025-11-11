@@ -67,7 +67,7 @@ describe('Security: Balance Checking', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
       expect(result.details?.balance).toBe('500000');
       expect(result.payer).toBe(
         '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
@@ -93,7 +93,7 @@ describe('Security: Balance Checking', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
       expect(result.details?.balance).toBe('0');
     });
 
@@ -127,7 +127,7 @@ describe('Security: Balance Checking', () => {
       const result = await verifyPayment(mockProvider, payload, requirements);
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
     });
 
     it('should detect insufficient balance with small deficit', async () => {
@@ -150,7 +150,7 @@ describe('Security: Balance Checking', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
       expect(result.details?.balance).toBe('999999');
     });
   });
@@ -205,7 +205,7 @@ describe('Security: Balance Checking', () => {
 
       // Settlement should fail because balance is now insufficient
       expect(settlement.success).toBe(false);
-      expect(settlement.errorReason).toBe('insufficient_balance');
+      expect(settlement.errorReason).toBe('insufficient_funds');
 
       // This demonstrates the TOCTOU race condition (SECURITY.md:45-48)
       // Mitigation: Minimize gap between verify and settle
@@ -378,7 +378,7 @@ describe('Security: Balance Checking', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
     });
 
     it('should pass with balance one unit more than required', async () => {
@@ -526,7 +526,7 @@ describe('Security: Balance Checking', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('unknown_error');
+      expect(result.invalidReason).toBe('unexpected_verify_error');
       expect(result.details?.error).toBe('RPC connection failed');
     });
 

@@ -264,9 +264,9 @@ export class PaymentError extends X402Error {
     );
   }
 
-  static insufficientBalance(required: string, available: string): X402Error {
+  static insufficientFunds(required: string, available: string): X402Error {
     return err.conflict(
-      `Insufficient balance: required ${required}, available ${available}`,
+      `Insufficient funds: required ${required}, available ${available}`,
       { required, available }
     );
   }

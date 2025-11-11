@@ -144,7 +144,7 @@ export async function settlePayment(
       error instanceof Error ? error.message : wrappedError.message;
     return {
       success: false,
-      errorReason: errorMessage,
+      errorReason: `unexpected_settle_error: ${errorMessage}`, // Spec compliance: §9 error codes
       transaction: '',
       network: paymentRequirements.network,
       payer: verification.payer,

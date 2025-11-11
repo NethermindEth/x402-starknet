@@ -60,7 +60,7 @@ describe('Security: Error Message Security', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
 
       // SECURITY ISSUE: Balance is exposed in details (SECURITY.md:167-192)
       expect(result.details?.balance).toBe('500000');
@@ -94,7 +94,7 @@ describe('Security: Error Message Security', () => {
         requirements
       );
 
-      if (!result.isValid && result.invalidReason === 'insufficient_balance') {
+      if (!result.isValid && result.invalidReason === 'insufficient_funds') {
         // Attacker can discover exact balance
         const exactBalance = result.details?.balance;
         expect(exactBalance).toBe('1234567');
@@ -135,7 +135,7 @@ describe('Security: Error Message Security', () => {
       };
 
       expect(clientResponse.isValid).toBe(false);
-      expect(clientResponse.invalidReason).toBe('insufficient_balance');
+      expect(clientResponse.invalidReason).toBe('insufficient_funds');
       expect((clientResponse as any).details).toBeUndefined();
     });
 
@@ -191,7 +191,7 @@ describe('Security: Error Message Security', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('unknown_error');
+      expect(result.invalidReason).toBe('unexpected_verify_error');
 
       // Error message is exposed
       expect(result.details?.error).toBe('RPC connection failed');
@@ -202,7 +202,7 @@ describe('Security: Error Message Security', () => {
       // Applications should sanitize even the error message
       const sanitizedResponse = {
         isValid: result.isValid,
-        invalidReason: 'unknown_error',
+        invalidReason: 'unexpected_verify_error',
         // Don't expose error details to clients
       };
 
@@ -331,13 +331,13 @@ describe('Security: Error Message Security', () => {
           name: 'insufficient balance',
           mockType: 'resolve',
           mockResponse: ['100', '0'],
-          expectedReason: 'insufficient_balance',
+          expectedReason: 'insufficient_funds',
         },
         {
           name: 'RPC error',
           mockType: 'reject',
           mockResponse: new Error('Network timeout'),
-          expectedReason: 'unknown_error',
+          expectedReason: 'unexpected_verify_error',
         },
       ];
 

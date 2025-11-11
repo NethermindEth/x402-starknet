@@ -19,6 +19,7 @@ import { normalizeAddress } from '../utils/encoding.js';
  * - Signature is valid
  * - User has sufficient balance
  * - Payment matches requirements
+ * - Payment hasn't expired (validUntil timestamp)
  *
  * @param provider - RPC provider for on-chain checks
  * @param payload - Payment payload from client
@@ -107,7 +108,35 @@ export async function verifyPayment(
       };
     }
 
-    // 8. Check token balance
+    // 8. Verify payment hasn't expired (validUntil timestamp check)
+    // validUntil is a Unix timestamp (seconds since epoch) as a string
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const validUntil = parseInt(payload.payload.authorization.validUntil, 10);
+
+    if (isNaN(validUntil)) {
+      return {
+        isValid: false,
+        invalidReason: 'invalid_network', // Using invalid_network for malformed data
+        payer,
+        details: {
+          error: 'Invalid validUntil timestamp format',
+        },
+      };
+    }
+
+    if (currentTimestamp > validUntil) {
+      return {
+        isValid: false,
+        invalidReason: 'expired',
+        payer,
+        details: {
+          validUntil: validUntil.toString(),
+          currentTimestamp: currentTimestamp.toString(),
+        },
+      };
+    }
+
+    // 9. Check token balance
     const { getTokenBalance } = await import('../utils/token.js');
     const balance = await getTokenBalance(
       provider,
@@ -118,7 +147,7 @@ export async function verifyPayment(
     if (BigInt(balance) < BigInt(paymentRequirements.maxAmountRequired)) {
       return {
         isValid: false,
-        invalidReason: 'insufficient_balance',
+        invalidReason: 'insufficient_funds', // Updated per spec §9
         payer,
         details: {
           balance,
@@ -143,7 +172,7 @@ export async function verifyPayment(
 
     return {
       isValid: false,
-      invalidReason: 'unknown_error',
+      invalidReason: 'unexpected_verify_error', // Updated per spec §9
       payer: '',
       details: {
         error: errorMessage,

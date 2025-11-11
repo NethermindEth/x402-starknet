@@ -131,6 +131,13 @@ const payload = await createPaymentPayload(account, 1, paymentRequirements, {
 
 Verify a payment payload without executing the transaction.
 
+This function validates:
+
+- Payload structure (schema compliance)
+- Network, asset, recipient, and amount matching
+- **Payment expiration (validUntil timestamp)**
+- Payer token balance sufficiency
+
 ```typescript
 function verifyPayment(
   provider: RpcProvider,
@@ -156,6 +163,8 @@ function verifyPayment(
   payer: string;
   details?: {
     balance?: string;
+    validUntil?: string;       // Included when payment expired
+    currentTimestamp?: string;  // Included when payment expired
     error?: string;
   };
 }
@@ -164,10 +173,11 @@ function verifyPayment(
 **Invalid Reasons:**
 
 - `'invalid_signature'` - Signature verification failed
-- `'insufficient_balance'` - Payer has insufficient token balance
-- `'invalid_network'` - Network mismatch
+- `'insufficient_funds'` - Payer has insufficient token balance (spec §9)
+- `'expired'` - Payment has expired (current time > validUntil)
+- `'invalid_network'` - Network mismatch or malformed payload
 - `'invalid_amount'` - Amount mismatch
-- `'unknown_error'` - Unexpected error (check `details.error`)
+- `'unexpected_verify_error'` - Unexpected error during verification (spec §9, check `details.error`)
 
 **Example:**
 
@@ -706,7 +716,7 @@ Reasons why a payment might be invalid.
 ```typescript
 type InvalidPaymentReason =
   | 'invalid_signature'
-  | 'insufficient_balance'
+  | 'insufficient_funds' // Spec compliance: x402 v0.2 §9
   | 'nonce_used'
   | 'expired'
   | 'invalid_network'
@@ -714,7 +724,7 @@ type InvalidPaymentReason =
   | 'token_not_approved'
   | 'invalid_recipient'
   | 'contract_error'
-  | 'unknown_error';
+  | 'unexpected_verify_error'; // Spec compliance: x402 v0.2 §9
 ```
 
 ---

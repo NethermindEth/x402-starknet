@@ -27,6 +27,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . -w",
     "format:check": "prettier . -c",
+    "check": "bun run format:check && bun run typecheck && bun run lint",
     "dev": "bun run --watch src/index.ts",
     "clean": "rm -rf dist"
   },

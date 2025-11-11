@@ -90,7 +90,7 @@ describe('Security: RPC Provider Trust', () => {
 
       // Falsely rejects payment
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('insufficient_balance');
+      expect(result.invalidReason).toBe('insufficient_funds');
 
       // Malicious RPC could deny service by always returning zero balance
     });

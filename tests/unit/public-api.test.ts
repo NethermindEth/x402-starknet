@@ -105,13 +105,15 @@ describe('Public API Surface', () => {
   });
 
   it('should have stable error factories', () => {
-    const insufficientBalance = publicApi.PaymentError.insufficientBalance(
+    // Test spec-compliant method name (spec §9)
+    const insufficientFunds = publicApi.PaymentError.insufficientFunds(
       '100',
       '50'
     );
-    expect(insufficientBalance.code).toBe('ECONFLICT');
-    expect(insufficientBalance.message).toContain('required 100');
-    expect(insufficientBalance.message).toContain('available 50');
+    expect(insufficientFunds.code).toBe('ECONFLICT');
+    expect(insufficientFunds.message).toContain('Insufficient funds');
+    expect(insufficientFunds.message).toContain('required 100');
+    expect(insufficientFunds.message).toContain('available 50');
 
     const invalidPayload =
       publicApi.PaymentError.invalidPayload('missing field');

@@ -114,12 +114,16 @@ export const PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA = z.object({
 /**
  * Schema for verify response
  */
+/**
+ * Schema for verify response
+ * Spec compliance: x402 v0.2 Section 9 - Error Handling
+ */
 export const VERIFY_RESPONSE_SCHEMA = z.object({
   isValid: z.boolean(),
   invalidReason: z
     .enum([
       'invalid_signature',
-      'insufficient_balance',
+      'insufficient_funds', // Updated per spec §9
       'nonce_used',
       'expired',
       'invalid_network',
@@ -127,7 +131,7 @@ export const VERIFY_RESPONSE_SCHEMA = z.object({
       'token_not_approved',
       'invalid_recipient',
       'contract_error',
-      'unknown_error',
+      'unexpected_verify_error', // Updated per spec §9
     ])
     .optional(),
   payer: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid payer address format'),
@@ -137,6 +141,8 @@ export const VERIFY_RESPONSE_SCHEMA = z.object({
       nonceUsed: z.boolean().optional(),
       timestamp: z.number().int().optional(),
       error: z.string().optional(),
+      validUntil: z.string().optional(),
+      currentTimestamp: z.string().optional(),
     })
     .optional(),
 });
