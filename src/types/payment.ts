@@ -100,12 +100,15 @@ export interface PaymentPayload {
 
 /**
  * Payment requirements response from server (402 response)
+ * Spec compliance: x402 v0.2 Section 5.1 - PaymentRequirementsResponse Schema
  */
 export interface PaymentRequirementsResponse {
   /** x402 protocol version */
   x402Version: 1;
-  /** Array of payment options */
-  paymentRequirements: Array<PaymentRequirements>;
+  /** Human-readable error message explaining why payment is required */
+  error: string;
+  /** Array of payment options (renamed from paymentRequirements per spec) */
+  accepts: Array<PaymentRequirements>;
 }
 
 /**

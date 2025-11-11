@@ -606,12 +606,21 @@ interface PaymentPayload {
 
 Server's 402 response with payment requirements.
 
+**Spec compliance:** x402 v0.2 Section 5.1 - PaymentRequirementsResponse Schema
+
 ```typescript
 interface PaymentRequirementsResponse {
   readonly x402Version: 1;
-  readonly paymentRequirements: ReadonlyArray<PaymentRequirements>;
+  readonly error: string;
+  readonly accepts: ReadonlyArray<PaymentRequirements>;
 }
 ```
+
+**Fields:**
+
+- `x402Version`: Protocol version (always 1)
+- `error`: Human-readable error message explaining why payment is required
+- `accepts`: Array of acceptable payment options (renamed from `paymentRequirements` per spec)
 
 ---
 

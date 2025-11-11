@@ -232,9 +232,8 @@ async function payForResource(url: string, account: Account) {
 
   // 2. Handle 402 Payment Required
   if (response.status === 402) {
-    const { paymentRequirements } =
-      (await response.json()) as PaymentRequirementsResponse;
-    const requirement = paymentRequirements[0];
+    const { accepts } = (await response.json()) as PaymentRequirementsResponse;
+    const requirement = accepts[0];
 
     // 3. Create payment
     const payload = await createPaymentPayload(account, 1, requirement, {
@@ -285,7 +284,8 @@ async function handleRequest(request: Request) {
     return new Response(
       JSON.stringify({
         x402Version: 1,
-        paymentRequirements: [requirements],
+        error: 'X-PAYMENT header is required',
+        accepts: [requirements],
       }),
       { status: 402 }
     );

@@ -93,10 +93,12 @@ export const PAYMENT_PAYLOAD_SCHEMA = z
 
 /**
  * Schema for payment requirements response
+ * Spec compliance: x402 v0.2 Section 5.1 - PaymentRequirementsResponse Schema
  */
 export const PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA = z.object({
   x402Version: z.literal(1),
-  paymentRequirements: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
+  error: z.string().min(1, 'Error message cannot be empty'),
+  accepts: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
 });
 
 /**
