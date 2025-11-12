@@ -1,6 +1,6 @@
 {
   "name": "x402-starknet",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Starknet implementation of the x402 payment protocol",
   "type": "module",
   "main": "./dist/index.js",
@@ -51,10 +51,10 @@
   },
   "homepage": "https://github.com/NethermindEth/x402-starknet/blob/main/README.md",
   "dependencies": {
-    "@scure/base": "^1.1.10",
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
