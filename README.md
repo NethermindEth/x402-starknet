@@ -4,7 +4,7 @@
 
 A TypeScript library providing core functions for building x402-compatible payment systems on Starknet. Designed as a foundation library with a minimal, stable API surface.
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/NethermindEth/starknet-x402)
+[![Version](https://img.shields.io/badge/version-0.3.2-green.svg)](https://github.com/NethermindEth/starknet-x402)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 
 ## Overview
@@ -19,7 +19,7 @@ This library implements the [x402 payment protocol](https://github.com/x402) for
 - 🌐 **Multi-Network** - Mainnet, Sepolia testnet, and devnet
 - 📦 **Tree-Shakeable** - `sideEffects: false`, import only what you need
 - 🛡️ **Validated** - Runtime validation with Zod schemas (internal)
-- ⚡ **Zero Runtime Deps** - Only `zod` and `@scure/base`
+- ⚡ **Minimal Runtime Deps** - Only `zod`
 - ✅ **Spec Compliant** - Full x402 v0.2 protocol compliance
 - 🔐 **Secure** - Signature verification via SNIP-6, expiration checking, balance validation
 
@@ -468,4 +468,4 @@ Apache License 2.0 - see [LICENSE](./LICENSE) for details.
 
 ---
 
-**Version**: 0.3.0 | **Status**: ✅ Fully Spec-Compliant | **Tests**: 306 passing | **Protocol**: x402 v0.2
+**Version**: 0.3.2 | **Status**: ✅ Fully Spec-Compliant | **Tests**: 306 passing | **Protocol**: x402 v0.2

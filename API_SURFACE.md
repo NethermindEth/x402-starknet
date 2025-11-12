@@ -10,7 +10,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 ✅ **Tree-shakeable** - `sideEffects: false` in package.json
 ✅ **Type-safe** - Full TypeScript support with strict types
 ✅ **Stable error codes** - Programmatic error handling
-✅ **Zero runtime deps** - Only `zod` and `@scure/base`
+✅ **Minimal runtime deps** - Only `zod`
 ✅ **Peer dependency model** - `starknet` as peer dependency
 
 ---
@@ -98,7 +98,6 @@ The following are implementation details and NOT exported:
     }
   },
   "dependencies": {
-    "@scure/base": "^1.1.10",
     "zod": "^3.24.2"
   },
   "peerDependencies": {
@@ -206,7 +205,7 @@ try {
 Optimized for minimal bundle size:
 
 - **Tree-shakeable** - Only import what you use
-- **Zero runtime deps** - Except `zod` (7kb) and `@scure/base` (3kb)
+- **Minimal runtime deps** - Only `zod` (~7kb)
 - **Pure functions** - No classes or heavy abstractions
 - **Type-only exports** - TypeScript types are free at runtime
 
