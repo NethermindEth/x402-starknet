@@ -36,6 +36,18 @@ describe('Public API Surface', () => {
       // Facilitator client
       'FacilitatorClient',
       'createFacilitatorClient',
+      // Extensions system
+      'ExtensionRegistry',
+      'createExtensionRegistry',
+      'globalRegistry',
+      'createExtensionData',
+      'getExtensionInfo',
+      'hasExtension',
+      'getExtensionNames',
+      'mergeExtensions',
+      'filterRegisteredExtensions',
+      'validateExtensions',
+      'defineExtension',
       // Constants
       'VERSION',
       'X402_VERSION',
@@ -55,8 +67,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 4 constants + 3 error classes + 1 ERROR_CODES = 26
-    expect(allExports).toHaveLength(26);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 11 extensions + 4 constants + 3 error classes + 1 ERROR_CODES = 37
+    expect(allExports).toHaveLength(37);
   });
 
   it('should export VERSION constant', () => {

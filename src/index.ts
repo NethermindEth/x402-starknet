@@ -111,6 +111,14 @@ export type {
   IFacilitatorClient,
 } from './facilitator/client.js';
 
+// Extension types
+export type {
+  Extension,
+  IExtensionRegistry,
+  ValidationResult,
+  JSONSchema,
+} from './extensions/types.js';
+
 // ============================================================================
 // Facilitator Client
 // ============================================================================
@@ -119,6 +127,24 @@ export {
   FacilitatorClient,
   createFacilitatorClient,
 } from './facilitator/index.js';
+
+// ============================================================================
+// Extensions System
+// ============================================================================
+
+export {
+  ExtensionRegistry,
+  createExtensionRegistry,
+  globalRegistry,
+  createExtensionData,
+  getExtensionInfo,
+  hasExtension,
+  getExtensionNames,
+  mergeExtensions,
+  filterRegisteredExtensions,
+  validateExtensions,
+  defineExtension,
+} from './extensions/index.js';
 
 // ============================================================================
 // Error Classes
