@@ -1,4 +1,4 @@
-# @x402/starknet API Reference
+# x402-starknet API Reference
 
 Complete API documentation for the Starknet x402 payment protocol library.
 
@@ -28,11 +28,11 @@ Complete API documentation for the Starknet x402 payment protocol library.
 ## Installation
 
 ```bash
-npm install @x402/starknet starknet
+npm install x402-starknet starknet
 # or
-bun add @x402/starknet starknet
+bun add x402-starknet starknet
 # or
-yarn add @x402/starknet starknet
+yarn add x402-starknet starknet
 ```
 
 **Peer Dependencies:**
@@ -52,7 +52,7 @@ import {
   DEFAULT_PAYMASTER_ENDPOINTS,
   HTTP_HEADERS,
   encodePaymentSignature,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { Account, RpcProvider } from 'starknet';
 
 // 1. Create payment payload (client-side)
@@ -124,7 +124,7 @@ function createPaymentPayload(
 import {
   createPaymentPayload,
   DEFAULT_PAYMASTER_ENDPOINTS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 const payload = await createPaymentPayload(account, 2, paymentRequirements, {
   endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'],
@@ -287,7 +287,7 @@ function getNetworkConfig(network: StarknetNetworkId): NetworkConfig;
 **Example:**
 
 ```typescript
-import { getNetworkConfig } from '@x402/starknet';
+import { getNetworkConfig } from 'x402-starknet';
 
 const config = getNetworkConfig('starknet:sepolia');
 console.log('RPC URL:', config.rpcUrl);
@@ -414,7 +414,7 @@ function isStarknetNetwork(network: string): network is StarknetNetworkId;
 **Example:**
 
 ```typescript
-import { isStarknetNetwork, getNetworkConfig } from '@x402/starknet';
+import { isStarknetNetwork, getNetworkConfig } from 'x402-starknet';
 
 const userInput = 'starknet:sepolia';
 
@@ -448,7 +448,7 @@ function validateNetwork(network: string): StarknetNetworkId;
 **Example:**
 
 ```typescript
-import { validateNetwork } from '@x402/starknet';
+import { validateNetwork } from 'x402-starknet';
 
 try {
   const network = validateNetwork(userInput);
@@ -484,7 +484,7 @@ function parseStarknetNetwork(caip2: string): {
 **Example:**
 
 ```typescript
-import { parseStarknetNetwork } from '@x402/starknet';
+import { parseStarknetNetwork } from 'x402-starknet';
 
 const { namespace, reference } = parseStarknetNetwork('starknet:sepolia');
 console.log(namespace); // 'starknet'
@@ -510,7 +510,7 @@ function buildStarknetCAIP2(reference: NetworkReference): StarknetNetworkId;
 **Example:**
 
 ```typescript
-import { buildStarknetCAIP2 } from '@x402/starknet';
+import { buildStarknetCAIP2 } from 'x402-starknet';
 
 const network = buildStarknetCAIP2('sepolia');
 console.log(network); // 'starknet:sepolia'
@@ -535,7 +535,7 @@ function getNetworkReference(network: StarknetNetworkId): NetworkReference;
 **Example:**
 
 ```typescript
-import { getNetworkReference } from '@x402/starknet';
+import { getNetworkReference } from 'x402-starknet';
 
 const ref = getNetworkReference('starknet:mainnet');
 console.log(ref); // 'mainnet'
@@ -560,7 +560,7 @@ const STARKNET_NETWORKS: readonly [
 **Example:**
 
 ```typescript
-import { STARKNET_NETWORKS } from '@x402/starknet';
+import { STARKNET_NETWORKS } from 'x402-starknet';
 
 for (const network of STARKNET_NETWORKS) {
   console.log(network);
@@ -580,7 +580,7 @@ const NETWORK_REFERENCES: Record<StarknetNetworkId, NetworkReference>;
 **Example:**
 
 ```typescript
-import { NETWORK_REFERENCES } from '@x402/starknet';
+import { NETWORK_REFERENCES } from 'x402-starknet';
 
 console.log(NETWORK_REFERENCES['starknet:mainnet']); // 'mainnet'
 ```
@@ -598,7 +598,7 @@ const NETWORK_NAMES: Record<StarknetNetworkId, string>;
 **Example:**
 
 ```typescript
-import { NETWORK_NAMES } from '@x402/starknet';
+import { NETWORK_NAMES } from 'x402-starknet';
 
 console.log(NETWORK_NAMES['starknet:sepolia']); // 'Starknet Sepolia Testnet'
 ```
@@ -616,7 +616,7 @@ const DEFAULT_RPC_URLS: Record<StarknetNetworkId, string>;
 **Example:**
 
 ```typescript
-import { DEFAULT_RPC_URLS } from '@x402/starknet';
+import { DEFAULT_RPC_URLS } from 'x402-starknet';
 
 const rpcUrl = DEFAULT_RPC_URLS['starknet:mainnet'];
 // 'https://starknet-mainnet.public.blastapi.io'
@@ -641,7 +641,7 @@ const ETH_ADDRESSES: Partial<Record<StarknetNetworkId, string>>;
 **Example:**
 
 ```typescript
-import { ETH_ADDRESSES } from '@x402/starknet';
+import { ETH_ADDRESSES } from 'x402-starknet';
 
 const mainnetEth = ETH_ADDRESSES['starknet:mainnet'];
 // '0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7'
@@ -714,7 +714,7 @@ function getTokenAddress(
 **Example:**
 
 ```typescript
-import { getTokenAddress } from '@x402/starknet';
+import { getTokenAddress } from 'x402-starknet';
 
 const ethAddress = getTokenAddress('ETH', 'starknet:mainnet');
 const usdcAddress = getTokenAddress('USDC', 'starknet:mainnet');
@@ -736,7 +736,7 @@ function getTokenDecimals(symbol: TokenSymbol): number;
 **Example:**
 
 ```typescript
-import { getTokenDecimals } from '@x402/starknet';
+import { getTokenDecimals } from 'x402-starknet';
 
 console.log(getTokenDecimals('ETH')); // 18
 console.log(getTokenDecimals('USDC')); // 6
@@ -755,7 +755,7 @@ function toAtomicUnits(amount: number, symbol: TokenSymbol): string;
 **Example:**
 
 ```typescript
-import { toAtomicUnits } from '@x402/starknet';
+import { toAtomicUnits } from 'x402-starknet';
 
 const atomic = toAtomicUnits(1.5, 'USDC');
 console.log(atomic); // '1500000' (1.5 * 10^6)
@@ -777,7 +777,7 @@ function fromAtomicUnits(atomicUnits: string, symbol: TokenSymbol): number;
 **Example:**
 
 ```typescript
-import { fromAtomicUnits } from '@x402/starknet';
+import { fromAtomicUnits } from 'x402-starknet';
 
 const amount = fromAtomicUnits('1500000', 'USDC');
 console.log(amount); // 1.5
@@ -802,7 +802,7 @@ function getTokenSymbol(
 **Example:**
 
 ```typescript
-import { getTokenSymbol, ETH_ADDRESSES } from '@x402/starknet';
+import { getTokenSymbol, ETH_ADDRESSES } from 'x402-starknet';
 
 const symbol = getTokenSymbol(
   ETH_ADDRESSES['starknet:mainnet']!,
@@ -827,7 +827,7 @@ function isTokenAvailable(
 **Example:**
 
 ```typescript
-import { isTokenAvailable } from '@x402/starknet';
+import { isTokenAvailable } from 'x402-starknet';
 
 console.log(isTokenAvailable('USDC', 'starknet:mainnet')); // true
 console.log(isTokenAvailable('USDC', 'starknet:sepolia')); // false
@@ -846,7 +846,7 @@ function getAvailableTokens(network: StarknetNetworkId): Array<TokenSymbol>;
 **Example:**
 
 ```typescript
-import { getAvailableTokens } from '@x402/starknet';
+import { getAvailableTokens } from 'x402-starknet';
 
 const mainnetTokens = getAvailableTokens('starknet:mainnet');
 console.log(mainnetTokens); // ['ETH', 'STRK', 'USDC']
@@ -876,7 +876,7 @@ function encodePaymentSignature(payload: PaymentPayload): string;
 **Example:**
 
 ```typescript
-import { encodePaymentSignature, HTTP_HEADERS } from '@x402/starknet';
+import { encodePaymentSignature, HTTP_HEADERS } from 'x402-starknet';
 
 const encoded = encodePaymentSignature(payload);
 
@@ -911,7 +911,7 @@ function decodePaymentSignature(encoded: string): PaymentPayload;
 **Example:**
 
 ```typescript
-import { decodePaymentSignature, HTTP_HEADERS } from '@x402/starknet';
+import { decodePaymentSignature, HTTP_HEADERS } from 'x402-starknet';
 
 const header = request.headers.get(HTTP_HEADERS.PAYMENT_SIGNATURE);
 const payload = decodePaymentSignature(header);
@@ -936,7 +936,7 @@ function encodePaymentRequired(response: PaymentRequired): string;
 **Example:**
 
 ```typescript
-import { encodePaymentRequired, HTTP_HEADERS } from '@x402/starknet';
+import { encodePaymentRequired, HTTP_HEADERS } from 'x402-starknet';
 
 const paymentRequired: PaymentRequired = {
   x402Version: 2,
@@ -978,7 +978,7 @@ function decodePaymentRequired(encoded: string): PaymentRequired;
 **Example:**
 
 ```typescript
-import { decodePaymentRequired, HTTP_HEADERS } from '@x402/starknet';
+import { decodePaymentRequired, HTTP_HEADERS } from 'x402-starknet';
 
 const response = await fetch(url);
 if (response.status === 402) {
@@ -1027,7 +1027,7 @@ const HTTP_HEADERS: {
 **Example:**
 
 ```typescript
-import { HTTP_HEADERS } from '@x402/starknet';
+import { HTTP_HEADERS } from 'x402-starknet';
 
 // Request headers
 headers[HTTP_HEADERS.PAYMENT_SIGNATURE] = encodedPayload;
@@ -1087,7 +1087,7 @@ interface FacilitatorClientConfig {
 **Example:**
 
 ```typescript
-import { createFacilitatorClient } from '@x402/starknet';
+import { createFacilitatorClient } from 'x402-starknet';
 
 const client = createFacilitatorClient({
   baseUrl: 'https://facilitator.example.com',
@@ -1195,7 +1195,7 @@ import {
   defineExtension,
   createExtensionData,
   hasExtension,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Create registry
 const registry = createExtensionRegistry();
@@ -1251,7 +1251,7 @@ The library exports Zod schemas for runtime validation and type-safe parsing of 
 import {
   PAYMENT_PAYLOAD_SCHEMA,
   PAYMENT_REQUIREMENTS_SCHEMA,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Parse and validate - result is properly typed
 const paymentPayload = PAYMENT_PAYLOAD_SCHEMA.parse(rawPayload);
@@ -1324,7 +1324,7 @@ import {
   settlePayment,
   type PaymentPayload,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { RpcProvider } from 'starknet';
 
 async function handlePayment(rawPayload: unknown, rawRequirements: unknown) {
@@ -1402,7 +1402,7 @@ const DEFAULT_PAYMASTER_ENDPOINTS: {
 **Example:**
 
 ```typescript
-import { DEFAULT_PAYMASTER_ENDPOINTS } from '@x402/starknet';
+import { DEFAULT_PAYMASTER_ENDPOINTS } from 'x402-starknet';
 
 const endpoint = DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'];
 ```
@@ -1422,7 +1422,7 @@ const NETWORK_CONFIGS: {
 **Example:**
 
 ```typescript
-import { NETWORK_CONFIGS } from '@x402/starknet';
+import { NETWORK_CONFIGS } from 'x402-starknet';
 
 const sepoliaConfig = NETWORK_CONFIGS['starknet:sepolia'];
 console.log('RPC:', sepoliaConfig.rpcUrl);
@@ -1807,7 +1807,7 @@ import {
   decodePaymentRequired,
   DEFAULT_PAYMASTER_ENDPOINTS,
   HTTP_HEADERS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { Account, RpcProvider } from 'starknet';
 
 async function payForResource(url: string, account: Account) {
@@ -1861,7 +1861,7 @@ import {
   encodePaymentRequired,
   HTTP_HEADERS,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { RpcProvider } from 'starknet';
 
 const provider = new RpcProvider({ nodeUrl: 'https://...' });
@@ -1939,7 +1939,7 @@ import {
   createFacilitatorClient,
   decodePaymentSignature,
   HTTP_HEADERS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 const facilitator = createFacilitatorClient({
   baseUrl: 'https://facilitator.example.com',
@@ -1981,10 +1981,10 @@ This library is fully tree-shakeable. Only import what you need:
 
 ```typescript
 // Good - only imports what you use
-import { createPaymentPayload, verifyPayment } from '@x402/starknet';
+import { createPaymentPayload, verifyPayment } from 'x402-starknet';
 
 // Avoid - imports everything
-import * as x402 from '@x402/starknet';
+import * as x402 from 'x402-starknet';
 ```
 
 The library has `"sideEffects": false` in package.json, ensuring optimal bundle sizes.

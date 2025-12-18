@@ -12,9 +12,9 @@ A TypeScript library providing core functions for building x402-compatible payme
 ## Installation
 
 ```bash
-npm install @x402/starknet starknet
+npm install x402-starknet starknet
 # or
-bun add @x402/starknet starknet
+bun add x402-starknet starknet
 ```
 
 ## Quick Start
@@ -27,7 +27,7 @@ import {
   buildUSDCPayment,
   createProvider,
   createSettlementOptions,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Server: Build payment requirements
 const requirements = buildUSDCPayment({

@@ -154,7 +154,7 @@ import {
   createProvider,
   createSettlementOptions,
   createPaymasterConfig,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Create provider using the factory function
 const provider = createProvider('starknet:sepolia');
@@ -212,7 +212,7 @@ import {
   createPaymentPayload,
   DEFAULT_PAYMASTER_ENDPOINTS,
   isStarknetNetwork,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Validate network before use
 const network = 'starknet:sepolia';
@@ -410,7 +410,7 @@ For self-hosted paymasters, monitor sponsor account balance:
 
 ```typescript
 import { RpcProvider } from 'starknet';
-import { ETH_ADDRESSES, toAtomicUnits, fromAtomicUnits } from '@x402/starknet';
+import { ETH_ADDRESSES, toAtomicUnits, fromAtomicUnits } from 'x402-starknet';
 
 async function checkSponsorBalance(
   provider: RpcProvider,

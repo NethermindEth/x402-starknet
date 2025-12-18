@@ -1,12 +1,12 @@
 # Public API Surface
 
-This document outlines the public API surface of `@x402/starknet` following library best practices.
+This document outlines the public API surface of `x402-starknet` following library best practices.
 
 ## Design Principles
 
 - **Small, stable surface** - Only 100 named exports
 - **No wildcard exports** - Explicit named exports only
-- **No deep imports** - Single entry point via `@x402/starknet`
+- **No deep imports** - Single entry point via `x402-starknet`
 - **Tree-shakeable** - `sideEffects: false` in package.json
 - **Type-safe** - Full TypeScript support with strict types
 - **Stable error codes** - Programmatic error handling (spec-compliant)
@@ -258,19 +258,19 @@ The following are implementation details and NOT exported:
 ### Good - Named imports
 
 ```typescript
-import { createPaymentPayload, verifyPayment } from '@x402/starknet';
+import { createPaymentPayload, verifyPayment } from 'x402-starknet';
 ```
 
 ### Good - Specific type imports
 
 ```typescript
-import type { PaymentRequirements, VerifyResponse } from '@x402/starknet';
+import type { PaymentRequirements, VerifyResponse } from 'x402-starknet';
 ```
 
 ### Good - Facilitator client
 
 ```typescript
-import { createFacilitatorClient } from '@x402/starknet';
+import { createFacilitatorClient } from 'x402-starknet';
 
 const client = createFacilitatorClient({
   baseUrl: 'https://facilitator.example.com',
@@ -280,7 +280,7 @@ const client = createFacilitatorClient({
 ### Good - Payment Builders
 
 ```typescript
-import { buildUSDCPayment, buildETHPayment } from '@x402/starknet';
+import { buildUSDCPayment, buildETHPayment } from 'x402-starknet';
 
 // Build USDC payment requirements
 const usdcReq = buildUSDCPayment({
@@ -300,7 +300,7 @@ const ethReq = buildETHPayment({
 ### Good - Extensions
 
 ```typescript
-import { createExtensionRegistry, defineExtension } from '@x402/starknet';
+import { createExtensionRegistry, defineExtension } from 'x402-starknet';
 
 const registry = createExtensionRegistry();
 registry.register(
@@ -317,7 +317,7 @@ registry.register(
 import {
   PAYMENT_PAYLOAD_SCHEMA,
   PAYMENT_REQUIREMENTS_SCHEMA,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Parse and validate incoming data - result is properly typed
 const payload = PAYMENT_PAYLOAD_SCHEMA.parse(rawPayload);
@@ -335,13 +335,13 @@ if (result.success) {
 ### Bad - Wildcard import (prevents tree-shaking)
 
 ```typescript
-import * as x402 from '@x402/starknet';
+import * as x402 from 'x402-starknet';
 ```
 
 ### Bad - Deep imports (not supported)
 
 ```typescript
-import { verifyPayment } from '@x402/starknet/payment'; // ERROR
+import { verifyPayment } from 'x402-starknet/payment'; // ERROR
 ```
 
 ---
@@ -420,7 +420,7 @@ We include a test that verifies only intended exports are public:
 
 ```typescript
 // tests/unit/public-api.test.ts
-import * as publicApi from '@x402/starknet';
+import * as publicApi from 'x402-starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
@@ -432,7 +432,7 @@ This ensures we don't accidentally leak internal APIs.
 
 ---
 
-## Migration from v0.1.0 to v0.2.0
+## Migration from v0.3.2 to v1.0.0
 
 ### Network Identifiers
 
@@ -442,7 +442,7 @@ Network identifiers now use CAIP-2 format:
 // v0.1.0 (old)
 const network = 'starknet-sepolia';
 
-// v0.2.0 (new)
+// v1.0.0 (new)
 const network = 'starknet:sepolia';
 ```
 
@@ -452,10 +452,10 @@ Encoding functions have been renamed to match spec v2:
 
 ```typescript
 // v0.1.0 (old)
-import { encodePaymentHeader, decodePaymentHeader } from '@x402/starknet';
+import { encodePaymentHeader, decodePaymentHeader } from 'x402-starknet';
 
-// v0.2.0 (new)
-import { encodePaymentSignature, decodePaymentSignature } from '@x402/starknet';
+// v1.0.0 (new)
+import { encodePaymentSignature, decodePaymentSignature } from 'x402-starknet';
 ```
 
 ### HTTP Headers
@@ -466,8 +466,8 @@ HTTP headers use new names:
 // v0.1.0 (old)
 headers: { 'X-Payment': encoded }
 
-// v0.2.0 (new)
-import { HTTP_HEADERS } from '@x402/starknet';
+// v1.0.0 (new)
+import { HTTP_HEADERS } from 'x402-starknet';
 headers: { [HTTP_HEADERS.PAYMENT_SIGNATURE]: encoded }
 // or: headers: { 'PAYMENT-SIGNATURE': encoded }
 ```
@@ -482,7 +482,7 @@ Field names updated:
   maxAmountRequired: '1000000';
 }
 
-// v0.2.0 (new)
+// v1.0.0 (new)
 {
   amount: '1000000';
 }
@@ -525,7 +525,7 @@ Field names updated:
 
 ## Summary
 
-The `@x402/starknet` library follows industry best practices for library design:
+The `x402-starknet` library follows industry best practices for library design:
 
 - **Minimal, stable API** with 100 exports
 - **Tree-shakeable** for optimal bundle sizes

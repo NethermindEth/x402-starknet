@@ -69,7 +69,7 @@ export function createProvider(
  *
  * @example
  * ```typescript
- * import { getChainId } from '@x402/starknet';
+ * import { getChainId } from 'x402-starknet';
  * import { constants } from 'starknet';
  *
  * const chainId = getChainId('starknet:mainnet');

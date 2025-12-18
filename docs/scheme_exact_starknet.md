@@ -170,7 +170,7 @@ import {
   createSettlementOptions,
   hasPublicPaymaster,
   DEFAULT_PAYMASTER_ENDPOINTS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Check if network has a default paymaster
 if (hasPublicPaymaster('starknet:mainnet')) {
@@ -451,7 +451,7 @@ import {
   fromAtomicUnits,
   isTokenAvailable,
   getAvailableTokens,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Get token address for a network
 const ethAddress = ETH_ADDRESSES['starknet:mainnet'];
@@ -496,7 +496,7 @@ import {
   validateNetwork,
   parseStarknetNetwork,
   STARKNET_NETWORKS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Type guard
 if (isStarknetNetwork(userInput)) {
@@ -519,7 +519,7 @@ for (const network of STARKNET_NETWORKS) {
 The library also provides a provider factory for creating RPC providers:
 
 ```typescript
-import { createProvider, getChainId } from '@x402/starknet';
+import { createProvider, getChainId } from 'x402-starknet';
 import { constants } from 'starknet';
 
 // Create provider with default RPC URL

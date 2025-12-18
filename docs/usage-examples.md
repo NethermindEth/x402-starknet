@@ -1,6 +1,6 @@
 # Usage Examples
 
-This guide provides practical examples for integrating the `@x402/starknet` library into your applications.
+This guide provides practical examples for integrating the `x402-starknet` library into your applications.
 
 ## Table of Contents
 
@@ -44,7 +44,7 @@ import {
   // Types
   type PaymentPayload,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // ============================================================================
 // Server: Build payment requirements
@@ -141,7 +141,7 @@ import {
   buildETHPayment,
   buildSTRKPayment,
   buildUSDCPayment,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Generic builder with any token
 const requirements = buildPaymentRequirements({
@@ -196,7 +196,7 @@ import {
   PAYMENT_REQUIRED_SCHEMA,
   type PaymentPayload,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Parse and validate - throws on invalid data
 function validatePaymentRequest(rawPayload: unknown, rawRequirements: unknown) {
@@ -233,7 +233,7 @@ import {
   verifyPayment,
   createProvider,
   type VerifyResponse,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 async function handlePaymentVerification(
   payload: PaymentPayload,
@@ -281,7 +281,7 @@ import {
   createSettlementOptions,
   createPaymasterConfig,
   type SettleResponse,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 async function settleUserPayment(
   payload: PaymentPayload,
@@ -324,7 +324,7 @@ import {
   DEFAULT_PAYMASTER_ENDPOINTS,
   type PaymentPayload,
   type PaymentRequirements,
-} from '@x402/starknet';
+} from 'x402-starknet';
 import { Account } from 'starknet';
 
 async function createPayment(
@@ -368,7 +368,7 @@ import {
   getSupportedNetworks,
   STARKNET_NETWORKS,
   NETWORK_NAMES,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Type guard for network validation
 function processRequest(network: string) {
@@ -426,7 +426,7 @@ import {
   STRK_ADDRESSES,
   USDC_ADDRESSES,
   TOKEN_DECIMALS,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Get token address for a network
 const usdcAddress = getTokenAddress('USDC', 'starknet:mainnet');
@@ -467,7 +467,7 @@ console.log(TOKEN_DECIMALS); // { ETH: 18, STRK: 18, USDC: 6 }
 Create RPC providers with sensible defaults:
 
 ```typescript
-import { createProvider, getChainId, DEFAULT_RPC_URLS } from '@x402/starknet';
+import { createProvider, getChainId, DEFAULT_RPC_URLS } from 'x402-starknet';
 
 // Create provider with default public RPC
 const provider = createProvider('starknet:sepolia');
@@ -507,7 +507,7 @@ import {
   PaymentError,
   NetworkError,
   ERROR_CODES,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 async function handlePayment() {
   try {
@@ -576,7 +576,7 @@ import {
   HTTP_HEADERS,
   type PaymentPayload,
   type PaymentRequired,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Server: Create 402 response
 function create402Response(paymentRequired: PaymentRequired): Response {
@@ -635,7 +635,7 @@ import {
   hasExtension,
   validateExtensions,
   globalRegistry,
-} from '@x402/starknet';
+} from 'x402-starknet';
 
 // Define a custom extension
 const receiptsExtension = defineExtension('receipts', {

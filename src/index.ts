@@ -6,8 +6,8 @@
  *
  * Spec compliance: x402 v2
  *
- * @module @x402/starknet
- * @version 0.2.0
+ * @module x402-starknet
+ * @version 1.0.0
  */
 
 // ============================================================================
