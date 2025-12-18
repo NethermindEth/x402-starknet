@@ -202,7 +202,7 @@ export function extractTypedData(
 }
 
 /**
- * Default paymaster endpoints by network
+ * Default paymaster endpoints by network (CAIP-2 format)
  *
  * Note: The old endpoints (starknet.api.avnu.fi) are deprecated.
  * Use these SNIP-29 compatible endpoints instead.
@@ -215,7 +215,7 @@ export function extractTypedData(
  * @see https://doc.avnu.fi/avnu-paymaster/cover-your-users-gas-fees
  */
 export const DEFAULT_PAYMASTER_ENDPOINTS = {
-  'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-  'starknet-sepolia': 'http://localhost:12777', // Local paymaster (run locally to avoid API key requirement)
-  'starknet-devnet': 'http://localhost:12777', // Local paymaster for testing
+  'starknet:mainnet': 'https://starknet.paymaster.avnu.fi',
+  'starknet:sepolia': 'http://localhost:12777', // Local paymaster (run locally to avoid API key requirement)
+  'starknet:devnet': 'http://localhost:12777', // Local paymaster for testing
 } as const;
