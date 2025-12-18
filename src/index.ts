@@ -23,10 +23,13 @@ export { settlePayment } from './payment/settle.js';
 // ============================================================================
 
 export {
-  encodePaymentHeader,
-  decodePaymentHeader,
-  encodePaymentResponseHeader,
-  decodePaymentResponseHeader,
+  encodePaymentSignature,
+  decodePaymentSignature,
+  encodePaymentRequired,
+  decodePaymentRequired,
+  encodePaymentResponse,
+  decodePaymentResponse,
+  HTTP_HEADERS,
 } from './payment/create.js';
 
 // ============================================================================

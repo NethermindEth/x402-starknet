@@ -9,8 +9,26 @@ import type {
   PaymentRequired,
   PaymasterConfig,
   StarknetNetworkId,
+  SettleResponse,
 } from '../types/index.js';
 import { networksEqual } from '../types/index.js';
+
+// ============================================================================
+// HTTP Header Constants
+// ============================================================================
+
+/**
+ * HTTP header names for x402 protocol
+ * Spec compliance: x402 v2 - HTTP Transport
+ */
+export const HTTP_HEADERS = {
+  /** Header for 402 response containing payment requirements */
+  PAYMENT_REQUIRED: 'PAYMENT-REQUIRED',
+  /** Header for client payment signature/payload */
+  PAYMENT_SIGNATURE: 'PAYMENT-SIGNATURE',
+  /** Header for settlement response after successful payment */
+  PAYMENT_RESPONSE: 'PAYMENT-RESPONSE',
+} as const;
 import type { Account, RpcProvider } from 'starknet';
 import { num } from 'starknet';
 import {
@@ -296,37 +314,43 @@ export function getDefaultPaymasterEndpoint(
   return DEFAULT_PAYMASTER_ENDPOINTS[network];
 }
 
+// ============================================================================
+// Header Encoding/Decoding Functions
+// ============================================================================
+
 /**
- * Encode payment payload to base64 string for X-PAYMENT header
+ * Encode payment payload to base64 string for PAYMENT-SIGNATURE header
+ *
+ * This is the client's signed payment payload sent to the server.
  *
  * @param payload - Payment payload to encode
  * @returns Base64-encoded string
  *
  * @example
  * ```typescript
- * const header = encodePaymentHeader(payload);
+ * const header = encodePaymentSignature(payload);
  * // Use in HTTP request:
- * // headers: { 'X-PAYMENT': header }
+ * // headers: { [HTTP_HEADERS.PAYMENT_SIGNATURE]: header }
  * ```
  */
-export function encodePaymentHeader(payload: PaymentPayload): string {
+export function encodePaymentSignature(payload: PaymentPayload): string {
   const json = JSON.stringify(payload);
   return Buffer.from(json).toString('base64');
 }
 
 /**
- * Decode payment payload from base64 X-PAYMENT header
+ * Decode payment payload from base64 PAYMENT-SIGNATURE header
  *
- * @param encoded - Base64-encoded payment header
+ * @param encoded - Base64-encoded payment signature header
  * @returns Decoded payment payload
  * @throws Error if decoded value is not a valid object
  *
  * @example
  * ```typescript
- * const payload = decodePaymentHeader(req.headers['x-payment']);
+ * const payload = decodePaymentSignature(req.headers['payment-signature']);
  * ```
  */
-export function decodePaymentHeader(encoded: string): PaymentPayload {
+export function decodePaymentSignature(encoded: string): PaymentPayload {
   const json = Buffer.from(encoded, 'base64').toString('utf-8');
   const parsed: unknown = JSON.parse(json);
 
@@ -341,10 +365,9 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
 }
 
 /**
- * Encode PaymentRequired to base64 string for X-PAYMENT-RESPONSE header
+ * Encode PaymentRequired to base64 string for PAYMENT-REQUIRED header
  *
- * This function is used by facilitators to encode the payment requirements response
- * when using header-based transport instead of JSON body.
+ * This is the server's 402 response containing payment requirements.
  *
  * @param response - Payment required response to encode (v2 format)
  * @returns Base64-encoded string
@@ -356,37 +379,87 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
  *   resource: { url: 'https://api.example.com/resource' },
  *   accepts: [paymentRequirement1, paymentRequirement2]
  * };
- * const header = encodePaymentResponseHeader(response);
+ * const header = encodePaymentRequired(response);
  * // Use in HTTP response:
- * // headers: { 'X-PAYMENT-RESPONSE': header }
+ * // headers: { [HTTP_HEADERS.PAYMENT_REQUIRED]: header }
  * ```
  */
-export function encodePaymentResponseHeader(response: PaymentRequired): string {
+export function encodePaymentRequired(response: PaymentRequired): string {
   const json = JSON.stringify(response);
   return Buffer.from(json).toString('base64');
 }
 
 /**
- * Decode PaymentRequired from base64 X-PAYMENT-RESPONSE header
+ * Decode PaymentRequired from base64 PAYMENT-REQUIRED header
  *
- * This function is used by clients to decode the payment requirements response
- * when the facilitator uses header-based transport.
+ * This is used by clients to decode the 402 response payment requirements.
  *
- * @param encoded - Base64-encoded payment response header
+ * @param encoded - Base64-encoded payment required header
  * @returns Decoded payment required response (v2 format)
  * @throws Error if decoded value is not a valid object
  *
  * @example
  * ```typescript
- * // In client code:
- * const responseHeader = response.headers.get('x-payment-response');
+ * const responseHeader = response.headers.get('payment-required');
  * if (responseHeader) {
- *   const paymentResponse = decodePaymentResponseHeader(responseHeader);
- *   // Use paymentResponse.accepts to create payment
+ *   const paymentRequired = decodePaymentRequired(responseHeader);
+ *   // Use paymentRequired.accepts to create payment
  * }
  * ```
  */
-export function decodePaymentResponseHeader(encoded: string): PaymentRequired {
+export function decodePaymentRequired(encoded: string): PaymentRequired {
+  const json = Buffer.from(encoded, 'base64').toString('utf-8');
+  const parsed: unknown = JSON.parse(json);
+
+  // Validate that decoded value is an object (not null, array, string, number, etc.)
+  // This prevents prototype pollution and ensures proper response structure
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw err.invalid('Invalid payment required: must be an object');
+  }
+
+  return parsed as PaymentRequired;
+}
+
+/**
+ * Encode SettleResponse to base64 string for PAYMENT-RESPONSE header
+ *
+ * This is the settlement response sent after successful payment execution.
+ *
+ * @param response - Settlement response to encode
+ * @returns Base64-encoded string
+ *
+ * @example
+ * ```typescript
+ * const settleResult = await settlePayment(...);
+ * const header = encodePaymentResponse(settleResult);
+ * // Use in HTTP response:
+ * // headers: { [HTTP_HEADERS.PAYMENT_RESPONSE]: header }
+ * ```
+ */
+export function encodePaymentResponse(response: SettleResponse): string {
+  const json = JSON.stringify(response);
+  return Buffer.from(json).toString('base64');
+}
+
+/**
+ * Decode SettleResponse from base64 PAYMENT-RESPONSE header
+ *
+ * This is used by clients to decode the settlement response.
+ *
+ * @param encoded - Base64-encoded payment response header
+ * @returns Decoded settlement response
+ * @throws Error if decoded value is not a valid object
+ *
+ * @example
+ * ```typescript
+ * const responseHeader = response.headers.get('payment-response');
+ * if (responseHeader) {
+ *   const settleResponse = decodePaymentResponse(responseHeader);
+ *   console.log('Transaction:', settleResponse.transaction);
+ * }
+ * ```
+ */
+export function decodePaymentResponse(encoded: string): SettleResponse {
   const json = Buffer.from(encoded, 'base64').toString('utf-8');
   const parsed: unknown = JSON.parse(json);
 
@@ -396,5 +469,5 @@ export function decodePaymentResponseHeader(encoded: string): PaymentRequired {
     throw err.invalid('Invalid payment response: must be an object');
   }
 
-  return parsed as PaymentRequired;
+  return parsed as SettleResponse;
 }
