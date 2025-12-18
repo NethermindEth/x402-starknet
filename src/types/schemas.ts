@@ -58,7 +58,7 @@ export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
     ),
   description: z.string().optional(),
   mimeType: z.string().optional(),
-  outputSchema: z.object({}).passthrough().nullable().optional(),
+  outputSchema: z.looseObject({}).nullable().optional(),
   maxTimeoutSeconds: z
     .number()
     .int()
@@ -94,12 +94,9 @@ export const PAYMENT_PAYLOAD_SCHEMA = z
       .regex(/^0x[0-9a-fA-F]+$/, 'Invalid transaction hash format')
       .optional(),
     typedData: z.unknown().optional(),
-    paymasterEndpoint: z
-      .string()
-      .url('Invalid paymaster endpoint URL')
-      .optional(),
+    paymasterEndpoint: z.url('Invalid paymaster endpoint URL').optional(),
   })
-  .passthrough(); // Allow additional fields for forward compatibility
+  .loose(); // Allow additional fields for forward compatibility
 
 /**
  * Schema for payment requirements response
@@ -174,8 +171,8 @@ export const SETTLE_RESPONSE_SCHEMA = z.object({
 export const NETWORK_CONFIG_SCHEMA = z.object({
   network: STARKNET_NETWORK_SCHEMA,
   chainId: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid chain ID format'),
-  rpcUrl: z.string().url('RPC URL must be a valid URL'),
-  explorerUrl: z.string().url('Explorer URL must be a valid URL').nullable(),
+  rpcUrl: z.url('RPC URL must be a valid URL'),
+  explorerUrl: z.url('Explorer URL must be a valid URL').nullable(),
   name: z.string().min(1, 'Network name cannot be empty'),
 });
 
@@ -196,7 +193,7 @@ export const ACCOUNT_CONFIG_SCHEMA = z.object({
  */
 export const PROVIDER_OPTIONS_SCHEMA = z.object({
   network: STARKNET_NETWORK_SCHEMA,
-  rpcUrl: z.string().url('RPC URL must be a valid URL').optional(),
+  rpcUrl: z.url('RPC URL must be a valid URL').optional(),
   timeout: z.number().int().positive().optional(),
   retries: z.number().int().nonnegative().optional(),
 });
