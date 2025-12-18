@@ -3,11 +3,7 @@
  * Spec compliance: x402 v2 - CAIP-2 network identifiers
  */
 
-import type {
-  NetworkConfig,
-  StarknetNetworkId,
-  StarknetNetworkLegacy,
-} from '../types/index.js';
+import type { NetworkConfig, StarknetNetworkId } from '../types/index.js';
 
 /**
  * Starknet chain IDs
@@ -25,16 +21,6 @@ export const DEFAULT_RPC_URLS: Record<StarknetNetworkId, string> = {
   'starknet:mainnet': 'https://starknet-mainnet.public.blastapi.io',
   'starknet:sepolia': 'https://starknet-sepolia.public.blastapi.io',
   'starknet:devnet': 'http://localhost:5050',
-} as const;
-
-/**
- * Legacy RPC URLs (for backward compatibility)
- * @deprecated Use DEFAULT_RPC_URLS with CAIP-2 keys
- */
-export const LEGACY_RPC_URLS: Record<StarknetNetworkLegacy, string> = {
-  'starknet-mainnet': 'https://starknet-mainnet.public.blastapi.io',
-  'starknet-sepolia': 'https://starknet-sepolia.public.blastapi.io',
-  'starknet-devnet': 'http://localhost:5050',
 } as const;
 
 /**
@@ -61,7 +47,6 @@ export const NETWORK_NAMES: Record<StarknetNetworkId, string> = {
 export const NETWORK_CONFIGS: Record<StarknetNetworkId, NetworkConfig> = {
   'starknet:mainnet': {
     network: 'starknet:mainnet',
-    legacyNetwork: 'starknet-mainnet',
     chainId: CHAIN_IDS.MAINNET,
     rpcUrl: DEFAULT_RPC_URLS['starknet:mainnet'],
     explorerUrl: EXPLORER_URLS['starknet:mainnet'],
@@ -69,7 +54,6 @@ export const NETWORK_CONFIGS: Record<StarknetNetworkId, NetworkConfig> = {
   },
   'starknet:sepolia': {
     network: 'starknet:sepolia',
-    legacyNetwork: 'starknet-sepolia',
     chainId: CHAIN_IDS.SEPOLIA,
     rpcUrl: DEFAULT_RPC_URLS['starknet:sepolia'],
     explorerUrl: EXPLORER_URLS['starknet:sepolia'],
@@ -77,7 +61,6 @@ export const NETWORK_CONFIGS: Record<StarknetNetworkId, NetworkConfig> = {
   },
   'starknet:devnet': {
     network: 'starknet:devnet',
-    legacyNetwork: 'starknet-devnet',
     chainId: CHAIN_IDS.DEVNET,
     rpcUrl: DEFAULT_RPC_URLS['starknet:devnet'],
     explorerUrl: EXPLORER_URLS['starknet:devnet'],
