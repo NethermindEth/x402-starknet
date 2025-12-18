@@ -381,16 +381,16 @@ describe('Error Handling', () => {
     describe('networkMismatch', () => {
       it('should create network mismatch error', () => {
         const error = NetworkError.networkMismatch(
-          'starknet-sepolia',
-          'starknet-mainnet'
+          'starknet:sepolia',
+          'starknet:mainnet'
         );
         expect(error.code).toBe('ECONFLICT');
         expect(error.message).toContain('Network mismatch');
-        expect(error.message).toContain('starknet-sepolia');
-        expect(error.message).toContain('starknet-mainnet');
+        expect(error.message).toContain('starknet:sepolia');
+        expect(error.message).toContain('starknet:mainnet');
         expect(error.details).toEqual({
-          expected: 'starknet-sepolia',
-          actual: 'starknet-mainnet',
+          expected: 'starknet:sepolia',
+          actual: 'starknet:mainnet',
         });
       });
     });

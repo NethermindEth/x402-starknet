@@ -4,17 +4,17 @@ import { createProvider, retryRpcCall } from '../../src/utils/provider.js';
 describe('Provider Utilities', () => {
   describe('createProvider', () => {
     it('should create provider for mainnet', () => {
-      const provider = createProvider('starknet-mainnet');
+      const provider = createProvider('starknet:mainnet');
       expect(provider).toBeDefined();
     });
 
     it('should create provider for sepolia', () => {
-      const provider = createProvider('starknet-sepolia');
+      const provider = createProvider('starknet:sepolia');
       expect(provider).toBeDefined();
     });
 
     it('should create provider for devnet', () => {
-      const provider = createProvider('starknet-devnet');
+      const provider = createProvider('starknet:devnet');
       expect(provider).toBeDefined();
     });
   });

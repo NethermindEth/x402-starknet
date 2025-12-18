@@ -53,25 +53,25 @@ describe('Public API Surface', () => {
   });
 
   it('should export VERSION constant', () => {
-    expect(publicApi.VERSION).toBe('0.1.0');
+    expect(publicApi.VERSION).toBe('0.2.0');
   });
 
   it('should export X402_VERSION constant', () => {
-    expect(publicApi.X402_VERSION).toBe(1);
+    expect(publicApi.X402_VERSION).toBe(2);
   });
 
   it('should export DEFAULT_PAYMASTER_ENDPOINTS', () => {
     expect(publicApi.DEFAULT_PAYMASTER_ENDPOINTS).toEqual({
-      'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-      'starknet-sepolia': 'http://localhost:12777',
-      'starknet-devnet': 'http://localhost:12777',
+      'starknet:mainnet': 'https://starknet.paymaster.avnu.fi',
+      'starknet:sepolia': 'http://localhost:12777',
+      'starknet:devnet': 'http://localhost:12777',
     });
   });
 
   it('should export NETWORK_CONFIGS', () => {
     expect(publicApi.NETWORK_CONFIGS).toBeDefined();
-    expect(publicApi.NETWORK_CONFIGS['starknet-sepolia']).toBeDefined();
-    expect(publicApi.NETWORK_CONFIGS['starknet-mainnet']).toBeDefined();
+    expect(publicApi.NETWORK_CONFIGS['starknet:sepolia']).toBeDefined();
+    expect(publicApi.NETWORK_CONFIGS['starknet:mainnet']).toBeDefined();
   });
 
   it('should export error classes', () => {
@@ -123,9 +123,9 @@ describe('Public API Surface', () => {
     expect(invalidPayload.message).toContain('missing field');
 
     const unsupportedNetwork =
-      publicApi.NetworkError.unsupportedNetwork('starknet-foo');
+      publicApi.NetworkError.unsupportedNetwork('starknet:foo');
     expect(unsupportedNetwork.code).toBe('EINVALID_INPUT');
-    expect(unsupportedNetwork.message).toContain('starknet-foo');
+    expect(unsupportedNetwork.message).toContain('starknet:foo');
 
     const networkMismatch = publicApi.NetworkError.networkMismatch(
       'sepolia',

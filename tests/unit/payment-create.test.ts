@@ -28,8 +28,8 @@ describe('Payment Creation', () => {
     const mockRequirements: Array<PaymentRequirements> = [
       {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: '0xeth',
         payTo: '0xrecipient',
         resource: '/api/data',
@@ -37,8 +37,8 @@ describe('Payment Creation', () => {
       },
       {
         scheme: 'exact',
-        network: 'starknet-mainnet',
-        maxAmountRequired: '2000000',
+        network: 'starknet:mainnet',
+        amount: '2000000',
         asset: '0xusdc',
         payTo: '0xrecipient2',
         resource: '/api/data',
@@ -61,7 +61,7 @@ describe('Payment Creation', () => {
         mockProvider
       );
 
-      expect(selected.network).toBe('starknet-sepolia');
+      expect(selected.network).toBe('starknet:sepolia');
     });
 
     it('should throw if no compatible requirements', async () => {
@@ -101,30 +101,29 @@ describe('Payment Creation', () => {
 
       const paymentRequirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset:
           '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
         payTo: '0xrecipient',
-        resource: '/api/data',
+        maxTimeoutSeconds: 3600,
       };
 
       const paymasterConfig: PaymasterConfig = {
         endpoint: 'https://sepolia.paymaster.avnu.fi',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       const payload = await createPaymentPayload(
         mockAccount,
-        1,
+        2,
         paymentRequirements,
         paymasterConfig
       );
 
-      // Verify payload structure
-      expect(payload.x402Version).toBe(1);
-      expect(payload.scheme).toBe('exact');
-      expect(payload.network).toBe('starknet-sepolia');
+      // Verify payload structure (v2 format)
+      expect(payload.x402Version).toBe(2);
+      expect(payload.accepted).toEqual(paymentRequirements);
       expect(payload.payload.signature).toEqual({
         r: '0x1234',
         s: '0x5678',
@@ -132,7 +131,7 @@ describe('Payment Creation', () => {
       expect(payload.payload.authorization).toEqual({
         from: mockAccount.address,
         to: paymentRequirements.payTo,
-        amount: paymentRequirements.maxAmountRequired,
+        amount: paymentRequirements.amount,
         token: paymentRequirements.asset,
         nonce: '0x0',
         validUntil: '0',
@@ -169,8 +168,8 @@ describe('Payment Creation', () => {
 
       const paymentRequirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset:
           '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
         payTo:
@@ -180,7 +179,7 @@ describe('Payment Creation', () => {
 
       const paymasterConfig: PaymasterConfig = {
         endpoint: 'https://sepolia.paymaster.avnu.fi',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       const payload = await createPaymentPayload(
@@ -200,9 +199,9 @@ describe('Payment Creation', () => {
   describe('encodePaymentHeader', () => {
     it('should encode payment payload to base64', () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
+        x402Version: 2,
         scheme: 'exact',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
         payload: {
           signature: {
             r: '0xsig_r',
@@ -232,9 +231,9 @@ describe('Payment Creation', () => {
   describe('decodePaymentHeader', () => {
     it('should decode base64 payment header', () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
+        x402Version: 2,
         scheme: 'exact',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
         payload: {
           signature: {
             r: '0xsig_r',
@@ -259,9 +258,9 @@ describe('Payment Creation', () => {
 
     it('should handle encode/decode round trip', () => {
       const original: PaymentPayload = {
-        x402Version: 1,
+        x402Version: 2,
         scheme: 'exact',
-        network: 'starknet-mainnet',
+        network: 'starknet:mainnet',
         payload: {
           signature: {
             r: '0x123',
@@ -285,17 +284,17 @@ describe('Payment Creation', () => {
 
   describe('getDefaultPaymasterEndpoint', () => {
     it('should return mainnet endpoint', () => {
-      const endpoint = getDefaultPaymasterEndpoint('starknet-mainnet');
+      const endpoint = getDefaultPaymasterEndpoint('starknet:mainnet');
       expect(endpoint).toBe('https://starknet.paymaster.avnu.fi');
     });
 
     it('should return sepolia endpoint', () => {
-      const endpoint = getDefaultPaymasterEndpoint('starknet-sepolia');
+      const endpoint = getDefaultPaymasterEndpoint('starknet:sepolia');
       expect(endpoint).toBe('http://localhost:12777');
     });
 
     it('should return devnet endpoint', () => {
-      const endpoint = getDefaultPaymasterEndpoint('starknet-devnet');
+      const endpoint = getDefaultPaymasterEndpoint('starknet:devnet');
       expect(endpoint).toBe('http://localhost:12777');
     });
   });

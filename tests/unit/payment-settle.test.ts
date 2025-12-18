@@ -33,26 +33,33 @@ vi.mock('../../src/paymaster/index.js', () => ({
   })),
   extractTypedData: vi.fn((resp) => resp.typed_data),
   DEFAULT_PAYMASTER_ENDPOINTS: {
-    'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-    'starknet-sepolia': 'http://localhost:12777',
-    'starknet-devnet': 'http://localhost:12777',
+    'starknet:mainnet': 'https://starknet.paymaster.avnu.fi',
+    'starknet:sepolia': 'http://localhost:12777',
+    'starknet:devnet': 'http://localhost:12777',
   },
 }));
 
 describe('Payment Settlement', () => {
   const mockPaymentRequirements: PaymentRequirements = {
     scheme: 'exact',
-    network: 'starknet-sepolia',
-    maxAmountRequired: '1000000',
+    network: 'starknet:sepolia',
+    amount: '1000000',
     asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
     payTo: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-    resource: 'https://example.com/api/data',
   };
 
   const mockPayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset:
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+      payTo:
+        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -112,7 +119,7 @@ describe('Payment Settlement', () => {
 
       expect(result.success).toBe(true);
       expect(result.transaction).toBe('0xtxhash123');
-      expect(result.network).toBe('starknet-sepolia');
+      expect(result.network).toBe('starknet:sepolia');
       expect(result.payer).toBe(
         '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
       );

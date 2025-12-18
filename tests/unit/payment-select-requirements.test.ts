@@ -18,8 +18,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-mainnet',
-          maxAmountRequired: '1000000',
+          network: 'starknet:mainnet',
+          amount: '1000000',
           asset:
             '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
           payTo:
@@ -29,8 +29,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '500000',
+          network: 'starknet:sepolia',
+          amount: '500000',
           asset:
             '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
           payTo:
@@ -51,16 +51,16 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.network).toBe('starknet-sepolia');
-      expect(selected.maxAmountRequired).toBe('500000');
+      expect(selected.network).toBe('starknet:sepolia');
+      expect(selected.amount).toBe('500000');
     });
 
     it('should throw when no compatible network found', async () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-mainnet',
-          maxAmountRequired: '1000000',
+          network: 'starknet:mainnet',
+          amount: '1000000',
           asset:
             '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
           payTo:
@@ -83,8 +83,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-mainnet',
-          maxAmountRequired: '1000000',
+          network: 'starknet:mainnet',
+          amount: '1000000',
           asset:
             '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
           payTo:
@@ -105,15 +105,15 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.network).toBe('starknet-mainnet');
+      expect(selected.network).toBe('starknet:mainnet');
     });
 
     it('should default to devnet for unknown chain IDs', async () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-devnet',
-          maxAmountRequired: '1000000',
+          network: 'starknet:devnet',
+          amount: '1000000',
           asset:
             '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
           payTo:
@@ -134,15 +134,15 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.network).toBe('starknet-devnet');
+      expect(selected.network).toBe('starknet:devnet');
     });
 
     it('should default to sepolia when getChainId fails', async () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset:
             '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
           payTo:
@@ -163,7 +163,7 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.network).toBe('starknet-sepolia');
+      expect(selected.network).toBe('starknet:sepolia');
     });
   });
 
@@ -172,8 +172,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken1',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -182,8 +182,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '500000',
+          network: 'starknet:sepolia',
+          amount: '500000',
           asset: '0xtoken2',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -217,8 +217,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -241,8 +241,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken1',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -251,8 +251,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '500000',
+          network: 'starknet:sepolia',
+          amount: '500000',
           asset: '0xtoken2',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -288,8 +288,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '2000000',
+          network: 'starknet:sepolia',
+          amount: '2000000',
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -298,8 +298,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '500000', // Lower cost
+          network: 'starknet:sepolia',
+          amount: '500000', // Lower cost
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -308,8 +308,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -329,15 +329,15 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.maxAmountRequired).toBe('500000');
+      expect(selected.amount).toBe('500000');
     });
 
     it('should prefer shorter timeout when costs are equal', async () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -346,8 +346,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -386,8 +386,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -414,8 +414,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '999999999999999999999999999999', // Very large
+          network: 'starknet:sepolia',
+          amount: '999999999999999999999999999999', // Very large
           asset: '0xtoken',
           payTo:
             '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -437,7 +437,7 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.maxAmountRequired).toBe('999999999999999999999999999999');
+      expect(selected.amount).toBe('999999999999999999999999999999');
     });
   });
 
@@ -446,8 +446,8 @@ describe('selectPaymentRequirements', () => {
       const requirements: Array<PaymentRequirements> = [
         {
           scheme: 'exact',
-          network: 'starknet-mainnet',
-          maxAmountRequired: '3000000',
+          network: 'starknet:mainnet',
+          amount: '3000000',
           asset: '0xtoken1',
           payTo: '0xrecipient',
           resource: 'https://api.example.com/data',
@@ -455,8 +455,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000', // Cheapest on correct network
+          network: 'starknet:sepolia',
+          amount: '1000000', // Cheapest on correct network
           asset: '0xtoken2',
           payTo: '0xrecipient',
           resource: 'https://api.example.com/data',
@@ -464,8 +464,8 @@ describe('selectPaymentRequirements', () => {
         },
         {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '2000000',
+          network: 'starknet:sepolia',
+          amount: '2000000',
           asset: '0xtoken3',
           payTo: '0xrecipient',
           resource: 'https://api.example.com/data',
@@ -484,8 +484,8 @@ describe('selectPaymentRequirements', () => {
         mockProvider
       );
 
-      expect(selected.network).toBe('starknet-sepolia');
-      expect(selected.maxAmountRequired).toBe('1000000');
+      expect(selected.network).toBe('starknet:sepolia');
+      expect(selected.amount).toBe('1000000');
       expect(selected.asset).toBe('0xtoken2');
     });
   });

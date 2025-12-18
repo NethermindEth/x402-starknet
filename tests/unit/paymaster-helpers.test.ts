@@ -228,26 +228,26 @@ describe('Paymaster Helpers', () => {
   describe('DEFAULT_PAYMASTER_ENDPOINTS', () => {
     it('should have correct endpoints for all networks', () => {
       expect(DEFAULT_PAYMASTER_ENDPOINTS).toEqual({
-        'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-        'starknet-sepolia': 'http://localhost:12777',
-        'starknet-devnet': 'http://localhost:12777',
+        'starknet:mainnet': 'https://starknet.paymaster.avnu.fi',
+        'starknet:sepolia': 'http://localhost:12777',
+        'starknet:devnet': 'http://localhost:12777',
       });
     });
 
     it('should have mainnet endpoint', () => {
-      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-mainnet']).toBe(
+      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet:mainnet']).toBe(
         'https://starknet.paymaster.avnu.fi'
       );
     });
 
     it('should have sepolia endpoint', () => {
-      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia']).toBe(
+      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia']).toBe(
         'http://localhost:12777'
       );
     });
 
     it('should have devnet endpoint', () => {
-      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-devnet']).toBe(
+      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet:devnet']).toBe(
         'http://localhost:12777'
       );
     });

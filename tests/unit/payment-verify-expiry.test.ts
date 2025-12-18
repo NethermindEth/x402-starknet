@@ -20,8 +20,8 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
   const baseRequirements: PaymentRequirements = {
     scheme: 'exact',
-    network: 'starknet-sepolia',
-    maxAmountRequired: '1000000',
+    network: 'starknet:sepolia',
+    amount: '1000000',
     asset: USDC_ADDRESS,
     payTo: RECIPIENT_ADDRESS,
     resource: 'https://api.example.com/data',
@@ -42,9 +42,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const futureTimestamp = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -76,9 +82,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const currentTimestamp = Math.floor(Date.now() / 1000);
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -110,9 +122,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const farFutureTimestamp = '4102444800';
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -145,9 +163,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const pastTimestamp = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -171,7 +195,9 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('expired');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_valid_until'
+      );
       expect(result.payer).toBe(PAYER_ADDRESS);
       expect(result.details?.validUntil).toBe(pastTimestamp.toString());
       expect(result.details?.currentTimestamp).toBeDefined();
@@ -181,9 +207,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const justExpired = Math.floor(Date.now() / 1000) - 1;
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -207,15 +239,23 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('expired');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_valid_until'
+      );
       expect(result.payer).toBe(PAYER_ADDRESS);
     });
 
     it('should accept payment with validUntil = 0 (no expiration)', async () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -245,9 +285,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
     it('should reject payment with validUntil = 1 (very old timestamp)', async () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -271,16 +317,24 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('expired');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_valid_until'
+      );
     });
   });
 
   describe('Invalid validUntil formats', () => {
     it('should reject payment with non-numeric validUntil (caught by schema)', async () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -305,16 +359,22 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
       // Schema validation catches this before timestamp check
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
-      expect(result.payer).toBe(''); // Schema validation fails before extracting payer
+      expect(result.invalidReason).toBe('invalid_payload');
+      expect(result.payer).toBeUndefined(); // Schema validation fails before extracting payer
       expect(result.details?.error).toBeDefined();
     });
 
     it('should reject payment with empty validUntil (caught by schema)', async () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -339,15 +399,21 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
       // Schema validation catches empty string
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe('invalid_payload');
       expect(result.details?.error).toBeDefined();
     });
 
     it('should reject payment with negative validUntil (caught by schema)', async () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -372,14 +438,20 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
       // Schema validation catches negative numbers (regex requires digits only, no minus sign)
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe('invalid_payload');
     });
 
     it('should reject payment with floating point validUntil (caught by schema)', async () => {
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -404,7 +476,7 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
       // Schema validation catches decimal point (regex requires digits only)
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe('invalid_payload');
     });
   });
 
@@ -414,9 +486,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const shortExpiry = Math.floor(Date.now() / 1000) + 2;
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -447,9 +525,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       const expiredTimestamp = 1000000; // Very old timestamp
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -473,7 +557,9 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('expired');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_valid_until'
+      );
       expect(result.details).toBeDefined();
       expect(result.details?.validUntil).toBe(expiredTimestamp.toString());
       expect(result.details?.currentTimestamp).toBeDefined();
@@ -498,9 +584,15 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
       } as unknown as RpcProvider;
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -525,16 +617,24 @@ describe('Payment Verification: validUntil Expiry Checks', () => {
 
       // Should fail with 'expired' not 'insufficient_funds'
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('expired');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_valid_until'
+      );
     });
 
     it('should accept valid payment with all checks passing', async () => {
       const futureTimestamp = Math.floor(Date.now() / 1000) + 3600;
 
       const payload: PaymentPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',

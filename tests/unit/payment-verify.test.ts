@@ -12,17 +12,25 @@ import type { RpcProvider } from 'starknet';
 describe('Payment Verification', () => {
   const mockPaymentRequirements: PaymentRequirements = {
     scheme: 'exact',
-    network: 'starknet-sepolia',
-    maxAmountRequired: '1000000',
+    network: 'starknet:sepolia',
+    amount: '1000000',
     asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
     payTo: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-    resource: 'https://example.com/api/data',
+    maxTimeoutSeconds: 3600,
   };
 
   const mockPayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset:
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+      payTo:
+        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -92,7 +100,10 @@ describe('Payment Verification', () => {
 
       const wrongNetworkPayload: PaymentPayload = {
         ...mockPayload,
-        network: 'starknet-mainnet', // Different from requirement (sepolia)
+        accepted: {
+          ...mockPayload.accepted,
+          network: 'starknet:mainnet', // Different from requirement (sepolia)
+        },
       };
 
       const result = await verifyPayment(
@@ -148,7 +159,9 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_token_mismatch'
+      );
     });
 
     it('should reject payment with wrong recipient', async () => {
@@ -172,7 +185,9 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_recipient_mismatch'
+      );
     });
 
     it('should reject payment with wrong amount', async () => {
@@ -198,7 +213,9 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should handle provider errors gracefully', async () => {
@@ -291,7 +308,7 @@ describe('Payment Verification', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe('invalid_payload');
       // Schema validation catches this before our code
       expect(result.details?.error).toBeDefined();
     });
