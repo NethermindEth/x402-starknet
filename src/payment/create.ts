@@ -6,10 +6,12 @@ import type {
   PaymentRequirements,
   PaymentPayload,
   PaymentRequirementsSelector,
-  PaymentRequirementsResponse,
+  PaymentRequired,
   PaymasterConfig,
+  StarknetNetworkId,
 } from '../types/index.js';
-import type { Account, RpcProvider, TypedData } from 'starknet';
+import { networksEqual } from '../types/index.js';
+import type { Account, RpcProvider } from 'starknet';
 import { num } from 'starknet';
 import {
   createPaymasterClient,
@@ -52,12 +54,12 @@ export async function selectPaymentRequirements(
     throw err.invalid('No payment requirements provided');
   }
 
-  // Get account network from provider
+  // Get account network from provider (returns CAIP-2 format)
   const accountNetwork = await getAccountNetwork(provider);
 
-  // Filter by network compatibility
-  const compatibleRequirements = requirements.filter(
-    (req) => req.network === accountNetwork
+  // Filter by network compatibility (use networksEqual for format-agnostic comparison)
+  const compatibleRequirements = requirements.filter((req) =>
+    networksEqual(req.network, accountNetwork)
   );
 
   if (compatibleRequirements.length === 0) {
@@ -67,7 +69,7 @@ export async function selectPaymentRequirements(
     );
   }
 
-  // Check balances for compatible requirements
+  // Check balances for compatible requirements (v2: uses 'amount' instead of 'maxAmountRequired')
   const { getTokenBalance } = await import('../utils/token.js');
   const requirementsWithBalance = await Promise.all(
     compatibleRequirements.map(async (req) => {
@@ -77,7 +79,7 @@ export async function selectPaymentRequirements(
           req.asset,
           account.address
         );
-        const hasBalance = BigInt(balance) >= BigInt(req.maxAmountRequired);
+        const hasBalance = BigInt(balance) >= BigInt(req.amount);
         return { requirement: req, balance, hasBalance };
       } catch {
         // If balance check fails, assume insufficient balance
@@ -96,7 +98,7 @@ export async function selectPaymentRequirements(
     const first = requirementsWithBalance[0];
     if (first) {
       throw PaymentError.insufficientFunds(
-        first.requirement.maxAmountRequired,
+        first.requirement.amount,
         first.balance
       );
     }
@@ -106,8 +108,8 @@ export async function selectPaymentRequirements(
   // Select the best option: lowest cost that meets timeout constraints
   // Sort by amount (lowest first)
   const sorted = affordableRequirements.sort((a, b) => {
-    const amountA = BigInt(a.requirement.maxAmountRequired);
-    const amountB = BigInt(b.requirement.maxAmountRequired);
+    const amountA = BigInt(a.requirement.amount);
+    const amountB = BigInt(b.requirement.amount);
     if (amountA < amountB) return -1;
     if (amountA > amountB) return 1;
     // If amounts are equal, prefer shorter timeout (faster settlement)
@@ -127,29 +129,31 @@ export async function selectPaymentRequirements(
 }
 
 /**
- * Get the network identifier from the provider
+ * Get the network identifier from the provider (CAIP-2 format)
  *
  * @param provider - RPC provider
- * @returns Network identifier (e.g., 'starknet-sepolia')
+ * @returns Network identifier in CAIP-2 format (e.g., 'starknet:sepolia')
  */
-async function getAccountNetwork(provider: RpcProvider): Promise<string> {
+async function getAccountNetwork(
+  provider: RpcProvider
+): Promise<StarknetNetworkId> {
   try {
     const chainId = await provider.getChainId();
 
-    // Map chain IDs to network identifiers
+    // Map chain IDs to CAIP-2 network identifiers
     // See: https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/network-architecture/
     switch (chainId) {
       case '0x534e5f4d41494e': // SN_MAIN
-        return 'starknet-mainnet';
+        return 'starknet:mainnet';
       case '0x534e5f5345504f4c4941': // SN_SEPOLIA
-        return 'starknet-sepolia';
+        return 'starknet:sepolia';
       default:
         // For devnet or unknown networks, assume devnet
-        return 'starknet-devnet';
+        return 'starknet:devnet';
     }
   } catch {
     // If we can't determine the network, assume sepolia (most common testnet)
-    return 'starknet-sepolia';
+    return 'starknet:sepolia';
   }
 }
 
@@ -165,7 +169,7 @@ export type { PaymentRequirementsSelector };
  * the signed payload ready to send to the server.
  *
  * @param account - User's Starknet account
- * @param x402Version - x402 protocol version (currently 1)
+ * @param x402Version - x402 protocol version (currently 2)
  * @param paymentRequirements - Payment requirements from server
  * @param paymasterConfig - Paymaster configuration (endpoint, API key)
  * @returns Payment payload to send to server
@@ -174,26 +178,26 @@ export type { PaymentRequirementsSelector };
  * ```typescript
  * const payload = await createPaymentPayload(
  *   account,
- *   1,
+ *   2,
  *   paymentRequirements,
  *   {
  *     endpoint: 'http://localhost:12777',
- *     network: 'starknet-sepolia'
+ *     network: 'starknet:sepolia'
  *   }
  * );
  * ```
  */
 export async function createPaymentPayload(
   account: Account,
-  x402Version: number,
+  _x402Version: number, // v2: Always creates v2 payloads, parameter kept for API compatibility
   paymentRequirements: PaymentRequirements,
   paymasterConfig: PaymasterConfig
 ): Promise<PaymentPayload> {
-  // 1. Create transfer call
+  // 1. Create transfer call (v2: uses 'amount' instead of 'maxAmountRequired')
   const transferCall = createTransferCall(
     paymentRequirements.asset,
     paymentRequirements.payTo,
-    paymentRequirements.maxAmountRequired
+    paymentRequirements.amount
   );
 
   // 2. Create paymaster client
@@ -250,11 +254,10 @@ export async function createPaymentPayload(
         ? String(validUntilValue)
         : '0x0';
 
-  // 7. Create payment payload
+  // 7. Create payment payload (v2 structure with 'accepted' field)
   const payload: PaymentPayload = {
-    x402Version: x402Version as 1,
-    scheme: 'exact',
-    network: paymentRequirements.network,
+    x402Version: 2,
+    accepted: paymentRequirements,
     payload: {
       signature: {
         r: signatureArray[0] ?? '0x0',
@@ -263,21 +266,15 @@ export async function createPaymentPayload(
       authorization: {
         from: account.address,
         to: paymentRequirements.payTo,
-        amount: paymentRequirements.maxAmountRequired,
+        amount: paymentRequirements.amount,
         token: paymentRequirements.asset,
         nonce,
         validUntil,
       },
     },
+    typedData: buildResult.typed_data,
+    paymasterEndpoint: paymasterConfig.endpoint,
   };
-
-  // Store the typed data and paymaster endpoint for later execution
-  // Note: The actual implementation needs to store this somewhere
-  // for the facilitator to use when settling
-  (payload as unknown as { typedData: TypedData }).typedData =
-    buildResult.typed_data;
-  (payload as unknown as { paymasterEndpoint: string }).paymasterEndpoint =
-    paymasterConfig.endpoint;
 
   return payload;
 }
@@ -285,16 +282,16 @@ export async function createPaymentPayload(
 /**
  * Get default paymaster endpoint for network
  *
- * @param network - Network identifier
+ * @param network - Network identifier (CAIP-2 format)
  * @returns Default paymaster endpoint URL
  *
  * @example
  * ```typescript
- * const endpoint = getDefaultPaymasterEndpoint('starknet-sepolia');
+ * const endpoint = getDefaultPaymasterEndpoint('starknet:sepolia');
  * ```
  */
 export function getDefaultPaymasterEndpoint(
-  network: 'starknet-mainnet' | 'starknet-sepolia' | 'starknet-devnet'
+  network: 'starknet:mainnet' | 'starknet:sepolia' | 'starknet:devnet'
 ): string {
   return DEFAULT_PAYMASTER_ENDPOINTS[network];
 }
@@ -344,19 +341,19 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
 }
 
 /**
- * Encode PaymentRequirementsResponse to base64 string for X-PAYMENT-RESPONSE header
+ * Encode PaymentRequired to base64 string for X-PAYMENT-RESPONSE header
  *
  * This function is used by facilitators to encode the payment requirements response
  * when using header-based transport instead of JSON body.
  *
- * @param response - Payment requirements response to encode
+ * @param response - Payment required response to encode (v2 format)
  * @returns Base64-encoded string
  *
  * @example
  * ```typescript
- * const response: PaymentRequirementsResponse = {
- *   x402Version: 1,
- *   error: 'Payment required',
+ * const response: PaymentRequired = {
+ *   x402Version: 2,
+ *   resource: { url: 'https://api.example.com/resource' },
  *   accepts: [paymentRequirement1, paymentRequirement2]
  * };
  * const header = encodePaymentResponseHeader(response);
@@ -364,21 +361,19 @@ export function decodePaymentHeader(encoded: string): PaymentPayload {
  * // headers: { 'X-PAYMENT-RESPONSE': header }
  * ```
  */
-export function encodePaymentResponseHeader(
-  response: PaymentRequirementsResponse
-): string {
+export function encodePaymentResponseHeader(response: PaymentRequired): string {
   const json = JSON.stringify(response);
   return Buffer.from(json).toString('base64');
 }
 
 /**
- * Decode PaymentRequirementsResponse from base64 X-PAYMENT-RESPONSE header
+ * Decode PaymentRequired from base64 X-PAYMENT-RESPONSE header
  *
  * This function is used by clients to decode the payment requirements response
  * when the facilitator uses header-based transport.
  *
  * @param encoded - Base64-encoded payment response header
- * @returns Decoded payment requirements response
+ * @returns Decoded payment required response (v2 format)
  * @throws Error if decoded value is not a valid object
  *
  * @example
@@ -391,9 +386,7 @@ export function encodePaymentResponseHeader(
  * }
  * ```
  */
-export function decodePaymentResponseHeader(
-  encoded: string
-): PaymentRequirementsResponse {
+export function decodePaymentResponseHeader(encoded: string): PaymentRequired {
   const json = Buffer.from(encoded, 'base64').toString('utf-8');
   const parsed: unknown = JSON.parse(json);
 
@@ -403,5 +396,5 @@ export function decodePaymentResponseHeader(
     throw err.invalid('Invalid payment response: must be an object');
   }
 
-  return parsed as PaymentRequirementsResponse;
+  return parsed as PaymentRequired;
 }

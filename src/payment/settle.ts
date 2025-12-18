@@ -71,7 +71,7 @@ export async function settlePayment(
       ...(errorReason ? { errorReason } : {}),
       transaction: '',
       network: paymentRequirements.network,
-      payer: verification.payer,
+      ...(verification.payer ? { payer: verification.payer } : {}),
     };
   }
 
@@ -104,11 +104,11 @@ export async function settlePayment(
         : {}),
     });
 
-    // 4. Create transfer call
+    // 4. Create transfer call (v2: uses 'amount' instead of 'maxAmountRequired')
     const transferCall = createTransferCall(
       paymentRequirements.asset,
       paymentRequirements.payTo,
-      paymentRequirements.maxAmountRequired
+      paymentRequirements.amount
     );
 
     // 5. Execute transaction via paymaster with the original typed_data
@@ -133,7 +133,7 @@ export async function settlePayment(
       success: true,
       transaction: result.transaction_hash,
       network: paymentRequirements.network,
-      payer: verification.payer,
+      ...(verification.payer ? { payer: verification.payer } : {}),
       ...(blockNumber !== undefined ? { blockNumber } : {}),
       ...(blockHash !== undefined ? { blockHash } : {}),
     };
@@ -144,10 +144,10 @@ export async function settlePayment(
       error instanceof Error ? error.message : wrappedError.message;
     return {
       success: false,
-      errorReason: `unexpected_settle_error: ${errorMessage}`, // Spec compliance: §9 error codes
+      errorReason: `unexpected_settle_error: ${errorMessage}`,
       transaction: '',
       network: paymentRequirements.network,
-      payer: verification.payer,
+      ...(verification.payer ? { payer: verification.payer } : {}),
     };
   }
 }
