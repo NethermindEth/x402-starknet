@@ -1,3 +1,5 @@
+![x402-starknet](./docs/banner.png)
+
 # x402-starknet
 
 **Pure library for implementing the x402 payment protocol on Starknet**
@@ -86,7 +88,7 @@ git clone https://github.com/aspect-build/x402-starknet.git
 cd x402-starknet
 bun install
 bun run build    # Build TypeScript
-bun run test     # Run tests (465 tests)
+bun run test     # Run tests (541 tests)
 bun run lint     # Lint code
 bun run check    # Run all checks
 ```
@@ -97,4 +99,4 @@ Apache License 2.0 - see [LICENSE](./LICENSE) for details.
 
 ---
 
-**Version**: 1.0.0 | **Protocol**: x402 v2 | **Tests**: 465 passing
+**Version**: 1.0.0 | **Protocol**: x402 v2 | **Tests**: 541 passing
