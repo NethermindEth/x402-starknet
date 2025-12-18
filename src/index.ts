@@ -105,6 +105,21 @@ export type {
 // Paymaster types
 export type { PaymasterConfig } from './types/paymaster.js';
 
+// Facilitator types
+export type {
+  FacilitatorClientConfig,
+  IFacilitatorClient,
+} from './facilitator/client.js';
+
+// ============================================================================
+// Facilitator Client
+// ============================================================================
+
+export {
+  FacilitatorClient,
+  createFacilitatorClient,
+} from './facilitator/index.js';
+
 // ============================================================================
 // Error Classes
 // ============================================================================

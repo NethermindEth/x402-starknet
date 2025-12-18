@@ -33,6 +33,9 @@ describe('Public API Surface', () => {
       'isTestnet',
       'isMainnet',
       'getSupportedNetworks',
+      // Facilitator client
+      'FacilitatorClient',
+      'createFacilitatorClient',
       // Constants
       'VERSION',
       'X402_VERSION',
@@ -52,8 +55,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 4 constants + 3 error classes + 1 ERROR_CODES = 24
-    expect(allExports).toHaveLength(24);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 4 constants + 3 error classes + 1 ERROR_CODES = 26
+    expect(allExports).toHaveLength(26);
   });
 
   it('should export VERSION constant', () => {
