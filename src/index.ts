@@ -52,7 +52,7 @@ export {
 /**
  * Library version
  */
-export const VERSION = '0.2.0';
+export const VERSION = '1.0.0';
 
 /**
  * Supported x402 protocol version
@@ -111,6 +111,23 @@ export type {
   IFacilitatorClient,
 } from './facilitator/client.js';
 
+// Discovery types
+export type {
+  DiscoveryClientConfig,
+  IDiscoveryClient,
+} from './discovery/client.js';
+
+export type {
+  ResourceType,
+  ResourceMetadata,
+  DiscoveredResource,
+  DiscoveryPagination,
+  DiscoveryResponse,
+  DiscoveryParams,
+  RegisterResourceRequest,
+  RegisterResourceResponse,
+} from './types/discovery.js';
+
 // Extension types
 export type {
   Extension,
@@ -127,6 +144,12 @@ export {
   FacilitatorClient,
   createFacilitatorClient,
 } from './facilitator/index.js';
+
+// ============================================================================
+// Discovery Client (Bazaar API)
+// ============================================================================
+
+export { DiscoveryClient, createDiscoveryClient } from './discovery/index.js';
 
 // ============================================================================
 // Extensions System

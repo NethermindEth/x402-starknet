@@ -36,6 +36,9 @@ describe('Public API Surface', () => {
       // Facilitator client
       'FacilitatorClient',
       'createFacilitatorClient',
+      // Discovery client (Bazaar API)
+      'DiscoveryClient',
+      'createDiscoveryClient',
       // Extensions system
       'ExtensionRegistry',
       'createExtensionRegistry',
@@ -67,12 +70,12 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 11 extensions + 4 constants + 3 error classes + 1 ERROR_CODES = 37
-    expect(allExports).toHaveLength(37);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 2 discovery + 11 extensions + 4 constants + 3 error classes + 1 ERROR_CODES = 39
+    expect(allExports).toHaveLength(39);
   });
 
   it('should export VERSION constant', () => {
-    expect(publicApi.VERSION).toBe('0.2.0');
+    expect(publicApi.VERSION).toBe('1.0.0');
   });
 
   it('should export X402_VERSION constant', () => {
