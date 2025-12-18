@@ -4,24 +4,25 @@
 
 A TypeScript library providing core functions for building x402-compatible payment systems on Starknet. Designed as a foundation library with a minimal, stable API surface.
 
-[![Version](https://img.shields.io/badge/version-0.3.2-green.svg)](https://github.com/NethermindEth/starknet-x402)
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/NethermindEth/x402-starknet)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 
 ## Overview
 
-This library implements the [x402 payment protocol](https://github.com/x402) for Starknet, enabling applications to accept micropayments for digital resources using HTTP 402 status codes.
+This library implements the [x402 payment protocol](https://github.com/coinbase/x402) v2 for Starknet, enabling applications to accept micropayments for digital resources using HTTP 402 status codes.
 
 ## Features
 
-- 🎯 **Minimal API Surface** - Only 21 named exports, all essential
-- 🚀 **Type Safe** - Complete TypeScript support with strict types
-- 🔗 **Starknet Native** - Built for Starknet's architecture with paymaster support
-- 🌐 **Multi-Network** - Mainnet, Sepolia testnet, and devnet
-- 📦 **Tree-Shakeable** - `sideEffects: false`, import only what you need
-- 🛡️ **Validated** - Runtime validation with Zod schemas (internal)
-- ⚡ **Minimal Runtime Deps** - Only `zod`
-- ✅ **Spec Compliant** - Full x402 v0.2 protocol compliance
-- 🔐 **Secure** - Signature verification via SNIP-6, expiration checking, balance validation
+- **Minimal API Surface** - 37 named exports, all essential
+- **Type Safe** - Complete TypeScript support with strict types
+- **Starknet Native** - Built for Starknet's architecture with paymaster support
+- **Multi-Network** - Mainnet, Sepolia testnet, and devnet (CAIP-2 format)
+- **Tree-Shakeable** - `sideEffects: false`, import only what you need
+- **Validated** - Runtime validation with Zod schemas (internal)
+- **Minimal Runtime Deps** - Only `zod`
+- **Spec Compliant** - Full x402 v2 protocol compliance
+- **Extensible** - Built-in extensions system with JSON Schema validation
+- **Secure** - Signature verification via SNIP-6, expiration checking, balance validation
 
 ## Installation
 
@@ -45,6 +46,8 @@ import {
   verifyPayment,
   settlePayment,
   DEFAULT_PAYMASTER_ENDPOINTS,
+  HTTP_HEADERS,
+  encodePaymentSignature,
   type PaymentRequirements,
 } from 'x402-starknet';
 import { Account, RpcProvider } from 'starknet';
@@ -52,11 +55,11 @@ import { Account, RpcProvider } from 'starknet';
 // 1. Create payment payload (client-side)
 const payload = await createPaymentPayload(
   account, // Starknet account
-  1, // x402 protocol version
+  2, // x402 protocol version
   paymentRequirements, // From server's 402 response
   {
-    endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
-    network: 'starknet-sepolia',
+    endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'],
+    network: 'starknet:sepolia',
   }
 );
 
@@ -82,24 +85,25 @@ console.log('Status:', settlement.status);
 
 ## Public API
 
-This library exports **exactly 21 symbols** from a single entry point:
+This library exports **37 symbols** from a single entry point:
 
-### Core Functions (13)
-
-**Payment Operations:**
+### Core Functions (3)
 
 - `createPaymentPayload()` - Create signed payment payload
 - `verifyPayment()` - Verify payment validity (signature, expiration, balance)
 - `settlePayment()` - Execute payment transaction
 
-**Encoding:**
+### Encoding Utilities (7)
 
-- `encodePaymentHeader()` - Encode payment payload to base64 for `X-Payment` header
-- `decodePaymentHeader()` - Decode payment payload from base64
-- `encodePaymentResponseHeader()` - Encode 402 response to base64 for `X-Payment-Response` header
-- `decodePaymentResponseHeader()` - Decode 402 response from base64
+- `encodePaymentSignature()` - Encode payment payload for `PAYMENT-SIGNATURE` header
+- `decodePaymentSignature()` - Decode payment payload from base64
+- `encodePaymentRequired()` - Encode 402 response for `PAYMENT-REQUIRED` header
+- `decodePaymentRequired()` - Decode 402 response from base64
+- `encodePaymentResponse()` - Encode settlement response for `PAYMENT-RESPONSE` header
+- `decodePaymentResponse()` - Decode settlement response from base64
+- `HTTP_HEADERS` - Standard header names constant
 
-**Network Utilities:**
+### Network Utilities (6)
 
 - `getNetworkConfig()` - Get network configuration
 - `getTransactionUrl()` - Get explorer URL for transaction
@@ -108,10 +112,29 @@ This library exports **exactly 21 symbols** from a single entry point:
 - `isMainnet()` - Check if network is mainnet
 - `getSupportedNetworks()` - Get all supported networks
 
+### Facilitator Client (2)
+
+- `FacilitatorClient` - HTTP client for facilitator API
+- `createFacilitatorClient()` - Factory function
+
+### Extensions System (10)
+
+- `ExtensionRegistry` - Extension registry class
+- `createExtensionRegistry()` - Factory function
+- `globalRegistry` - Global registry instance
+- `createExtensionData()` - Create extension data
+- `getExtensionInfo()` - Extract extension info
+- `hasExtension()` - Check for extension
+- `getExtensionNames()` - Get extension names
+- `mergeExtensions()` - Merge extension records
+- `filterRegisteredExtensions()` - Filter to registered only
+- `validateExtensions()` - Validate all extensions
+- `defineExtension()` - Define extension helper
+
 ### Constants (4)
 
-- `VERSION` - Library version (`'0.1.0'`)
-- `X402_VERSION` - Protocol version (`1`)
+- `VERSION` - Library version (`'0.2.0'`)
+- `X402_VERSION` - Protocol version (`2`)
 - `DEFAULT_PAYMASTER_ENDPOINTS` - AVNU paymaster endpoints
 - `NETWORK_CONFIGS` - Network configurations
 
@@ -120,10 +143,6 @@ This library exports **exactly 21 symbols** from a single entry point:
 - `X402Error` - Base error class
 - `PaymentError` - Payment-related errors
 - `NetworkError` - Network-related errors
-- `PaymasterError` - Paymaster errors
-
-### Error Codes (1)
-
 - `ERROR_CODES` - All error codes as constants
 
 ### TypeScript Types
@@ -133,12 +152,18 @@ All types are exported for TypeScript users:
 ```typescript
 import type {
   StarknetNetwork,
+  StarknetNetworkId,
   NetworkConfig,
   PaymentRequirements,
+  PaymentRequired,
   PaymentPayload,
+  ResourceInfo,
   VerifyResponse,
   SettleResponse,
   PaymasterConfig,
+  Extension,
+  IExtensionRegistry,
+  FacilitatorClientConfig,
   ErrorCode,
 } from 'x402-starknet';
 ```
@@ -156,10 +181,10 @@ try {
 } catch (error) {
   if (error instanceof PaymentError) {
     switch (error.code) {
-      case ERROR_CODES.INSUFFICIENT_BALANCE:
-        console.error('Insufficient balance');
+      case ERROR_CODES.ECONFLICT:
+        console.error('Insufficient balance or conflict');
         break;
-      case ERROR_CODES.INVALID_PAYLOAD:
+      case ERROR_CODES.EINVALID_INPUT:
         console.error('Invalid payload');
         break;
       default:
@@ -179,17 +204,17 @@ import {
   NETWORK_CONFIGS,
 } from 'x402-starknet';
 
-// Get network config
-const config = getNetworkConfig('starknet-sepolia');
+// Get network config (CAIP-2 format)
+const config = getNetworkConfig('starknet:sepolia');
 console.log('RPC URL:', config.rpcUrl);
 console.log('Chain ID:', config.chainId);
 
 // Get explorer URL
-const txUrl = getTransactionUrl('starknet-sepolia', '0x123...');
+const txUrl = getTransactionUrl('starknet:sepolia', '0x123...');
 console.log('View transaction:', txUrl);
 
 // Check network type
-if (isTestnet('starknet-sepolia')) {
+if (isTestnet('starknet:sepolia')) {
   console.log('Using testnet');
 }
 
@@ -201,45 +226,113 @@ console.log('Available networks:', Object.keys(NETWORK_CONFIGS));
 
 ```typescript
 import {
-  encodePaymentHeader,
-  decodePaymentHeader,
-  encodePaymentResponseHeader,
-  decodePaymentResponseHeader,
+  encodePaymentSignature,
+  decodePaymentSignature,
+  encodePaymentRequired,
+  decodePaymentRequired,
+  HTTP_HEADERS,
 } from 'x402-starknet';
 
 // Client: Encode payment payload for HTTP header
-const encoded = encodePaymentHeader(payload);
+const encoded = encodePaymentSignature(payload);
 
 // Client: Send in request
 await fetch(url, {
   headers: {
-    'X-Payment': encoded,
+    [HTTP_HEADERS.PAYMENT_SIGNATURE]: encoded,
   },
 });
 
 // Server: Decode payment from client
-const header = request.headers.get('X-Payment');
-const payload = decodePaymentHeader(header);
+const header = request.headers.get(HTTP_HEADERS.PAYMENT_SIGNATURE);
+const payload = decodePaymentSignature(header);
 
-// Server: Encode payment requirements response (optional, can use JSON body instead)
-const response: PaymentRequirementsResponse = {
-  x402Version: 1,
+// Server: Encode payment requirements response
+const paymentRequired = {
+  x402Version: 2,
   error: 'Payment required',
+  resource: { url: 'https://api.example.com/data' },
   accepts: [requirement1, requirement2],
 };
-const responseHeader = encodePaymentResponseHeader(response);
+const responseHeader = encodePaymentRequired(paymentRequired);
 
 // Server: Send response via header
 return new Response(null, {
   status: 402,
-  headers: { 'X-Payment-Response': responseHeader },
+  headers: { [HTTP_HEADERS.PAYMENT_REQUIRED]: responseHeader },
 });
 
 // Client: Decode payment requirements from header
-const paymentResponseHeader = response.headers.get('X-Payment-Response');
-if (paymentResponseHeader) {
-  const requirements = decodePaymentResponseHeader(paymentResponseHeader);
+const paymentRequiredHeader = response.headers.get(
+  HTTP_HEADERS.PAYMENT_REQUIRED
+);
+if (paymentRequiredHeader) {
+  const requirements = decodePaymentRequired(paymentRequiredHeader);
   // Use requirements.accepts to create payment
+}
+```
+
+### Using Facilitator Client
+
+```typescript
+import { createFacilitatorClient, HTTP_HEADERS } from 'x402-starknet';
+
+const client = createFacilitatorClient({
+  baseUrl: 'https://facilitator.example.com',
+  apiKey: 'your-api-key',
+  timeout: 60000,
+});
+
+// Verify payment
+const verification = await client.verify(payload, requirements);
+
+// Settle payment
+const settlement = await client.settle(payload, requirements);
+
+// Check supported schemes
+const supported = await client.supported();
+console.log('Supported:', supported.kinds);
+```
+
+### Using Extensions
+
+```typescript
+import {
+  createExtensionRegistry,
+  defineExtension,
+  createExtensionData,
+  hasExtension,
+} from 'x402-starknet';
+
+// Create and configure registry
+const registry = createExtensionRegistry();
+
+registry.register(
+  defineExtension('receipts', {
+    description: 'Payment receipts',
+    schema: {
+      type: 'object',
+      properties: {
+        format: { type: 'string', enum: ['pdf', 'json'] },
+      },
+      required: ['format'],
+    },
+  })
+);
+
+// Create extension data with validation
+const receiptData = createExtensionData(
+  {
+    name: 'receipts',
+    info: { format: 'pdf' },
+    validate: true,
+  },
+  registry
+);
+
+// Check for extensions in payload
+if (hasExtension(payload.extensions, 'receipts')) {
+  // Handle receipts extension
 }
 ```
 
@@ -250,9 +343,10 @@ if (paymentResponseHeader) {
 ```typescript
 import {
   createPaymentPayload,
-  encodePaymentHeader,
+  encodePaymentSignature,
+  decodePaymentRequired,
   DEFAULT_PAYMASTER_ENDPOINTS,
-  type PaymentRequirementsResponse,
+  HTTP_HEADERS,
 } from 'x402-starknet';
 import { Account } from 'starknet';
 
@@ -262,11 +356,12 @@ async function payForResource(url: string, account: Account) {
 
   // 2. Handle 402 Payment Required
   if (response.status === 402) {
-    const { accepts } = (await response.json()) as PaymentRequirementsResponse;
+    const header = response.headers.get(HTTP_HEADERS.PAYMENT_REQUIRED);
+    const { accepts } = decodePaymentRequired(header!);
     const requirement = accepts[0];
 
     // 3. Create payment
-    const payload = await createPaymentPayload(account, 1, requirement, {
+    const payload = await createPaymentPayload(account, 2, requirement, {
       endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
       network: requirement.network,
     });
@@ -274,7 +369,7 @@ async function payForResource(url: string, account: Account) {
     // 4. Retry with payment
     response = await fetch(url, {
       headers: {
-        'X-Payment': encodePaymentHeader(payload),
+        [HTTP_HEADERS.PAYMENT_SIGNATURE]: encodePaymentSignature(payload),
       },
     });
   }
@@ -288,9 +383,11 @@ async function payForResource(url: string, account: Account) {
 
 ```typescript
 import {
-  decodePaymentHeader,
+  decodePaymentSignature,
   verifyPayment,
   settlePayment,
+  encodePaymentRequired,
+  HTTP_HEADERS,
   type PaymentRequirements,
 } from 'x402-starknet';
 import { RpcProvider } from 'starknet';
@@ -299,31 +396,33 @@ const provider = new RpcProvider({ nodeUrl: 'https://...' });
 
 const requirements: PaymentRequirements = {
   scheme: 'exact',
-  network: 'starknet-sepolia',
-  maxAmountRequired: '1000000', // 1 USDC
+  network: 'starknet:sepolia',
+  amount: '1000000', // 1 USDC
   asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
   payTo: '0x1234...', // Your address
-  resource: 'https://api.example.com/data',
-  maxTimeoutSeconds: 60, // Required per spec §5.1
+  maxTimeoutSeconds: 60,
 };
 
 async function handleRequest(request: Request) {
-  const paymentHeader = request.headers.get('X-Payment');
+  const paymentHeader = request.headers.get(HTTP_HEADERS.PAYMENT_SIGNATURE);
 
   // No payment - return 402
   if (!paymentHeader) {
-    return new Response(
-      JSON.stringify({
-        x402Version: 1,
-        error: 'X-PAYMENT header is required',
-        accepts: [requirements],
-      }),
-      { status: 402 }
-    );
+    return new Response(null, {
+      status: 402,
+      headers: {
+        [HTTP_HEADERS.PAYMENT_REQUIRED]: encodePaymentRequired({
+          x402Version: 2,
+          error: 'Payment required',
+          resource: { url: 'https://api.example.com/data' },
+          accepts: [requirements],
+        }),
+      },
+    });
   }
 
   // Decode and verify
-  const payload = decodePaymentHeader(paymentHeader);
+  const payload = decodePaymentSignature(paymentHeader);
   const verification = await verifyPayment(provider, payload, requirements);
 
   if (!verification.isValid) {
@@ -350,24 +449,18 @@ async function handleRequest(request: Request) {
 
 ## Error Codes
 
-All errors include stable error codes for programmatic handling:
+All errors include stable, spec-compliant error codes for programmatic handling:
 
 ```typescript
 const ERROR_CODES = {
-  // Payment errors
-  INVALID_PAYLOAD: 'INVALID_PAYLOAD',
-  INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
-  VERIFICATION_FAILED: 'VERIFICATION_FAILED',
-  SETTLEMENT_FAILED: 'SETTLEMENT_FAILED',
-
-  // Network errors
-  UNSUPPORTED_NETWORK: 'UNSUPPORTED_NETWORK',
-  NETWORK_MISMATCH: 'NETWORK_MISMATCH',
-  RPC_FAILED: 'RPC_FAILED',
-
-  // Paymaster errors
-  PAYMASTER_ERROR: 'PAYMASTER_ERROR',
-  PAYMASTER_UNAVAILABLE: 'PAYMASTER_UNAVAILABLE',
+  EINVALID_INPUT: 'EINVALID_INPUT', // Invalid input or payload
+  ENOT_FOUND: 'ENOT_FOUND', // Resource not found
+  ETIMEOUT: 'ETIMEOUT', // Operation timed out
+  ECONFLICT: 'ECONFLICT', // Conflict (insufficient funds, mismatch)
+  ECANCELLED: 'ECANCELLED', // Operation cancelled
+  EINTERNAL: 'EINTERNAL', // Internal error
+  ENETWORK: 'ENETWORK', // Network error
+  EPAYMASTER: 'EPAYMASTER', // Paymaster error
 };
 ```
 
@@ -379,18 +472,20 @@ For API design and best practices, see [API_SURFACE.md](./API_SURFACE.md).
 
 ## Network Support
 
-| Network          | Chain ID                 | Status       |
-| ---------------- | ------------------------ | ------------ |
-| Starknet Mainnet | `0x534e5f4d41494e`       | ✅ Supported |
-| Starknet Sepolia | `0x534e5f5345504f4c4941` | ✅ Supported |
-| Starknet Devnet  | `0x534e5f474f45524c49`   | ✅ Supported |
+Networks use CAIP-2 format identifiers:
+
+| Network          | Identifier         | Chain ID                 | Status    |
+| ---------------- | ------------------ | ------------------------ | --------- |
+| Starknet Mainnet | `starknet:mainnet` | `0x534e5f4d41494e`       | Supported |
+| Starknet Sepolia | `starknet:sepolia` | `0x534e5f5345504f4c4941` | Supported |
+| Starknet Devnet  | `starknet:devnet`  | `0x534e5f474f45524c49`   | Supported |
 
 ## Development
 
 ### Setup
 
 ```bash
-git clone https://github.com/yourusername/x402-starknet.git
+git clone https://github.com/NethermindEth/x402-starknet.git
 cd x402-starknet
 bun install
 ```
@@ -404,11 +499,12 @@ bun run lint           # Lint code
 bun run test           # Run tests
 bun run test:watch     # Run tests in watch mode
 bun run test:coverage  # Coverage report
+bun run check          # Run all checks
 ```
 
 ### Testing
 
-**78 tests** with comprehensive coverage:
+**465 tests** with comprehensive coverage:
 
 ```bash
 bun run test
@@ -416,13 +512,13 @@ bun run test
 
 ## Import Rules
 
-✅ **Do this** - Import from root:
+**Do this** - Import from root:
 
 ```typescript
 import { createPaymentPayload, verifyPayment } from 'x402-starknet';
 ```
 
-❌ **Don't do this** - Deep imports not supported:
+**Don't do this** - Deep imports not supported:
 
 ```typescript
 import { verifyPayment } from 'x402-starknet/payment'; // ERROR
@@ -432,33 +528,22 @@ import { verifyPayment } from 'x402-starknet/payment'; // ERROR
 
 This library follows modern library best practices:
 
-- **Small surface** - Only 20 exports
+- **Small surface** - 37 exports
 - **Named exports** - No wildcards, explicit imports
 - **Single entry** - No subpath exports
 - **Tree-shakeable** - `sideEffects: false`
 - **Type-safe** - Strict TypeScript
-- **Stable errors** - Error codes, not strings
-- **Minimal deps** - Only 2 runtime dependencies
+- **Stable errors** - Spec-compliant error codes
+- **Minimal deps** - Only 1 runtime dependency (zod)
 
 See [API_SURFACE.md](./API_SURFACE.md) for detailed design decisions.
-
-## Building Applications
-
-This library is designed to be used by applications. For a complete implementation, see:
-
-**[voyager-x402](https://github.com/yourusername/voyager-x402)** - Reference implementation
-
-## Contributing
-
-Contributions welcome! This is a pure library - application code belongs in separate repos.
 
 ## Resources
 
 - [Complete API Reference](./API.md)
-- [Starknet x402 Scheme Specification](./docs/scheme_exact_starknet.md) - Complete protocol documentation
+- [Starknet x402 Scheme Specification](./docs/scheme_exact_starknet.md)
 - [API Surface Design](./API_SURFACE.md)
-- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
-- [x402 Protocol](https://github.com/x402)
+- [x402 Protocol Specification](https://github.com/coinbase/x402)
 - [Starknet Documentation](https://docs.starknet.io)
 - [Starknet.js](https://www.starknetjs.com/)
 
@@ -468,4 +553,4 @@ Apache License 2.0 - see [LICENSE](./LICENSE) for details.
 
 ---
 
-**Version**: 0.3.2 | **Status**: ✅ Fully Spec-Compliant | **Tests**: 306 passing | **Protocol**: x402 v0.2
+**Version**: 1.0.0 | **Protocol**: x402 v2 | **Tests**: 465 passing
