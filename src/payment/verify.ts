@@ -9,7 +9,7 @@ import type {
 } from '../types/index.js';
 import type { RpcProvider, TypedData } from 'starknet';
 import { typedData } from 'starknet';
-import { PAYMENT_PAYLOAD_SCHEMA } from '../types/schemas.js';
+import { PAYMENT_PAYLOAD_V2_SCHEMA } from '../types/schemas.js';
 import { normalizeAddress } from '../utils/encoding.js';
 
 /**
@@ -48,12 +48,12 @@ export async function verifyPayment(
 ): Promise<VerifyResponse> {
   try {
     // 1. Validate payload structure
-    const validationResult = PAYMENT_PAYLOAD_SCHEMA.safeParse(payload);
+    const validationResult = PAYMENT_PAYLOAD_V2_SCHEMA.safeParse(payload);
     if (!validationResult.success) {
       return {
         isValid: false,
-        invalidReason: 'invalid_network',
-        payer: '',
+        invalidReason: 'invalid_payload',
+        payer: undefined,
         details: {
           error: validationResult.error.message,
         },
@@ -63,8 +63,8 @@ export async function verifyPayment(
     // 2. Extract payer address
     const payer = extractPayerAddress(payload);
 
-    // 3. Verify network matches
-    if (payload.network !== paymentRequirements.network) {
+    // 3. Verify network matches (v2: network is in payload.accepted)
+    if (payload.accepted.network !== paymentRequirements.network) {
       return {
         isValid: false,
         invalidReason: 'invalid_network',
