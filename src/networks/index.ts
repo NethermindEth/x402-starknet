@@ -5,7 +5,14 @@
  */
 
 import type { NetworkConfig, StarknetNetworkId } from '../types/index.js';
-import { NETWORK_CONFIGS, CHAIN_IDS, EXPLORER_URLS } from './constants.js';
+import {
+  NETWORK_CONFIGS,
+  CHAIN_IDS,
+  EXPLORER_URLS,
+  STARKNET_NETWORKS,
+  NETWORK_REFERENCES,
+  type NetworkReference,
+} from './constants.js';
 import { err } from '../errors.js';
 
 /**
@@ -170,6 +177,121 @@ export function validateNetworkConfig(network: StarknetNetworkId): void {
   }
 }
 
+/**
+ * Check if a string is a valid Starknet network identifier
+ * @param network - String to check
+ * @returns True if the string is a valid Starknet network identifier
+ *
+ * @example
+ * ```typescript
+ * if (isStarknetNetwork(userInput)) {
+ *   // userInput is now typed as StarknetNetworkId
+ *   const config = getNetworkConfig(userInput);
+ * }
+ * ```
+ */
+export function isStarknetNetwork(
+  network: string
+): network is StarknetNetworkId {
+  return (STARKNET_NETWORKS as ReadonlyArray<string>).includes(network);
+}
+
+/**
+ * Parse a CAIP-2 Starknet network identifier into its components
+ * @param caip2 - CAIP-2 network identifier (e.g., "starknet:mainnet")
+ * @returns Object with namespace ("starknet") and reference (e.g., "mainnet")
+ * @throws Error if not a valid Starknet CAIP-2 identifier
+ *
+ * @example
+ * ```typescript
+ * const { namespace, reference } = parseStarknetNetwork('starknet:sepolia');
+ * console.log(namespace);  // 'starknet'
+ * console.log(reference);  // 'sepolia'
+ * ```
+ */
+export function parseStarknetNetwork(caip2: string): {
+  namespace: 'starknet';
+  reference: NetworkReference;
+} {
+  if (!caip2.startsWith('starknet:')) {
+    throw err.invalid(`Invalid Starknet CAIP-2 identifier: ${caip2}`, {
+      caip2,
+      expected: 'starknet:{reference}',
+    });
+  }
+
+  const reference = caip2.slice(9); // Remove "starknet:" prefix
+
+  if (!['mainnet', 'sepolia', 'devnet'].includes(reference)) {
+    throw err.invalid(`Invalid Starknet network reference: ${reference}`, {
+      caip2,
+      validReferences: ['mainnet', 'sepolia', 'devnet'],
+    });
+  }
+
+  return { namespace: 'starknet', reference: reference as NetworkReference };
+}
+
+/**
+ * Build a CAIP-2 identifier from a Starknet network reference
+ * @param reference - Network reference (e.g., "mainnet", "sepolia", "devnet")
+ * @returns CAIP-2 network identifier
+ *
+ * @example
+ * ```typescript
+ * const network = buildStarknetCAIP2('sepolia');
+ * console.log(network); // 'starknet:sepolia'
+ * ```
+ */
+export function buildStarknetCAIP2(
+  reference: NetworkReference
+): StarknetNetworkId {
+  return `starknet:${reference}` as StarknetNetworkId;
+}
+
+/**
+ * Get the network reference from a CAIP-2 identifier
+ * @param network - CAIP-2 network identifier
+ * @returns Network reference (e.g., "mainnet", "sepolia", "devnet")
+ *
+ * @example
+ * ```typescript
+ * const ref = getNetworkReference('starknet:mainnet');
+ * console.log(ref); // 'mainnet'
+ * ```
+ */
+export function getNetworkReference(
+  network: StarknetNetworkId
+): NetworkReference {
+  return NETWORK_REFERENCES[network];
+}
+
+/**
+ * Validate a network string and return it as a typed StarknetNetworkId
+ * @param network - Network string to validate
+ * @returns Validated network identifier
+ * @throws Error if network is not supported
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   const validNetwork = validateNetwork(userInput);
+ *   // validNetwork is now typed as StarknetNetworkId
+ * } catch (error) {
+ *   console.error('Invalid network:', error.message);
+ * }
+ * ```
+ */
+export function validateNetwork(network: string): StarknetNetworkId {
+  if (!isStarknetNetwork(network)) {
+    throw err.invalid(
+      `Unsupported Starknet network: ${network}. Supported: ${STARKNET_NETWORKS.join(', ')}`,
+      { network, supported: STARKNET_NETWORKS }
+    );
+  }
+  return network;
+}
+
 // Re-export network utilities
 export {
   toCAIP2Network,
@@ -180,7 +302,9 @@ export {
 
 // Re-export constants
 export {
+  STARKNET_NETWORKS,
   NETWORK_CONFIGS,
+  NETWORK_REFERENCES,
   CHAIN_IDS,
   DEFAULT_RPC_URLS,
   EXPLORER_URLS,
@@ -188,4 +312,5 @@ export {
   DEFAULT_PROVIDER_TIMEOUT,
   DEFAULT_RETRY_ATTEMPTS,
   DEFAULT_BACKOFF_MULTIPLIER,
+  type NetworkReference,
 } from './constants.js';

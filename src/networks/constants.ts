@@ -6,6 +6,23 @@
 import type { NetworkConfig, StarknetNetworkId } from '../types/index.js';
 
 /**
+ * Supported Starknet networks in CAIP-2 format
+ * Use this array to iterate over all supported networks
+ *
+ * @example
+ * ```typescript
+ * for (const network of STARKNET_NETWORKS) {
+ *   console.log(network); // 'starknet:mainnet', etc.
+ * }
+ * ```
+ */
+export const STARKNET_NETWORKS = [
+  'starknet:mainnet',
+  'starknet:sepolia',
+  'starknet:devnet',
+] as const satisfies ReadonlyArray<StarknetNetworkId>;
+
+/**
  * Starknet chain IDs
  */
 export const CHAIN_IDS = {
@@ -39,6 +56,27 @@ export const NETWORK_NAMES: Record<StarknetNetworkId, string> = {
   'starknet:mainnet': 'Starknet Mainnet',
   'starknet:sepolia': 'Starknet Sepolia Testnet',
   'starknet:devnet': 'Starknet Devnet (Local)',
+} as const;
+
+/**
+ * Network reference type (the part after "starknet:" in CAIP-2)
+ */
+export type NetworkReference = 'mainnet' | 'sepolia' | 'devnet';
+
+/**
+ * Network references for extracting the reference part from CAIP-2 identifiers
+ * Maps CAIP-2 network identifier to its reference component
+ *
+ * @example
+ * ```typescript
+ * const ref = NETWORK_REFERENCES['starknet:mainnet'];
+ * console.log(ref); // 'mainnet'
+ * ```
+ */
+export const NETWORK_REFERENCES: Record<StarknetNetworkId, NetworkReference> = {
+  'starknet:mainnet': 'mainnet',
+  'starknet:sepolia': 'sepolia',
+  'starknet:devnet': 'devnet',
 } as const;
 
 /**

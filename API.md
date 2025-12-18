@@ -396,6 +396,233 @@ const networks = getSupportedNetworks();
 
 ---
 
+### `isStarknetNetwork`
+
+Type guard to check if a string is a valid Starknet network identifier.
+
+```typescript
+function isStarknetNetwork(network: string): network is StarknetNetworkId;
+```
+
+**Parameters:**
+
+- `network` - String to validate
+
+**Returns:** `boolean` - True if the string is a valid network identifier
+
+**Example:**
+
+```typescript
+import { isStarknetNetwork, getNetworkConfig } from '@x402/starknet';
+
+const userInput = 'starknet:sepolia';
+
+if (isStarknetNetwork(userInput)) {
+  // userInput is now typed as StarknetNetworkId
+  const config = getNetworkConfig(userInput);
+  console.log(config.rpcUrl);
+}
+```
+
+---
+
+### `validateNetwork`
+
+Validate a network string and return it as a typed `StarknetNetworkId`. Throws if invalid.
+
+```typescript
+function validateNetwork(network: string): StarknetNetworkId;
+```
+
+**Parameters:**
+
+- `network` - Network string to validate
+
+**Returns:** `StarknetNetworkId` - Validated network identifier
+
+**Throws:**
+
+- `X402Error` - If network is not supported
+
+**Example:**
+
+```typescript
+import { validateNetwork } from '@x402/starknet';
+
+try {
+  const network = validateNetwork(userInput);
+  // network is now typed as StarknetNetworkId
+} catch (error) {
+  console.error('Invalid network:', error.message);
+}
+```
+
+---
+
+### `parseStarknetNetwork`
+
+Parse a CAIP-2 Starknet network identifier into its components.
+
+```typescript
+function parseStarknetNetwork(caip2: string): {
+  namespace: 'starknet';
+  reference: NetworkReference;
+};
+```
+
+**Parameters:**
+
+- `caip2` - CAIP-2 network identifier (e.g., "starknet:mainnet")
+
+**Returns:** Object with `namespace` ("starknet") and `reference` (e.g., "mainnet")
+
+**Throws:**
+
+- `X402Error` - If not a valid Starknet CAIP-2 identifier
+
+**Example:**
+
+```typescript
+import { parseStarknetNetwork } from '@x402/starknet';
+
+const { namespace, reference } = parseStarknetNetwork('starknet:sepolia');
+console.log(namespace); // 'starknet'
+console.log(reference); // 'sepolia'
+```
+
+---
+
+### `buildStarknetCAIP2`
+
+Build a CAIP-2 identifier from a Starknet network reference.
+
+```typescript
+function buildStarknetCAIP2(reference: NetworkReference): StarknetNetworkId;
+```
+
+**Parameters:**
+
+- `reference` - Network reference ("mainnet", "sepolia", or "devnet")
+
+**Returns:** `StarknetNetworkId` - CAIP-2 network identifier
+
+**Example:**
+
+```typescript
+import { buildStarknetCAIP2 } from '@x402/starknet';
+
+const network = buildStarknetCAIP2('sepolia');
+console.log(network); // 'starknet:sepolia'
+```
+
+---
+
+### `getNetworkReference`
+
+Get the network reference from a CAIP-2 identifier.
+
+```typescript
+function getNetworkReference(network: StarknetNetworkId): NetworkReference;
+```
+
+**Parameters:**
+
+- `network` - CAIP-2 network identifier
+
+**Returns:** `NetworkReference` - Network reference (e.g., "mainnet", "sepolia", "devnet")
+
+**Example:**
+
+```typescript
+import { getNetworkReference } from '@x402/starknet';
+
+const ref = getNetworkReference('starknet:mainnet');
+console.log(ref); // 'mainnet'
+```
+
+---
+
+### Network Constants
+
+#### `STARKNET_NETWORKS`
+
+Array of all supported Starknet networks in CAIP-2 format.
+
+```typescript
+const STARKNET_NETWORKS: readonly [
+  'starknet:mainnet',
+  'starknet:sepolia',
+  'starknet:devnet',
+];
+```
+
+**Example:**
+
+```typescript
+import { STARKNET_NETWORKS } from '@x402/starknet';
+
+for (const network of STARKNET_NETWORKS) {
+  console.log(network);
+}
+```
+
+---
+
+#### `NETWORK_REFERENCES`
+
+Mapping of CAIP-2 network identifiers to their reference strings.
+
+```typescript
+const NETWORK_REFERENCES: Record<StarknetNetworkId, NetworkReference>;
+```
+
+**Example:**
+
+```typescript
+import { NETWORK_REFERENCES } from '@x402/starknet';
+
+console.log(NETWORK_REFERENCES['starknet:mainnet']); // 'mainnet'
+```
+
+---
+
+#### `NETWORK_NAMES`
+
+Human-readable display names for networks.
+
+```typescript
+const NETWORK_NAMES: Record<StarknetNetworkId, string>;
+```
+
+**Example:**
+
+```typescript
+import { NETWORK_NAMES } from '@x402/starknet';
+
+console.log(NETWORK_NAMES['starknet:sepolia']); // 'Starknet Sepolia Testnet'
+```
+
+---
+
+#### `DEFAULT_RPC_URLS`
+
+Default RPC endpoints for each network.
+
+```typescript
+const DEFAULT_RPC_URLS: Record<StarknetNetworkId, string>;
+```
+
+**Example:**
+
+```typescript
+import { DEFAULT_RPC_URLS } from '@x402/starknet';
+
+const rpcUrl = DEFAULT_RPC_URLS['starknet:mainnet'];
+// 'https://starknet-mainnet.public.blastapi.io'
+```
+
+---
+
 ## Encoding Utilities
 
 ### `encodePaymentSignature`

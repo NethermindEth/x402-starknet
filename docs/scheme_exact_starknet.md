@@ -427,6 +427,34 @@ switch (chainId) {
 }
 ```
 
+The library provides utilities for network validation and conversion:
+
+```typescript
+import {
+  isStarknetNetwork,
+  validateNetwork,
+  parseStarknetNetwork,
+  STARKNET_NETWORKS,
+} from 'x402-starknet';
+
+// Type guard
+if (isStarknetNetwork(userInput)) {
+  // userInput is now typed as StarknetNetworkId
+}
+
+// Validate or throw
+const network = validateNetwork(userInput);
+
+// Parse CAIP-2 components
+const { namespace, reference } = parseStarknetNetwork('starknet:mainnet');
+// namespace = 'starknet', reference = 'mainnet'
+
+// Iterate all supported networks
+for (const network of STARKNET_NETWORKS) {
+  console.log(network);
+}
+```
+
 ## HTTP Headers (v2)
 
 The x402 v2 protocol uses these HTTP headers:

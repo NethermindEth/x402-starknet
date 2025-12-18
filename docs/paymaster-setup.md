@@ -196,16 +196,23 @@ Clients using the library receive paymaster configuration from the server or use
 ```typescript
 import {
   createPaymentPayload,
-  getDefaultPaymasterEndpoint,
+  DEFAULT_PAYMASTER_ENDPOINTS,
+  isStarknetNetwork,
 } from 'x402-starknet';
+
+// Validate network before use
+const network = 'starknet:sepolia';
+if (!isStarknetNetwork(network)) {
+  throw new Error('Invalid network');
+}
 
 const paymentPayload = await createPaymentPayload(
   account,
   2, // x402 version
   paymentRequirements,
   {
-    endpoint: getDefaultPaymasterEndpoint('starknet:sepolia'),
-    network: 'starknet:sepolia',
+    endpoint: DEFAULT_PAYMASTER_ENDPOINTS[network],
+    network,
   }
 );
 ```

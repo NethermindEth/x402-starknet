@@ -33,6 +33,17 @@ describe('Public API Surface', () => {
       'isTestnet',
       'isMainnet',
       'getSupportedNetworks',
+      // Network utilities (IMPROVEMENT_SPEC section 2)
+      'isStarknetNetwork',
+      'parseStarknetNetwork',
+      'buildStarknetCAIP2',
+      'getNetworkReference',
+      'validateNetwork',
+      // Network constants
+      'STARKNET_NETWORKS',
+      'NETWORK_REFERENCES',
+      'NETWORK_NAMES',
+      'DEFAULT_RPC_URLS',
       // Facilitator client
       'FacilitatorClient',
       'createFacilitatorClient',
@@ -107,8 +118,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 70
-    expect(allExports).toHaveLength(70);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 79
+    expect(allExports).toHaveLength(79);
   });
 
   it('should export VERSION constant', () => {

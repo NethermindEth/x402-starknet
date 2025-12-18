@@ -43,6 +43,21 @@ export {
   isTestnet,
   isMainnet,
   getSupportedNetworks,
+  // New network utilities (IMPROVEMENT_SPEC section 2)
+  isStarknetNetwork,
+  parseStarknetNetwork,
+  buildStarknetCAIP2,
+  getNetworkReference,
+  validateNetwork,
+} from './networks/index.js';
+
+// Network constants
+export {
+  STARKNET_NETWORKS,
+  NETWORK_REFERENCES,
+  NETWORK_NAMES,
+  DEFAULT_RPC_URLS,
+  type NetworkReference,
 } from './networks/index.js';
 
 // ============================================================================

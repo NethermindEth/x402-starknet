@@ -4,7 +4,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-- **Small, stable surface** - Only 70 named exports
+- **Small, stable surface** - Only 79 named exports
 - **No wildcard exports** - Explicit named exports only
 - **No deep imports** - Single entry point via `@x402/starknet`
 - **Tree-shakeable** - `sideEffects: false` in package.json
@@ -15,7 +15,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ---
 
-## Public Exports (70 total)
+## Public Exports (79 total)
 
 ### Core Functions (3)
 
@@ -35,7 +35,9 @@ Payment operations:
 - `decodePaymentResponse()` - Decode PaymentResponse from base64
 - `HTTP_HEADERS` - Standard HTTP header names constant
 
-### Network Utilities (6)
+### Network Utilities (15)
+
+**Core utilities:**
 
 - `getNetworkConfig()` - Get network configuration
 - `getTransactionUrl()` - Get explorer URL for transaction
@@ -43,6 +45,21 @@ Payment operations:
 - `isTestnet()` - Check if network is testnet
 - `isMainnet()` - Check if network is mainnet
 - `getSupportedNetworks()` - Get all supported networks
+
+**Validation & parsing utilities:**
+
+- `isStarknetNetwork()` - Type guard for valid network identifiers
+- `validateNetwork()` - Validate and return typed network
+- `parseStarknetNetwork()` - Parse CAIP-2 into namespace + reference
+- `buildStarknetCAIP2()` - Build CAIP-2 from reference
+- `getNetworkReference()` - Get reference from CAIP-2 identifier
+
+**Network constants:**
+
+- `STARKNET_NETWORKS` - Array of supported networks
+- `NETWORK_REFERENCES` - Map CAIP-2 to reference strings
+- `NETWORK_NAMES` - Human-readable network names
+- `DEFAULT_RPC_URLS` - Default RPC endpoints
 
 ### Facilitator Client (2)
 
@@ -338,7 +355,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(70); // Enforced!
+  expect(allExports).toHaveLength(79); // Enforced!
 });
 ```
 
@@ -423,7 +440,7 @@ Field names updated:
 
 | Practice           | Status | Notes                               |
 | ------------------ | ------ | ----------------------------------- |
-| Small surface      | Yes    | 70 named exports                    |
+| Small surface      | Yes    | 79 named exports                    |
 | Named exports only | Yes    | No `export *`                       |
 | No deep imports    | Yes    | Single entry point                  |
 | Tree-shakeable     | Yes    | `sideEffects: false`                |
@@ -441,7 +458,7 @@ Field names updated:
 
 The `@x402/starknet` library follows industry best practices for library design:
 
-- **Minimal, stable API** with 70 exports
+- **Minimal, stable API** with 79 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
 - **Predictable errors** with stable, spec-compliant error codes
