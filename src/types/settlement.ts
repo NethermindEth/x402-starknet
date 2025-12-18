@@ -3,7 +3,7 @@
  * Spec compliance: x402 v2
  */
 
-import type { StarknetNetwork, StarknetNetworkId } from './network.js';
+import type { StarknetNetworkId } from './network.js';
 
 /**
  * Reason for invalid payment
@@ -29,13 +29,7 @@ export type InvalidPaymentReason =
   | 'invalid_exact_starknet_payload_signature'
   | 'invalid_exact_starknet_payload_recipient_mismatch'
   | 'invalid_exact_starknet_payload_token_mismatch'
-  | 'invalid_exact_starknet_payload_nonce_used'
-  // Legacy error codes (for backward compatibility)
-  | 'nonce_used'
-  | 'expired'
-  | 'token_not_approved'
-  | 'invalid_recipient'
-  | 'contract_error';
+  | 'invalid_exact_starknet_payload_nonce_used';
 
 /**
  * Verification response from facilitator
@@ -131,23 +125,9 @@ export interface SupportedKind {
  */
 export interface SupportedResponse {
   /** Array of supported payment kinds */
-  kinds: SupportedKind[];
+  kinds: Array<SupportedKind>;
   /** Supported protocol extensions */
-  extensions: string[];
+  extensions: Array<string>;
   /** Signer addresses by network pattern */
-  signers: Record<string, string[]>;
-}
-
-/**
- * Legacy supported kinds response (v1)
- * @deprecated Use SupportedResponse instead
- */
-export interface SupportedKindsResponse {
-  /** Array of supported payment schemes and networks */
-  kinds: Array<{
-    /** Payment scheme */
-    scheme: string;
-    /** Network identifier */
-    network: StarknetNetwork;
-  }>;
+  signers: Record<string, Array<string>>;
 }

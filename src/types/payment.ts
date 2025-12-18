@@ -3,7 +3,7 @@
  * Spec compliance: x402 v2
  */
 
-import type { StarknetNetwork, StarknetNetworkId } from './network.js';
+import type { StarknetNetworkId } from './network.js';
 
 /**
  * Payment scheme type
@@ -109,7 +109,7 @@ export interface PaymentRequired {
   /** Information about the protected resource */
   resource: ResourceInfo;
   /** Array of acceptable payment methods */
-  accepts: PaymentRequirements[];
+  accepts: Array<PaymentRequirements>;
   /** Protocol extensions */
   extensions?: Record<string, ExtensionData>;
 }
@@ -146,84 +146,9 @@ export interface PaymentPayload {
   paymasterEndpoint?: string;
 }
 
-// ============================================================================
-// Legacy Types (v1 compatibility)
-// ============================================================================
-
-/**
- * Legacy payment requirements (v1)
- * @deprecated Use PaymentRequirements (v2) instead
- */
-export interface PaymentRequirementsV1 {
-  /** Payment scheme */
-  scheme: PaymentScheme;
-  /** Network identifier (legacy format) */
-  network: StarknetNetwork;
-  /** Maximum amount required (u256 as string) */
-  maxAmountRequired: string;
-  /** Token contract address (felt252) */
-  asset: string;
-  /** Recipient address (felt252) */
-  payTo: string;
-  /** Protected resource identifier */
-  resource: string;
-  /** Human-readable description */
-  description?: string;
-  /** MIME type of the resource */
-  mimeType?: string;
-  /** JSON schema describing the response format */
-  outputSchema?: object | null;
-  /** Maximum timeout in seconds */
-  maxTimeoutSeconds: number;
-  /** Additional scheme-specific data */
-  extra?: {
-    tokenName?: string;
-    tokenSymbol?: string;
-    tokenDecimals?: number;
-    paymentContract?: string;
-  };
-}
-
-/**
- * Legacy payment payload (v1)
- * @deprecated Use PaymentPayload (v2) instead
- */
-export interface PaymentPayloadV1 {
-  /** x402 protocol version */
-  x402Version: 1;
-  /** Payment scheme */
-  scheme: PaymentScheme;
-  /** Network identifier */
-  network: StarknetNetwork;
-  /** Payment details */
-  payload: {
-    signature: Signature;
-    authorization: PaymentAuthorization;
-  };
-  /** Settlement transaction hash */
-  settlementTransaction?: string;
-  /** Typed data used for signature */
-  typedData?: unknown;
-  /** Paymaster endpoint for settlement */
-  paymasterEndpoint?: string;
-}
-
-/**
- * Legacy payment requirements response (v1)
- * @deprecated Use PaymentRequired (v2) instead
- */
-export interface PaymentRequirementsResponse {
-  /** x402 protocol version */
-  x402Version: 1;
-  /** Human-readable error message */
-  error: string;
-  /** Array of payment options */
-  accepts: PaymentRequirementsV1[];
-}
-
 /**
  * Payment requirements selector function type
  */
 export type PaymentRequirementsSelector = (
-  requirements: PaymentRequirements[]
+  requirements: Array<PaymentRequirements>
 ) => Promise<PaymentRequirements> | PaymentRequirements;
