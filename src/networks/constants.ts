@@ -1,8 +1,13 @@
 /**
  * Network constants for Starknet
+ * Spec compliance: x402 v2 - CAIP-2 network identifiers
  */
 
-import type { NetworkConfig, StarknetNetwork } from '../types/index.js';
+import type {
+  NetworkConfig,
+  StarknetNetworkId,
+  StarknetNetworkLegacy,
+} from '../types/index.js';
 
 /**
  * Starknet chain IDs
@@ -14,56 +19,69 @@ export const CHAIN_IDS = {
 } as const;
 
 /**
- * Default RPC URLs for Starknet networks
+ * Default RPC URLs for Starknet networks (keyed by CAIP-2 identifier)
  */
-export const DEFAULT_RPC_URLS = {
+export const DEFAULT_RPC_URLS: Record<StarknetNetworkId, string> = {
+  'starknet:mainnet': 'https://starknet-mainnet.public.blastapi.io',
+  'starknet:sepolia': 'https://starknet-sepolia.public.blastapi.io',
+  'starknet:devnet': 'http://localhost:5050',
+} as const;
+
+/**
+ * Legacy RPC URLs (for backward compatibility)
+ * @deprecated Use DEFAULT_RPC_URLS with CAIP-2 keys
+ */
+export const LEGACY_RPC_URLS: Record<StarknetNetworkLegacy, string> = {
   'starknet-mainnet': 'https://starknet-mainnet.public.blastapi.io',
   'starknet-sepolia': 'https://starknet-sepolia.public.blastapi.io',
   'starknet-devnet': 'http://localhost:5050',
 } as const;
 
 /**
- * Block explorer URLs
+ * Block explorer URLs (keyed by CAIP-2 identifier)
  */
-export const EXPLORER_URLS = {
-  'starknet-mainnet': 'https://starkscan.co',
-  'starknet-sepolia': 'https://sepolia.starkscan.co',
-  'starknet-devnet': null,
+export const EXPLORER_URLS: Record<StarknetNetworkId, string | null> = {
+  'starknet:mainnet': 'https://starkscan.co',
+  'starknet:sepolia': 'https://sepolia.starkscan.co',
+  'starknet:devnet': null,
 } as const;
 
 /**
- * Network display names
+ * Network display names (keyed by CAIP-2 identifier)
  */
-export const NETWORK_NAMES = {
-  'starknet-mainnet': 'Starknet Mainnet',
-  'starknet-sepolia': 'Starknet Sepolia Testnet',
-  'starknet-devnet': 'Starknet Devnet (Local)',
+export const NETWORK_NAMES: Record<StarknetNetworkId, string> = {
+  'starknet:mainnet': 'Starknet Mainnet',
+  'starknet:sepolia': 'Starknet Sepolia Testnet',
+  'starknet:devnet': 'Starknet Devnet (Local)',
 } as const;
 
 /**
- * Complete network configurations
+ * Complete network configurations (keyed by CAIP-2 identifier)
  */
-export const NETWORK_CONFIGS: Record<StarknetNetwork, NetworkConfig> = {
-  'starknet-mainnet': {
-    network: 'starknet-mainnet',
+export const NETWORK_CONFIGS: Record<StarknetNetworkId, NetworkConfig> = {
+  'starknet:mainnet': {
+    network: 'starknet:mainnet',
+    legacyNetwork: 'starknet-mainnet',
     chainId: CHAIN_IDS.MAINNET,
-    rpcUrl: DEFAULT_RPC_URLS['starknet-mainnet'],
-    explorerUrl: EXPLORER_URLS['starknet-mainnet'],
-    name: NETWORK_NAMES['starknet-mainnet'],
+    rpcUrl: DEFAULT_RPC_URLS['starknet:mainnet'],
+    explorerUrl: EXPLORER_URLS['starknet:mainnet'],
+    name: NETWORK_NAMES['starknet:mainnet'],
   },
-  'starknet-sepolia': {
-    network: 'starknet-sepolia',
+  'starknet:sepolia': {
+    network: 'starknet:sepolia',
+    legacyNetwork: 'starknet-sepolia',
     chainId: CHAIN_IDS.SEPOLIA,
-    rpcUrl: DEFAULT_RPC_URLS['starknet-sepolia'],
-    explorerUrl: EXPLORER_URLS['starknet-sepolia'],
-    name: NETWORK_NAMES['starknet-sepolia'],
+    rpcUrl: DEFAULT_RPC_URLS['starknet:sepolia'],
+    explorerUrl: EXPLORER_URLS['starknet:sepolia'],
+    name: NETWORK_NAMES['starknet:sepolia'],
   },
-  'starknet-devnet': {
-    network: 'starknet-devnet',
+  'starknet:devnet': {
+    network: 'starknet:devnet',
+    legacyNetwork: 'starknet-devnet',
     chainId: CHAIN_IDS.DEVNET,
-    rpcUrl: DEFAULT_RPC_URLS['starknet-devnet'],
-    explorerUrl: EXPLORER_URLS['starknet-devnet'],
-    name: NETWORK_NAMES['starknet-devnet'],
+    rpcUrl: DEFAULT_RPC_URLS['starknet:devnet'],
+    explorerUrl: EXPLORER_URLS['starknet:devnet'],
+    name: NETWORK_NAMES['starknet:devnet'],
   },
 };
 
