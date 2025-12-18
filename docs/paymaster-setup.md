@@ -149,11 +149,14 @@ katana --seed 0
 The facilitator (resource server) needs paymaster configuration to settle payments:
 
 ```typescript
-import { settlePayment } from 'x402-starknet';
-import { RpcProvider } from 'starknet';
+import { settlePayment, createProvider } from '@x402/starknet';
 
-const provider = new RpcProvider({
-  nodeUrl: 'https://starknet-sepolia.public.blastapi.io',
+// Create provider using the factory function
+const provider = createProvider('starknet:sepolia');
+
+// Or with custom RPC URL
+const provider = createProvider('starknet:sepolia', {
+  rpcUrl: process.env.STARKNET_RPC_URL,
 });
 
 // Settlement with paymaster
@@ -198,7 +201,7 @@ import {
   createPaymentPayload,
   DEFAULT_PAYMASTER_ENDPOINTS,
   isStarknetNetwork,
-} from 'x402-starknet';
+} from '@x402/starknet';
 
 // Validate network before use
 const network = 'starknet:sepolia';

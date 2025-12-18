@@ -58,6 +58,9 @@ describe('Public API Surface', () => {
       'fromAtomicUnits',
       'isTokenAvailable',
       'getAvailableTokens',
+      // Provider factory (IMPROVEMENT_SPEC section 4)
+      'createProvider',
+      'getChainId',
       // Facilitator client
       'FacilitatorClient',
       'createFacilitatorClient',
@@ -132,8 +135,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 12 token utils/constants + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 91
-    expect(allExports).toHaveLength(91);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 12 token utils/constants + 2 provider factory + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 93
+    expect(allExports).toHaveLength(93);
   });
 
   it('should export VERSION constant', () => {

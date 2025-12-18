@@ -469,7 +469,7 @@ import {
   validateNetwork,
   parseStarknetNetwork,
   STARKNET_NETWORKS,
-} from 'x402-starknet';
+} from '@x402/starknet';
 
 // Type guard
 if (isStarknetNetwork(userInput)) {
@@ -487,6 +487,26 @@ const { namespace, reference } = parseStarknetNetwork('starknet:mainnet');
 for (const network of STARKNET_NETWORKS) {
   console.log(network);
 }
+```
+
+The library also provides a provider factory for creating RPC providers:
+
+```typescript
+import { createProvider, getChainId } from '@x402/starknet';
+import { constants } from 'starknet';
+
+// Create provider with default RPC URL
+const provider = createProvider('starknet:sepolia');
+
+// Create provider with custom RPC URL
+const provider = createProvider('starknet:mainnet', {
+  rpcUrl: 'https://your-rpc-endpoint.com',
+  timeout: 60000,
+});
+
+// Get Starknet.js chain ID constant
+const chainId = getChainId('starknet:mainnet');
+console.log(chainId === constants.StarknetChainId.SN_MAIN); // true
 ```
 
 ## HTTP Headers (v2)

@@ -108,6 +108,12 @@ export { DEFAULT_PAYMASTER_ENDPOINTS } from './paymaster/helpers.js';
 export { NETWORK_CONFIGS } from './networks/constants.js';
 
 // ============================================================================
+// Provider Factory
+// ============================================================================
+
+export { createProvider, getChainId } from './utils/provider.js';
+
+// ============================================================================
 // TypeScript Types (All Public)
 // ============================================================================
 
@@ -116,6 +122,7 @@ export type {
   StarknetNetwork,
   StarknetNetworkId,
   NetworkConfig,
+  ProviderOptions,
 } from './types/network.js';
 
 // Payment types

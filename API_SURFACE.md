@@ -4,7 +4,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-- **Small, stable surface** - Only 91 named exports
+- **Small, stable surface** - Only 93 named exports
 - **No wildcard exports** - Explicit named exports only
 - **No deep imports** - Single entry point via `@x402/starknet`
 - **Tree-shakeable** - `sideEffects: false` in package.json
@@ -15,7 +15,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ---
 
-## Public Exports (91 total)
+## Public Exports (93 total)
 
 ### Core Functions (3)
 
@@ -80,6 +80,11 @@ Payment operations:
 - `fromAtomicUnits()` - Convert atomic units to human amount
 - `isTokenAvailable()` - Check if token available on network
 - `getAvailableTokens()` - Get all tokens for a network
+
+### Provider Factory (2)
+
+- `createProvider()` - Create RPC provider for a network with optional custom config
+- `getChainId()` - Get Starknet.js chain ID constant for a network
 
 ### Facilitator Client (2)
 
@@ -168,7 +173,7 @@ Runtime validation schemas for type-safe parsing:
 
 All TypeScript types are exported:
 
-- `StarknetNetwork`, `StarknetNetworkId`, `NetworkConfig`
+- `StarknetNetwork`, `StarknetNetworkId`, `NetworkConfig`, `ProviderOptions`
 - `PaymentScheme`, `Signature`, `PaymentAuthorization`
 - `PaymentRequirements`, `PaymentPayload`, `PaymentRequired`
 - `ResourceInfo`, `ExtensionData`, `ExactStarknetPayload`
@@ -187,7 +192,7 @@ The following are implementation details and NOT exported:
 - `PaymasterClient` class (abstracted away)
 - Low-level paymaster helpers (`buildTransaction`, `executeTransaction`, etc.)
 - Token utilities (`getTokenBalance`, `getTokenMetadata`)
-- Provider utilities (`createProvider`, `retryRpcCall`)
+- Provider utilities (`retryRpcCall`)
 - Encoding helpers (`hexToFelt`, `feltToHex`)
 - Internal helpers (`extractPayerAddress`, `waitForSettlement`)
 
@@ -375,7 +380,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(91); // Enforced!
+  expect(allExports).toHaveLength(93); // Enforced!
 });
 ```
 
@@ -460,7 +465,7 @@ Field names updated:
 
 | Practice           | Status | Notes                               |
 | ------------------ | ------ | ----------------------------------- |
-| Small surface      | Yes    | 91 named exports                    |
+| Small surface      | Yes    | 93 named exports                    |
 | Named exports only | Yes    | No `export *`                       |
 | No deep imports    | Yes    | Single entry point                  |
 | Tree-shakeable     | Yes    | `sideEffects: false`                |
@@ -478,7 +483,7 @@ Field names updated:
 
 The `@x402/starknet` library follows industry best practices for library design:
 
-- **Minimal, stable API** with 91 exports
+- **Minimal, stable API** with 93 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
 - **Predictable errors** with stable, spec-compliant error codes
