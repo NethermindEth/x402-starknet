@@ -149,28 +149,39 @@ katana --seed 0
 The facilitator (resource server) needs paymaster configuration to settle payments:
 
 ```typescript
-import { settlePayment, createProvider } from '@x402/starknet';
+import {
+  settlePayment,
+  createProvider,
+  createSettlementOptions,
+  createPaymasterConfig,
+} from '@x402/starknet';
 
 // Create provider using the factory function
 const provider = createProvider('starknet:sepolia');
 
-// Or with custom RPC URL
-const provider = createProvider('starknet:sepolia', {
-  rpcUrl: process.env.STARKNET_RPC_URL,
+// Option 1: Using createSettlementOptions helper (recommended)
+const options = createSettlementOptions('starknet:mainnet', {
+  apiKey: process.env.PAYMASTER_API_KEY,
 });
 
-// Settlement with paymaster
 const result = await settlePayment(
   provider,
   paymentPayload,
   paymentRequirements,
-  {
-    paymasterConfig: {
-      endpoint: process.env.PAYMASTER_ENDPOINT,
-      network: 'starknet:sepolia',
-      apiKey: process.env.PAYMASTER_API_KEY,
-    },
-  }
+  options
+);
+
+// Option 2: Using createPaymasterConfig directly
+const paymasterConfig = createPaymasterConfig('starknet:mainnet', {
+  endpoint: process.env.PAYMASTER_ENDPOINT, // Optional: uses default if not provided
+  apiKey: process.env.PAYMASTER_API_KEY,
+});
+
+const result = await settlePayment(
+  provider,
+  paymentPayload,
+  paymentRequirements,
+  { paymasterConfig }
 );
 ```
 

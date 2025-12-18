@@ -162,6 +162,33 @@ Default paymaster endpoints per network:
 - **Sepolia**: `http://localhost:12777` (development)
 - **Devnet**: `http://localhost:12777` (development)
 
+The library provides utilities for paymaster configuration:
+
+```typescript
+import {
+  createPaymasterConfig,
+  createSettlementOptions,
+  hasPublicPaymaster,
+  DEFAULT_PAYMASTER_ENDPOINTS,
+} from '@x402/starknet';
+
+// Check if network has a default paymaster
+if (hasPublicPaymaster('starknet:mainnet')) {
+  console.log('Using default endpoint');
+}
+
+// Create paymaster configuration
+const config = createPaymasterConfig('starknet:mainnet', {
+  apiKey: process.env.PAYMASTER_API_KEY,
+});
+
+// Or create complete settlement options
+const options = createSettlementOptions('starknet:mainnet', {
+  endpoint: 'https://custom-paymaster.com', // Optional
+  apiKey: process.env.PAYMASTER_API_KEY,
+});
+```
+
 ### Typed Data Structure
 
 The paymaster constructs a SNIP-12 typed data structure for the transfer. The client signs this typed data, creating a signature that authorizes the transaction.

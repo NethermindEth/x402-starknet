@@ -4,7 +4,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-- **Small, stable surface** - Only 93 named exports
+- **Small, stable surface** - Only 96 named exports
 - **No wildcard exports** - Explicit named exports only
 - **No deep imports** - Single entry point via `@x402/starknet`
 - **Tree-shakeable** - `sideEffects: false` in package.json
@@ -15,7 +15,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ---
 
-## Public Exports (93 total)
+## Public Exports (96 total)
 
 ### Core Functions (3)
 
@@ -105,6 +105,12 @@ Payment operations:
 - `validateExtensions()` - Validate all extensions against registry
 - `defineExtension()` - Helper to create extension definitions
 
+### Paymaster Configuration (3)
+
+- `createPaymasterConfig()` - Create paymaster config from network and options
+- `createSettlementOptions()` - Create settlement options with paymaster config
+- `hasPublicPaymaster()` - Check if network has a public paymaster endpoint
+
 ### Constants (4)
 
 - `VERSION` - Library version (`'1.0.0'`)
@@ -179,7 +185,7 @@ All TypeScript types are exported:
 - `ResourceInfo`, `ExtensionData`, `ExactStarknetPayload`
 - `VerifyResponse`, `SettleResponse`, `InvalidPaymentReason`
 - `SupportedKind`, `SupportedResponse`
-- `PaymasterConfig`, `ErrorCode`
+- `PaymasterConfig`, `SettlementOptions`, `PaymasterConfigOptions`, `ErrorCode`
 - `Extension`, `IExtensionRegistry`, `ValidationResult`, `JSONSchema`
 - `FacilitatorClientConfig`, `IFacilitatorClient`
 
@@ -380,7 +386,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(93); // Enforced!
+  expect(allExports).toHaveLength(96); // Enforced!
 });
 ```
 
@@ -465,7 +471,7 @@ Field names updated:
 
 | Practice           | Status | Notes                               |
 | ------------------ | ------ | ----------------------------------- |
-| Small surface      | Yes    | 93 named exports                    |
+| Small surface      | Yes    | 96 named exports                    |
 | Named exports only | Yes    | No `export *`                       |
 | No deep imports    | Yes    | Single entry point                  |
 | Tree-shakeable     | Yes    | `sideEffects: false`                |
@@ -483,7 +489,7 @@ Field names updated:
 
 The `@x402/starknet` library follows industry best practices for library design:
 
-- **Minimal, stable API** with 93 exports
+- **Minimal, stable API** with 96 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
 - **Predictable errors** with stable, spec-compliant error codes

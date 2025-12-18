@@ -103,6 +103,17 @@ export const X402_VERSION = 2;
 export { DEFAULT_PAYMASTER_ENDPOINTS } from './paymaster/helpers.js';
 
 /**
+ * Paymaster configuration utilities
+ */
+export {
+  createPaymasterConfig,
+  createSettlementOptions,
+  hasPublicPaymaster,
+  type SettlementOptions,
+  type PaymasterConfigOptions,
+} from './paymaster/helpers.js';
+
+/**
  * Network configurations for all supported Starknet networks
  */
 export { NETWORK_CONFIGS } from './networks/constants.js';

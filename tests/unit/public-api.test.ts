@@ -121,6 +121,10 @@ describe('Public API Surface', () => {
       'X402_VERSION',
       'DEFAULT_PAYMASTER_ENDPOINTS',
       'NETWORK_CONFIGS',
+      // Paymaster configuration utilities (IMPROVEMENT_SPEC section 5)
+      'createPaymasterConfig',
+      'createSettlementOptions',
+      'hasPublicPaymaster',
       // Error classes (classes are also functions in JS)
       'X402Error',
       'PaymentError',
@@ -135,8 +139,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 12 token utils/constants + 2 provider factory + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 93
-    expect(allExports).toHaveLength(93);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 12 token utils/constants + 2 provider factory + 3 paymaster config + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 96
+    expect(allExports).toHaveLength(96);
   });
 
   it('should export VERSION constant', () => {
