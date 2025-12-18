@@ -4,20 +4,20 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-✅ **Small, stable surface** - Only 21 named exports
-✅ **No wildcard exports** - Explicit named exports only
-✅ **No deep imports** - Single entry point via `@x402/starknet`
-✅ **Tree-shakeable** - `sideEffects: false` in package.json
-✅ **Type-safe** - Full TypeScript support with strict types
-✅ **Stable error codes** - Programmatic error handling
-✅ **Minimal runtime deps** - Only `zod`
-✅ **Peer dependency model** - `starknet` as peer dependency
+- **Small, stable surface** - Only 37 named exports
+- **No wildcard exports** - Explicit named exports only
+- **No deep imports** - Single entry point via `@x402/starknet`
+- **Tree-shakeable** - `sideEffects: false` in package.json
+- **Type-safe** - Full TypeScript support with strict types
+- **Stable error codes** - Programmatic error handling (spec-compliant)
+- **Minimal runtime deps** - Only `zod`
+- **Peer dependency model** - `starknet` as peer dependency
 
 ---
 
-## Public Exports (21 total)
+## Public Exports (37 total)
 
-### Core Functions (13)
+### Core Functions (3)
 
 Payment operations:
 
@@ -25,14 +25,17 @@ Payment operations:
 - `verifyPayment()` - Verify payment validity
 - `settlePayment()` - Execute payment transaction
 
-Encoding:
+### Encoding Utilities (7)
 
-- `encodePaymentHeader()` - Encode payment payload to base64
-- `decodePaymentHeader()` - Decode payment payload from base64
-- `encodePaymentResponseHeader()` - Encode payment response to base64
-- `decodePaymentResponseHeader()` - Decode payment response from base64
+- `encodePaymentSignature()` - Encode payment payload to base64 for `PAYMENT-SIGNATURE` header
+- `decodePaymentSignature()` - Decode payment payload from base64
+- `encodePaymentRequired()` - Encode PaymentRequired response to base64
+- `decodePaymentRequired()` - Decode PaymentRequired response from base64
+- `encodePaymentResponse()` - Encode PaymentResponse to base64
+- `decodePaymentResponse()` - Decode PaymentResponse from base64
+- `HTTP_HEADERS` - Standard HTTP header names constant
 
-Network utilities:
+### Network Utilities (6)
 
 - `getNetworkConfig()` - Get network configuration
 - `getTransactionUrl()` - Get explorer URL for transaction
@@ -41,10 +44,29 @@ Network utilities:
 - `isMainnet()` - Check if network is mainnet
 - `getSupportedNetworks()` - Get all supported networks
 
+### Facilitator Client (2)
+
+- `FacilitatorClient` - HTTP client class for facilitator API
+- `createFacilitatorClient()` - Factory function for FacilitatorClient
+
+### Extensions System (10)
+
+- `ExtensionRegistry` - Extension registry class
+- `createExtensionRegistry()` - Factory function for ExtensionRegistry
+- `globalRegistry` - Global extension registry instance
+- `createExtensionData()` - Create extension data for payloads
+- `getExtensionInfo()` - Extract info from extension data
+- `hasExtension()` - Check if extensions contain a specific extension
+- `getExtensionNames()` - Get all extension names from a record
+- `mergeExtensions()` - Merge extensions from multiple sources
+- `filterRegisteredExtensions()` - Filter to only registered extensions
+- `validateExtensions()` - Validate all extensions against registry
+- `defineExtension()` - Helper to create extension definitions
+
 ### Constants (4)
 
-- `VERSION` - Library version (`'0.1.0'`)
-- `X402_VERSION` - Protocol version (`1`)
+- `VERSION` - Library version (`'0.2.0'`)
+- `X402_VERSION` - Protocol version (`2`)
 - `DEFAULT_PAYMASTER_ENDPOINTS` - AVNU paymaster endpoints
 - `NETWORK_CONFIGS` - Network configurations
 
@@ -53,21 +75,21 @@ Network utilities:
 - `X402Error` - Base error class
 - `PaymentError` - Payment-related errors
 - `NetworkError` - Network-related errors
-- `PaymasterError` - Paymaster errors
-
-### Error Codes (1)
-
 - `ERROR_CODES` - Constant object with all error codes
 
 ### Types (Exported as TypeScript types)
 
 All TypeScript types are exported:
 
-- `StarknetNetwork`, `NetworkConfig`
+- `StarknetNetwork`, `StarknetNetworkId`, `NetworkConfig`
 - `PaymentScheme`, `Signature`, `PaymentAuthorization`
-- `PaymentRequirements`, `PaymentPayload`, `PaymentRequirementsResponse`
+- `PaymentRequirements`, `PaymentPayload`, `PaymentRequired`
+- `ResourceInfo`, `ExtensionData`, `ExactStarknetPayload`
 - `VerifyResponse`, `SettleResponse`, `InvalidPaymentReason`
+- `SupportedKind`, `SupportedResponse`
 - `PaymasterConfig`, `ErrorCode`
+- `Extension`, `IExtensionRegistry`, `ValidationResult`, `JSONSchema`
+- `FacilitatorClientConfig`, `IFacilitatorClient`
 
 ---
 
@@ -118,25 +140,49 @@ The following are implementation details and NOT exported:
 
 ## Import Examples
 
-### ✅ Good - Named imports
+### Good - Named imports
 
 ```typescript
 import { createPaymentPayload, verifyPayment } from '@x402/starknet';
 ```
 
-### ✅ Good - Specific type imports
+### Good - Specific type imports
 
 ```typescript
 import type { PaymentRequirements, VerifyResponse } from '@x402/starknet';
 ```
 
-### ❌ Bad - Wildcard import (prevents tree-shaking)
+### Good - Facilitator client
+
+```typescript
+import { createFacilitatorClient } from '@x402/starknet';
+
+const client = createFacilitatorClient({
+  baseUrl: 'https://facilitator.example.com',
+});
+```
+
+### Good - Extensions
+
+```typescript
+import { createExtensionRegistry, defineExtension } from '@x402/starknet';
+
+const registry = createExtensionRegistry();
+registry.register(
+  defineExtension('receipts', {
+    description: 'Payment receipts',
+    schema: { type: 'object' },
+  })
+);
+```
+
+### Bad - Wildcard import (prevents tree-shaking)
 
 ```typescript
 import * as x402 from '@x402/starknet';
 ```
 
-### ❌ Bad - Deep imports (not supported)
+### Bad - Deep imports (not supported)
 
 ```typescript
 import { verifyPayment } from '@x402/starknet/payment'; // ERROR
@@ -146,7 +192,7 @@ import { verifyPayment } from '@x402/starknet/payment'; // ERROR
 
 ## Error Handling Strategy
 
-All errors extend from `X402Error` with stable `code` properties:
+All errors extend from `X402Error` with stable `code` properties following x402 spec section 9:
 
 ```typescript
 try {
@@ -154,10 +200,10 @@ try {
 } catch (error) {
   if (error instanceof PaymentError) {
     switch (error.code) {
-      case 'INSUFFICIENT_BALANCE':
-        // Handle insufficient balance
+      case 'ECONFLICT':
+        // Handle insufficient funds
         break;
-      case 'INVALID_PAYLOAD':
+      case 'EINVALID_INPUT':
         // Handle invalid payload
         break;
     }
@@ -165,23 +211,22 @@ try {
 }
 ```
 
-**Stable Error Codes:**
+**Stable Error Codes (spec-compliant):**
 
-- `INVALID_PAYLOAD`
-- `INSUFFICIENT_BALANCE`
-- `VERIFICATION_FAILED`
-- `SETTLEMENT_FAILED`
-- `UNSUPPORTED_NETWORK`
-- `NETWORK_MISMATCH`
-- `RPC_FAILED`
-- `PAYMASTER_ERROR`
-- `PAYMASTER_UNAVAILABLE`
+- `EINVALID_INPUT` - Invalid input or payload
+- `ENOT_FOUND` - Resource not found
+- `ETIMEOUT` - Operation timed out
+- `ECONFLICT` - Conflict (e.g., insufficient funds, network mismatch)
+- `ECANCELLED` - Operation cancelled
+- `EINTERNAL` - Internal error
+- `ENETWORK` - Network-related error
+- `EPAYMASTER` - Paymaster error
 
 ---
 
 ## API Stability
 
-**Current version:** 0.1.0 (experimental)
+**Current version:** 0.2.0 (experimental)
 
 **Versioning:**
 
@@ -223,7 +268,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(21); // Enforced!
+  expect(allExports).toHaveLength(37); // Enforced!
 });
 ```
 
@@ -231,20 +276,67 @@ This ensures we don't accidentally leak internal APIs.
 
 ---
 
-## Migration from Previous Versions
+## Migration from v0.1.0 to v0.2.0
 
-If you were using deep imports:
+### Network Identifiers
+
+Network identifiers now use CAIP-2 format:
 
 ```typescript
-// ❌ Before (deep imports)
-import { verifyPayment } from '@x402/starknet/payment';
-import { getNetworkConfig } from '@x402/starknet/networks';
+// v0.1.0 (old)
+const network = 'starknet-sepolia';
 
-// ✅ After (single entry point)
-import { verifyPayment, getNetworkConfig } from '@x402/starknet';
+// v0.2.0 (new)
+const network = 'starknet:sepolia';
 ```
 
-All public APIs are now available from the root export.
+### Encoding Functions
+
+Encoding functions have been renamed to match spec v2:
+
+```typescript
+// v0.1.0 (old)
+import { encodePaymentHeader, decodePaymentHeader } from '@x402/starknet';
+
+// v0.2.0 (new)
+import { encodePaymentSignature, decodePaymentSignature } from '@x402/starknet';
+```
+
+### HTTP Headers
+
+HTTP headers use new names:
+
+```typescript
+// v0.1.0 (old)
+headers: { 'X-Payment': encoded }
+
+// v0.2.0 (new)
+import { HTTP_HEADERS } from '@x402/starknet';
+headers: { [HTTP_HEADERS.PAYMENT_SIGNATURE]: encoded }
+// or: headers: { 'PAYMENT-SIGNATURE': encoded }
+```
+
+### Payment Requirements
+
+Field names updated:
+
+```typescript
+// v0.1.0 (old)
+{
+  maxAmountRequired: '1000000';
+}
+
+// v0.2.0 (new)
+{
+  amount: '1000000';
+}
+```
+
+### New Features
+
+- `FacilitatorClient` for HTTP communication with facilitator servers
+- Extensions system for protocol extensibility
+- `HTTP_HEADERS` constant for standard header names
 
 ---
 
@@ -252,6 +344,7 @@ All public APIs are now available from the root export.
 
 - **API Reference**: See [API.md](./API.md) for complete documentation
 - **README**: See [README.md](./README.md) for quick start guide
+- **Scheme Spec**: See [docs/scheme_exact_starknet.md](./docs/scheme_exact_starknet.md) for payment scheme details
 - **Examples**: See [API.md](./API.md#examples) for usage examples
 
 ---
@@ -260,30 +353,28 @@ All public APIs are now available from the root export.
 
 | Practice           | Status | Notes                               |
 | ------------------ | ------ | ----------------------------------- |
-| Small surface      | ✅     | 21 named exports                    |
-| Named exports only | ✅     | No `export *`                       |
-| No deep imports    | ✅     | Single entry point                  |
-| Tree-shakeable     | ✅     | `sideEffects: false`                |
-| Minimal deps       | ✅     | Only 2 runtime deps                 |
-| Peer deps          | ✅     | `starknet` as peer                  |
-| Type-safe          | ✅     | Full TypeScript support             |
-| Stable errors      | ✅     | Error codes + classes               |
-| ESM-first          | ✅     | `"type": "module"`                  |
-| Documented         | ✅     | API.md + JSDoc + Scheme spec        |
-| Tested             | ✅     | 306 tests, 100% public API coverage |
+| Small surface      | Yes    | 37 named exports                    |
+| Named exports only | Yes    | No `export *`                       |
+| No deep imports    | Yes    | Single entry point                  |
+| Tree-shakeable     | Yes    | `sideEffects: false`                |
+| Minimal deps       | Yes    | Only 1 runtime dep (zod)            |
+| Peer deps          | Yes    | `starknet` as peer                  |
+| Type-safe          | Yes    | Full TypeScript support             |
+| Stable errors      | Yes    | Error codes + classes               |
+| ESM-first          | Yes    | `"type": "module"`                  |
+| Documented         | Yes    | API.md + JSDoc + Scheme spec        |
+| Tested             | Yes    | 465 tests, 100% public API coverage |
 
 ---
 
 ## Summary
 
-The `@x402/starknet` library now follows industry best practices for library design:
+The `@x402/starknet` library follows industry best practices for library design:
 
-- **Minimal, stable API** with only 21 exports
+- **Minimal, stable API** with 37 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
-- **Predictable errors** with stable error codes
+- **Predictable errors** with stable, spec-compliant error codes
 - **Well-documented** with comprehensive API reference and protocol specification
-- **Fully tested** with public API surface verification (306 tests)
-- **Spec-compliant** with x402 v0.2 protocol
-
-This ensures a great developer experience and long-term API stability.
+- **Fully tested** with public API surface verification (465 tests)
+- **Spec-compliant** with x402 v2 protocol

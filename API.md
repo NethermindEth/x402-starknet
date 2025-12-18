@@ -2,7 +2,7 @@
 
 Complete API documentation for the Starknet x402 payment protocol library.
 
-**Version:** 1.0.0
+**Version:** 0.2.0
 **License:** Apache-2.0
 **Protocol Version:** x402 v2
 
@@ -13,6 +13,8 @@ Complete API documentation for the Starknet x402 payment protocol library.
 - [Core Payment Operations](#core-payment-operations)
 - [Network Utilities](#network-utilities)
 - [Encoding Utilities](#encoding-utilities)
+- [Facilitator Client](#facilitator-client)
+- [Extensions System](#extensions-system)
 - [Constants](#constants)
 - [TypeScript Types](#typescript-types)
 - [Error Handling](#error-handling)
@@ -45,17 +47,19 @@ import {
   settlePayment,
   getNetworkConfig,
   DEFAULT_PAYMASTER_ENDPOINTS,
+  HTTP_HEADERS,
+  encodePaymentSignature,
 } from '@x402/starknet';
 import { Account, RpcProvider } from 'starknet';
 
 // 1. Create payment payload (client-side)
 const payload = await createPaymentPayload(
   account,
-  1, // x402 version
+  2, // x402 version
   paymentRequirements,
   {
-    endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
-    network: 'starknet-sepolia',
+    endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'],
+    network: 'starknet:sepolia',
   }
 );
 
@@ -97,11 +101,11 @@ function createPaymentPayload(
 **Parameters:**
 
 - `account` - User's Starknet account (from starknet.js)
-- `x402Version` - x402 protocol version (currently `1`)
+- `x402Version` - x402 protocol version (currently `2`)
 - `paymentRequirements` - Payment requirements from server's 402 response
 - `paymasterConfig` - Paymaster configuration
   - `endpoint` - Paymaster RPC endpoint URL
-  - `network` - Network identifier (`'starknet-mainnet'` | `'starknet-sepolia'` | `'starknet-devnet'`)
+  - `network` - Network identifier (CAIP-2 format: `'starknet:mainnet'` | `'starknet:sepolia'` | `'starknet:devnet'`)
   - `apiKey?` - Optional API key for paymaster
 
 **Returns:** `Promise<PaymentPayload>` - Signed payment payload to send to server
@@ -109,7 +113,7 @@ function createPaymentPayload(
 **Throws:**
 
 - `PaymentError` - If payload creation fails
-- `PaymasterError` - If paymaster interaction fails
+- `NetworkError` - If network interaction fails
 
 **Example:**
 
@@ -119,9 +123,9 @@ import {
   DEFAULT_PAYMASTER_ENDPOINTS,
 } from '@x402/starknet';
 
-const payload = await createPaymentPayload(account, 1, paymentRequirements, {
-  endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'],
-  network: 'starknet-sepolia',
+const payload = await createPaymentPayload(account, 2, paymentRequirements, {
+  endpoint: DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'],
+  network: 'starknet:sepolia',
 });
 ```
 
@@ -173,11 +177,11 @@ function verifyPayment(
 **Invalid Reasons:**
 
 - `'invalid_signature'` - Signature verification failed
-- `'insufficient_funds'` - Payer has insufficient token balance (spec §9)
+- `'insufficient_funds'` - Payer has insufficient token balance (spec section 9)
 - `'expired'` - Payment has expired (current time > validUntil)
 - `'invalid_network'` - Network mismatch or malformed payload
 - `'invalid_amount'` - Amount mismatch
-- `'unexpected_verify_error'` - Unexpected error during verification (spec §9, check `details.error`)
+- `'unexpected_verify_error'` - Unexpected error during verification (spec section 9, check `details.error`)
 
 **Example:**
 
@@ -231,7 +235,7 @@ function settlePayment(
   success: boolean;
   errorReason?: string;
   transaction: string;
-  network: StarknetNetwork;
+  network: StarknetNetworkId;
   payer: string;
   status?: 'pending' | 'accepted_on_l2' | 'accepted_on_l1' | 'rejected';
   blockNumber?: number;
@@ -242,7 +246,7 @@ function settlePayment(
 **Throws:**
 
 - `PaymentError` - If settlement fails
-- `PaymasterError` - If paymaster execution fails
+- `NetworkError` - If network interaction fails
 
 **Example:**
 
@@ -268,12 +272,12 @@ console.log('Block:', settlement.blockNumber);
 Get network configuration for a Starknet network.
 
 ```typescript
-function getNetworkConfig(network: StarknetNetwork): NetworkConfig;
+function getNetworkConfig(network: StarknetNetworkId): NetworkConfig;
 ```
 
 **Parameters:**
 
-- `network` - Network identifier
+- `network` - Network identifier (CAIP-2 format)
 
 **Returns:** `NetworkConfig` - Network configuration
 
@@ -282,7 +286,7 @@ function getNetworkConfig(network: StarknetNetwork): NetworkConfig;
 ```typescript
 import { getNetworkConfig } from '@x402/starknet';
 
-const config = getNetworkConfig('starknet-sepolia');
+const config = getNetworkConfig('starknet:sepolia');
 console.log('RPC URL:', config.rpcUrl);
 console.log('Chain ID:', config.chainId);
 console.log('Explorer:', config.explorerUrl);
@@ -296,7 +300,7 @@ Get block explorer URL for a transaction.
 
 ```typescript
 function getTransactionUrl(
-  network: StarknetNetwork,
+  network: StarknetNetworkId,
   txHash: string
 ): string | null;
 ```
@@ -311,7 +315,7 @@ function getTransactionUrl(
 **Example:**
 
 ```typescript
-const url = getTransactionUrl('starknet-sepolia', '0x1234...');
+const url = getTransactionUrl('starknet:sepolia', '0x1234...');
 // Returns: 'https://sepolia.starkscan.co/tx/0x1234...'
 ```
 
@@ -323,7 +327,7 @@ Get block explorer URL for an address.
 
 ```typescript
 function getAddressUrl(
-  network: StarknetNetwork,
+  network: StarknetNetworkId,
   address: string
 ): string | null;
 ```
@@ -338,7 +342,7 @@ function getAddressUrl(
 **Example:**
 
 ```typescript
-const url = getAddressUrl('starknet-sepolia', '0xabcd...');
+const url = getAddressUrl('starknet:sepolia', '0xabcd...');
 // Returns: 'https://sepolia.starkscan.co/contract/0xabcd...'
 ```
 
@@ -349,14 +353,14 @@ const url = getAddressUrl('starknet-sepolia', '0xabcd...');
 Check if a network is a testnet.
 
 ```typescript
-function isTestnet(network: StarknetNetwork): boolean;
+function isTestnet(network: StarknetNetworkId): boolean;
 ```
 
 **Example:**
 
 ```typescript
-console.log(isTestnet('starknet-sepolia')); // true
-console.log(isTestnet('starknet-mainnet')); // false
+console.log(isTestnet('starknet:sepolia')); // true
+console.log(isTestnet('starknet:mainnet')); // false
 ```
 
 ---
@@ -366,7 +370,7 @@ console.log(isTestnet('starknet-mainnet')); // false
 Check if a network is mainnet.
 
 ```typescript
-function isMainnet(network: StarknetNetwork): boolean;
+function isMainnet(network: StarknetNetworkId): boolean;
 ```
 
 ---
@@ -376,28 +380,28 @@ function isMainnet(network: StarknetNetwork): boolean;
 Get all supported Starknet networks.
 
 ```typescript
-function getSupportedNetworks(): Array<StarknetNetwork>;
+function getSupportedNetworks(): Array<StarknetNetworkId>;
 ```
 
-**Returns:** `Array<StarknetNetwork>` - Array of network identifiers
+**Returns:** `Array<StarknetNetworkId>` - Array of network identifiers
 
 **Example:**
 
 ```typescript
 const networks = getSupportedNetworks();
-// Returns: ['starknet-mainnet', 'starknet-sepolia', 'starknet-devnet']
+// Returns: ['starknet:mainnet', 'starknet:sepolia', 'starknet:devnet']
 ```
 
 ---
 
 ## Encoding Utilities
 
-### `encodePaymentHeader`
+### `encodePaymentSignature`
 
-Encode payment payload to base64 for HTTP `X-Payment` header.
+Encode payment payload to base64 for HTTP `PAYMENT-SIGNATURE` header.
 
 ```typescript
-function encodePaymentHeader(payload: PaymentPayload): string;
+function encodePaymentSignature(payload: PaymentPayload): string;
 ```
 
 **Parameters:**
@@ -409,26 +413,26 @@ function encodePaymentHeader(payload: PaymentPayload): string;
 **Example:**
 
 ```typescript
-import { encodePaymentHeader } from '@x402/starknet';
+import { encodePaymentSignature, HTTP_HEADERS } from '@x402/starknet';
 
-const encoded = encodePaymentHeader(payload);
+const encoded = encodePaymentSignature(payload);
 
 // Use in HTTP header
 fetch(url, {
   headers: {
-    'X-Payment': encoded,
+    [HTTP_HEADERS.PAYMENT_SIGNATURE]: encoded,
   },
 });
 ```
 
 ---
 
-### `decodePaymentHeader`
+### `decodePaymentSignature`
 
 Decode base64 payment header back to payload.
 
 ```typescript
-function decodePaymentHeader(encoded: string): PaymentPayload;
+function decodePaymentSignature(encoded: string): PaymentPayload;
 ```
 
 **Parameters:**
@@ -444,75 +448,65 @@ function decodePaymentHeader(encoded: string): PaymentPayload;
 **Example:**
 
 ```typescript
-import { decodePaymentHeader } from '@x402/starknet';
+import { decodePaymentSignature, HTTP_HEADERS } from '@x402/starknet';
 
-const header = request.headers.get('X-Payment');
-const payload = decodePaymentHeader(header);
+const header = request.headers.get(HTTP_HEADERS.PAYMENT_SIGNATURE);
+const payload = decodePaymentSignature(header);
 ```
 
 ---
 
-### `encodePaymentResponseHeader`
+### `encodePaymentRequired`
 
-Encode payment requirements response to base64 for HTTP `X-Payment-Response` header.
-
-This function is used by facilitators to encode the 402 response when using header-based
-transport instead of JSON body.
+Encode PaymentRequired response to base64 for HTTP `PAYMENT-REQUIRED` header.
 
 ```typescript
-function encodePaymentResponseHeader(
-  response: PaymentRequirementsResponse
-): string;
+function encodePaymentRequired(response: PaymentRequired): string;
 ```
 
 **Parameters:**
 
-- `response` - Payment requirements response to encode
+- `response` - PaymentRequired response to encode
 
 **Returns:** `string` - Base64-encoded response
 
 **Example:**
 
 ```typescript
-import { encodePaymentResponseHeader } from '@x402/starknet';
+import { encodePaymentRequired, HTTP_HEADERS } from '@x402/starknet';
 
-const response: PaymentRequirementsResponse = {
-  x402Version: 1,
+const paymentRequired: PaymentRequired = {
+  x402Version: 2,
   error: 'Payment required',
   accepts: [requirement1, requirement2],
 };
 
-const encoded = encodePaymentResponseHeader(response);
+const encoded = encodePaymentRequired(paymentRequired);
 
 // Use in HTTP response header
-return new Response(resource, {
+return new Response(null, {
   status: 402,
   headers: {
-    'X-Payment-Response': encoded,
+    [HTTP_HEADERS.PAYMENT_REQUIRED]: encoded,
   },
 });
 ```
 
 ---
 
-### `decodePaymentResponseHeader`
+### `decodePaymentRequired`
 
-Decode base64 payment response header back to PaymentRequirementsResponse.
-
-This function is used by clients to decode the 402 response when the facilitator
-uses header-based transport.
+Decode base64 PaymentRequired header back to object.
 
 ```typescript
-function decodePaymentResponseHeader(
-  encoded: string
-): PaymentRequirementsResponse;
+function decodePaymentRequired(encoded: string): PaymentRequired;
 ```
 
 **Parameters:**
 
-- `encoded` - Base64-encoded payment response header
+- `encoded` - Base64-encoded payment required header
 
-**Returns:** `PaymentRequirementsResponse` - Decoded payment requirements response
+**Returns:** `PaymentRequired` - Decoded payment requirements
 
 **Throws:**
 
@@ -521,15 +515,264 @@ function decodePaymentResponseHeader(
 **Example:**
 
 ```typescript
-import { decodePaymentResponseHeader } from '@x402/starknet';
+import { decodePaymentRequired, HTTP_HEADERS } from '@x402/starknet';
 
 const response = await fetch(url);
 if (response.status === 402) {
-  const header = response.headers.get('X-Payment-Response');
+  const header = response.headers.get(HTTP_HEADERS.PAYMENT_REQUIRED);
   if (header) {
-    const requirements = decodePaymentResponseHeader(header);
+    const requirements = decodePaymentRequired(header);
     // Use requirements.accepts to create payment
   }
+}
+```
+
+---
+
+### `encodePaymentResponse`
+
+Encode payment response to base64 for HTTP `PAYMENT-RESPONSE` header.
+
+```typescript
+function encodePaymentResponse(response: object): string;
+```
+
+---
+
+### `decodePaymentResponse`
+
+Decode base64 payment response header.
+
+```typescript
+function decodePaymentResponse(encoded: string): unknown;
+```
+
+---
+
+### `HTTP_HEADERS`
+
+Standard HTTP header names for x402 protocol v2.
+
+```typescript
+const HTTP_HEADERS: {
+  readonly PAYMENT_REQUIRED: 'PAYMENT-REQUIRED';
+  readonly PAYMENT_SIGNATURE: 'PAYMENT-SIGNATURE';
+  readonly PAYMENT_RESPONSE: 'PAYMENT-RESPONSE';
+};
+```
+
+**Example:**
+
+```typescript
+import { HTTP_HEADERS } from '@x402/starknet';
+
+// Request headers
+headers[HTTP_HEADERS.PAYMENT_SIGNATURE] = encodedPayload;
+
+// Response headers
+headers[HTTP_HEADERS.PAYMENT_REQUIRED] = encodedRequirements;
+headers[HTTP_HEADERS.PAYMENT_RESPONSE] = encodedResponse;
+```
+
+---
+
+## Facilitator Client
+
+The FacilitatorClient provides HTTP communication with x402 facilitator servers.
+
+### `FacilitatorClient`
+
+```typescript
+class FacilitatorClient implements IFacilitatorClient {
+  constructor(config: FacilitatorClientConfig);
+
+  verify(
+    payload: PaymentPayload,
+    requirements: PaymentRequirements
+  ): Promise<VerifyResponse>;
+
+  settle(
+    payload: PaymentPayload,
+    requirements: PaymentRequirements
+  ): Promise<SettleResponse>;
+
+  supported(): Promise<SupportedResponse>;
+}
+```
+
+### `createFacilitatorClient`
+
+Factory function for creating FacilitatorClient instances.
+
+```typescript
+function createFacilitatorClient(
+  config: FacilitatorClientConfig
+): IFacilitatorClient;
+```
+
+**FacilitatorClientConfig:**
+
+```typescript
+interface FacilitatorClientConfig {
+  baseUrl: string; // Facilitator server URL
+  apiKey?: string; // Optional API key
+  timeout?: number; // Request timeout (ms), default 30000
+  fetch?: typeof fetch; // Custom fetch implementation
+}
+```
+
+**Example:**
+
+```typescript
+import { createFacilitatorClient } from '@x402/starknet';
+
+const client = createFacilitatorClient({
+  baseUrl: 'https://facilitator.example.com',
+  apiKey: 'your-api-key',
+  timeout: 60000,
+});
+
+// Verify payment
+const verification = await client.verify(payload, requirements);
+
+// Settle payment
+const settlement = await client.settle(payload, requirements);
+
+// Check supported schemes
+const supported = await client.supported();
+console.log('Supported:', supported.kinds);
+```
+
+---
+
+## Extensions System
+
+The extensions system provides protocol extensibility following x402 v2 specification.
+
+### `ExtensionRegistry`
+
+```typescript
+class ExtensionRegistry implements IExtensionRegistry {
+  register(extension: Extension): void;
+  get(name: string): Extension | undefined;
+  has(name: string): boolean;
+  getNames(): Array<string>;
+  validate(name: string, data: unknown): ValidationResult;
+  unregister(name: string): boolean;
+  clear(): void;
+}
+```
+
+### `createExtensionRegistry`
+
+```typescript
+function createExtensionRegistry(): IExtensionRegistry;
+```
+
+### `globalRegistry`
+
+Global extension registry instance for application-wide use.
+
+```typescript
+const globalRegistry: ExtensionRegistry;
+```
+
+### Extension Utilities
+
+```typescript
+// Create extension data for payloads
+function createExtensionData(
+  options: { name: string; info: unknown; validate?: boolean },
+  registry?: IExtensionRegistry
+): ExtensionData;
+
+// Extract info from extension data
+function getExtensionInfo(data: ExtensionData | undefined): unknown;
+
+// Check if extension exists
+function hasExtension(
+  extensions: Record<string, unknown> | undefined,
+  name: string
+): boolean;
+
+// Get all extension names
+function getExtensionNames(
+  extensions: Record<string, unknown> | undefined
+): Array<string>;
+
+// Merge extensions from multiple sources
+function mergeExtensions(
+  ...sources: Array<Record<string, unknown> | undefined>
+): Record<string, unknown>;
+
+// Filter to registered extensions only
+function filterRegisteredExtensions(
+  extensions: Record<string, unknown> | undefined,
+  registry: IExtensionRegistry
+): Record<string, unknown>;
+
+// Validate all extensions
+function validateExtensions(
+  extensions: Record<string, unknown> | undefined,
+  registry: IExtensionRegistry
+): Record<string, { valid: boolean; errors?: Array<string> }>;
+
+// Define extension helper
+function defineExtension(
+  name: string,
+  options?: Omit<Extension, 'name'>
+): Extension;
+```
+
+**Example:**
+
+```typescript
+import {
+  createExtensionRegistry,
+  defineExtension,
+  createExtensionData,
+  hasExtension,
+} from '@x402/starknet';
+
+// Create registry
+const registry = createExtensionRegistry();
+
+// Register extension with schema
+registry.register(
+  defineExtension('receipts', {
+    description: 'Payment receipt generation',
+    schema: {
+      type: 'object',
+      properties: {
+        format: { type: 'string', enum: ['pdf', 'json'] },
+        email: { type: 'string' },
+      },
+      required: ['format'],
+    },
+  })
+);
+
+// Create extension data
+const receiptData = createExtensionData(
+  {
+    name: 'receipts',
+    info: { format: 'pdf', email: 'user@example.com' },
+    validate: true,
+  },
+  registry
+);
+
+// Use in PaymentRequired
+const paymentRequired = {
+  // ...
+  extensions: {
+    receipts: receiptData,
+  },
+};
+
+// Check for extension
+if (hasExtension(payload.extensions, 'receipts')) {
+  // Handle receipts
 }
 ```
 
@@ -542,7 +785,7 @@ if (response.status === 402) {
 Library version.
 
 ```typescript
-const VERSION: string = '0.1.0';
+const VERSION: string = '0.2.0';
 ```
 
 ---
@@ -552,7 +795,7 @@ const VERSION: string = '0.1.0';
 Supported x402 protocol version.
 
 ```typescript
-const X402_VERSION: number = 1;
+const X402_VERSION: number = 2;
 ```
 
 ---
@@ -563,9 +806,9 @@ Default AVNU paymaster endpoints for each network.
 
 ```typescript
 const DEFAULT_PAYMASTER_ENDPOINTS: {
-  readonly 'starknet-mainnet': 'https://starknet.paymaster.avnu.fi';
-  readonly 'starknet-sepolia': 'https://sepolia.paymaster.avnu.fi';
-  readonly 'starknet-devnet': 'http://localhost:5555';
+  readonly 'starknet:mainnet': 'https://starknet.paymaster.avnu.fi';
+  readonly 'starknet:sepolia': 'http://localhost:12777';
+  readonly 'starknet:devnet': 'http://localhost:12777';
 };
 ```
 
@@ -574,7 +817,7 @@ const DEFAULT_PAYMASTER_ENDPOINTS: {
 ```typescript
 import { DEFAULT_PAYMASTER_ENDPOINTS } from '@x402/starknet';
 
-const endpoint = DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'];
+const endpoint = DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'];
 ```
 
 ---
@@ -585,7 +828,7 @@ Network configurations for all supported networks.
 
 ```typescript
 const NETWORK_CONFIGS: {
-  readonly [K in StarknetNetwork]: NetworkConfig;
+  readonly [K in StarknetNetworkId]: NetworkConfig;
 };
 ```
 
@@ -594,7 +837,7 @@ const NETWORK_CONFIGS: {
 ```typescript
 import { NETWORK_CONFIGS } from '@x402/starknet';
 
-const sepoliaConfig = NETWORK_CONFIGS['starknet-sepolia'];
+const sepoliaConfig = NETWORK_CONFIGS['starknet:sepolia'];
 console.log('RPC:', sepoliaConfig.rpcUrl);
 ```
 
@@ -602,15 +845,25 @@ console.log('RPC:', sepoliaConfig.rpcUrl);
 
 ## TypeScript Types
 
-### `StarknetNetwork`
+### `StarknetNetworkId`
 
-Supported Starknet network identifiers.
+Supported Starknet network identifiers (CAIP-2 format).
 
 ```typescript
-type StarknetNetwork =
-  | 'starknet-mainnet'
-  | 'starknet-sepolia'
-  | 'starknet-devnet';
+type StarknetNetworkId =
+  | 'starknet:mainnet'
+  | 'starknet:sepolia'
+  | 'starknet:devnet';
+```
+
+---
+
+### `StarknetNetwork`
+
+Legacy network identifier type (alias for StarknetNetworkId).
+
+```typescript
+type StarknetNetwork = StarknetNetworkId;
 ```
 
 ---
@@ -621,7 +874,7 @@ Network configuration.
 
 ```typescript
 interface NetworkConfig {
-  readonly network: StarknetNetwork;
+  readonly network: StarknetNetworkId;
   readonly chainId: string;
   readonly rpcUrl: string;
   readonly explorerUrl: string | null;
@@ -648,15 +901,15 @@ Payment requirements from server's 402 response.
 ```typescript
 interface PaymentRequirements {
   readonly scheme: PaymentScheme;
-  readonly network: StarknetNetwork;
-  readonly maxAmountRequired: string;
+  readonly network: StarknetNetworkId;
+  readonly amount: string; // Amount in smallest token unit
   readonly asset: string;
   readonly payTo: string;
-  readonly resource: string;
+  readonly resource: ResourceInfo; // Resource identifier
   readonly description?: string;
   readonly mimeType?: string;
   readonly outputSchema?: object | null;
-  readonly maxTimeoutSeconds: number; // REQUIRED per spec §5.1
+  readonly maxTimeoutSeconds: number; // REQUIRED per spec
   readonly extra?: {
     readonly tokenName?: string;
     readonly tokenSymbol?: string;
@@ -666,16 +919,16 @@ interface PaymentRequirements {
 }
 ```
 
-**Spec compliance:** x402 v0.2 Section 5.1 - PaymentRequirements Schema
+**Spec compliance:** x402 v2 Section 5.1 - PaymentRequirements Schema
 
 **Required Fields:**
 
 - `scheme`: Payment scheme identifier ("exact")
-- `network`: Starknet network identifier
-- `maxAmountRequired`: Payment amount in smallest token unit (string)
+- `network`: CAIP-2 network identifier
+- `amount`: Payment amount in smallest token unit (string)
 - `asset`: Token contract address
 - `payTo`: Recipient address
-- `resource`: Protected resource identifier (supports HTTP, MCP, A2A, IPFS, and custom schemes)
+- `resource`: Protected resource identifier (string or ResourceInfo object)
 - `maxTimeoutSeconds`: Maximum time (seconds) for payment settlement
 
 **Optional Fields:**
@@ -693,37 +946,44 @@ Payment payload sent from client to server.
 
 ```typescript
 interface PaymentPayload {
-  readonly x402Version: 1;
+  readonly x402Version: 2;
   readonly scheme: PaymentScheme;
-  readonly network: StarknetNetwork;
-  readonly payload: {
-    readonly signature: {
-      readonly r: string;
-      readonly s: string;
-    };
-    readonly authorization: {
-      readonly from: string;
-      readonly to: string;
-      readonly amount: string;
-      readonly token: string;
-      readonly nonce: string;
-      readonly validUntil: string;
-    };
-  };
+  readonly network: StarknetNetworkId;
+  readonly accepted: PaymentRequirements; // The accepted payment option
+  readonly payload: ExactStarknetPayload;
+}
+
+interface ExactStarknetPayload {
+  readonly signature: Signature;
+  readonly authorization: PaymentAuthorization;
+}
+
+interface Signature {
+  readonly r: string;
+  readonly s: string;
+}
+
+interface PaymentAuthorization {
+  readonly from: string;
+  readonly to: string;
+  readonly amount: string;
+  readonly token: string;
+  readonly nonce: string;
+  readonly validUntil: string;
 }
 ```
 
 ---
 
-### `PaymentRequirementsResponse`
+### `PaymentRequired`
 
-Server's 402 response with payment requirements.
+Server's 402 response with payment requirements (v2 format).
 
-**Spec compliance:** x402 v0.2 Section 5.1 - PaymentRequirementsResponse Schema
+**Spec compliance:** x402 v2 Section 5.1 - PaymentRequired Schema
 
 ```typescript
-interface PaymentRequirementsResponse {
-  readonly x402Version: 1;
+interface PaymentRequired {
+  readonly x402Version: 2;
   readonly error: string;
   readonly accepts: ReadonlyArray<PaymentRequirements>;
 }
@@ -731,9 +991,9 @@ interface PaymentRequirementsResponse {
 
 **Fields:**
 
-- `x402Version`: Protocol version (always 1)
+- `x402Version`: Protocol version (always 2)
 - `error`: Human-readable error message explaining why payment is required
-- `accepts`: Array of acceptable payment options (renamed from `paymentRequirements` per spec)
+- `accepts`: Array of acceptable payment options
 
 ---
 
@@ -764,7 +1024,7 @@ interface SettleResponse {
   readonly success: boolean;
   readonly errorReason?: string;
   readonly transaction: string;
-  readonly network: StarknetNetwork;
+  readonly network: StarknetNetworkId;
   readonly payer: string;
   readonly status?:
     | 'pending'
@@ -799,7 +1059,7 @@ Reasons why a payment might be invalid.
 ```typescript
 type InvalidPaymentReason =
   | 'invalid_signature'
-  | 'insufficient_funds' // Spec compliance: x402 v0.2 §9
+  | 'insufficient_funds' // Spec section 9
   | 'nonce_used'
   | 'expired'
   | 'invalid_network'
@@ -807,14 +1067,58 @@ type InvalidPaymentReason =
   | 'token_not_approved'
   | 'invalid_recipient'
   | 'contract_error'
-  | 'unexpected_verify_error'; // Spec compliance: x402 v0.2 §9
+  | 'unexpected_verify_error'; // Spec section 9
+```
+
+---
+
+### Extension Types
+
+```typescript
+interface Extension {
+  name: string;
+  version?: string;
+  description?: string;
+  defaultInfo?: unknown;
+  schema?: JSONSchema;
+}
+
+interface IExtensionRegistry {
+  register(extension: Extension): void;
+  get(name: string): Extension | undefined;
+  has(name: string): boolean;
+  getNames(): Array<string>;
+  validate(name: string, data: unknown): ValidationResult;
+  unregister(name: string): boolean;
+  clear(): void;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  errors?: Array<string>;
+}
+
+interface JSONSchema {
+  type?: string | Array<string>;
+  properties?: Record<string, JSONSchema>;
+  required?: Array<string>;
+  items?: JSONSchema;
+  enum?: Array<unknown>;
+  const?: unknown;
+  minLength?: number;
+  maxLength?: number;
+  minimum?: number;
+  maximum?: number;
+  pattern?: string;
+  additionalProperties?: boolean | JSONSchema;
+}
 ```
 
 ---
 
 ## Error Handling
 
-All errors extend from `X402Error` with stable error codes.
+All errors extend from `X402Error` with stable error codes following x402 spec section 9.
 
 ### `X402Error`
 
@@ -822,8 +1126,8 @@ Base error class.
 
 ```typescript
 class X402Error extends Error {
-  readonly code: string;
-  constructor(message: string, code: string);
+  readonly code: ErrorCode;
+  constructor(message: string, code: ErrorCode);
 }
 ```
 
@@ -836,7 +1140,7 @@ Payment-related errors.
 ```typescript
 class PaymentError extends X402Error {
   static invalidPayload(details?: string): PaymentError;
-  static insufficientBalance(required: string, available: string): PaymentError;
+  static insufficientFunds(required: string, available: string): PaymentError;
   static verificationFailed(reason: string): PaymentError;
   static settlementFailed(reason: string): PaymentError;
 }
@@ -844,10 +1148,9 @@ class PaymentError extends X402Error {
 
 **Error Codes:**
 
-- `INVALID_PAYLOAD` - Payment payload validation failed
-- `INSUFFICIENT_BALANCE` - Payer has insufficient balance
-- `VERIFICATION_FAILED` - Payment verification failed
-- `SETTLEMENT_FAILED` - Payment settlement failed
+- `EINVALID_INPUT` - Payment payload validation failed
+- `ECONFLICT` - Insufficient funds or other conflict
+- `EINTERNAL` - Internal error
 
 **Example:**
 
@@ -858,7 +1161,7 @@ try {
   if (error instanceof PaymentError) {
     console.error('Payment error:', error.code, error.message);
 
-    if (error.code === 'INSUFFICIENT_BALANCE') {
+    if (error.code === 'ECONFLICT') {
       // Handle insufficient balance
     }
   }
@@ -881,40 +1184,26 @@ class NetworkError extends X402Error {
 
 **Error Codes:**
 
-- `UNSUPPORTED_NETWORK` - Network is not supported
-- `NETWORK_MISMATCH` - Network mismatch between payload and requirements
-- `RPC_FAILED` - RPC call failed
-
----
-
-### `PaymasterError`
-
-Paymaster interaction errors.
-
-```typescript
-class PaymasterError extends Error {
-  readonly code: number;
-  constructor(message: string, code: number);
-}
-```
+- `EINVALID_INPUT` - Unsupported network
+- `ECONFLICT` - Network mismatch
+- `ENETWORK` - RPC or network communication failed
 
 ---
 
 ### `ERROR_CODES`
 
-All error codes as constants.
+All error codes as constants (spec-compliant).
 
 ```typescript
 const ERROR_CODES: {
-  readonly INVALID_PAYLOAD: 'INVALID_PAYLOAD';
-  readonly INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE';
-  readonly VERIFICATION_FAILED: 'VERIFICATION_FAILED';
-  readonly SETTLEMENT_FAILED: 'SETTLEMENT_FAILED';
-  readonly UNSUPPORTED_NETWORK: 'UNSUPPORTED_NETWORK';
-  readonly NETWORK_MISMATCH: 'NETWORK_MISMATCH';
-  readonly RPC_FAILED: 'RPC_FAILED';
-  readonly PAYMASTER_ERROR: 'PAYMASTER_ERROR';
-  readonly PAYMASTER_UNAVAILABLE: 'PAYMASTER_UNAVAILABLE';
+  readonly EINVALID_INPUT: 'EINVALID_INPUT';
+  readonly ENOT_FOUND: 'ENOT_FOUND';
+  readonly ETIMEOUT: 'ETIMEOUT';
+  readonly ECONFLICT: 'ECONFLICT';
+  readonly ECANCELLED: 'ECANCELLED';
+  readonly EINTERNAL: 'EINTERNAL';
+  readonly ENETWORK: 'ENETWORK';
+  readonly EPAYMASTER: 'EPAYMASTER';
 };
 ```
 
@@ -927,8 +1216,10 @@ const ERROR_CODES: {
 ```typescript
 import {
   createPaymentPayload,
-  encodePaymentHeader,
+  encodePaymentSignature,
+  decodePaymentRequired,
   DEFAULT_PAYMASTER_ENDPOINTS,
+  HTTP_HEADERS,
 } from '@x402/starknet';
 import { Account, RpcProvider } from 'starknet';
 
@@ -939,11 +1230,12 @@ async function payForResource(url: string, account: Account) {
 
     // 2. If 402 Payment Required, get payment requirements
     if (response.status === 402) {
-      const { paymentRequirements } = await response.json();
-      const requirement = paymentRequirements[0];
+      const header = response.headers.get(HTTP_HEADERS.PAYMENT_REQUIRED);
+      const { accepts } = decodePaymentRequired(header!);
+      const requirement = accepts[0];
 
       // 3. Create payment payload
-      const payload = await createPaymentPayload(account, 1, requirement, {
+      const payload = await createPaymentPayload(account, 2, requirement, {
         endpoint: DEFAULT_PAYMASTER_ENDPOINTS[requirement.network],
         network: requirement.network,
       });
@@ -951,7 +1243,7 @@ async function payForResource(url: string, account: Account) {
       // 4. Retry request with payment
       response = await fetch(url, {
         headers: {
-          'X-Payment': encodePaymentHeader(payload),
+          [HTTP_HEADERS.PAYMENT_SIGNATURE]: encodePaymentSignature(payload),
         },
       });
     }
@@ -976,9 +1268,11 @@ async function payForResource(url: string, account: Account) {
 
 ```typescript
 import {
-  decodePaymentHeader,
+  decodePaymentSignature,
   verifyPayment,
   settlePayment,
+  encodePaymentRequired,
+  HTTP_HEADERS,
   type PaymentRequirements,
 } from '@x402/starknet';
 import { RpcProvider } from 'starknet';
@@ -987,35 +1281,35 @@ const provider = new RpcProvider({ nodeUrl: 'https://...' });
 
 const requirements: PaymentRequirements = {
   scheme: 'exact',
-  network: 'starknet-sepolia',
-  maxAmountRequired: '1000000', // 1 USDC
+  network: 'starknet:sepolia',
+  amount: '1000000', // 1 USDC
   asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
   payTo: '0x1234...', // Your address
   resource: 'https://api.example.com/data',
   description: 'Premium API access',
-  maxTimeoutSeconds: 60, // Required per spec §5.1
+  maxTimeoutSeconds: 60, // Required per spec
 };
 
 async function handleRequest(request: Request) {
-  const paymentHeader = request.headers.get('X-Payment');
+  const paymentHeader = request.headers.get(HTTP_HEADERS.PAYMENT_SIGNATURE);
 
   // No payment header - return 402
   if (!paymentHeader) {
-    return new Response(
-      JSON.stringify({
-        x402Version: 1,
-        paymentRequirements: [requirements],
-      }),
-      {
-        status: 402,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(null, {
+      status: 402,
+      headers: {
+        [HTTP_HEADERS.PAYMENT_REQUIRED]: encodePaymentRequired({
+          x402Version: 2,
+          error: 'Payment required',
+          accepts: [requirements],
+        }),
+      },
+    });
   }
 
   try {
     // Decode payment
-    const payload = decodePaymentHeader(paymentHeader);
+    const payload = decodePaymentSignature(paymentHeader);
 
     // Verify payment
     const verification = await verifyPayment(provider, payload, requirements);
@@ -1051,15 +1345,58 @@ async function handleRequest(request: Request) {
 
 ---
 
+### Using Facilitator Client
+
+```typescript
+import {
+  createFacilitatorClient,
+  decodePaymentSignature,
+  HTTP_HEADERS,
+} from '@x402/starknet';
+
+const facilitator = createFacilitatorClient({
+  baseUrl: 'https://facilitator.example.com',
+  apiKey: process.env.FACILITATOR_API_KEY,
+});
+
+async function handlePayment(
+  request: Request,
+  requirements: PaymentRequirements
+) {
+  const header = request.headers.get(HTTP_HEADERS.PAYMENT_SIGNATURE);
+  if (!header) {
+    return { status: 402 };
+  }
+
+  const payload = decodePaymentSignature(header);
+
+  // Verify via facilitator
+  const verification = await facilitator.verify(payload, requirements);
+  if (!verification.isValid) {
+    return { status: 400, error: verification.invalidReason };
+  }
+
+  // Settle via facilitator
+  const settlement = await facilitator.settle(payload, requirements);
+  if (!settlement.success) {
+    return { status: 500, error: settlement.errorReason };
+  }
+
+  return { status: 200, transaction: settlement.transaction };
+}
+```
+
+---
+
 ## Tree-Shaking
 
 This library is fully tree-shakeable. Only import what you need:
 
 ```typescript
-// ✅ Good - only imports what you use
+// Good - only imports what you use
 import { createPaymentPayload, verifyPayment } from '@x402/starknet';
 
-// ❌ Avoid - imports everything
+// Avoid - imports everything
 import * as x402 from '@x402/starknet';
 ```
 
@@ -1081,4 +1418,4 @@ Current API is **experimental** (v0.x.x). Breaking changes may occur in minor re
 
 ## License
 
-MIT © 2025
+Apache-2.0
