@@ -26,9 +26,15 @@ describe('Security: Token and Recipient Validation', () => {
   } as unknown as RpcProvider;
 
   const basePayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset: USDC_ADDRESS,
+      payTo: RECIPIENT_ADDRESS,
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -49,15 +55,18 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject payment with wrong token address', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const wrongTokenPayload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          asset: ETH_ADDRESS,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -74,17 +83,18 @@ describe('Security: Token and Recipient Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_token_mismatch'
+      );
     });
 
     it('should accept payment with correct token', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -99,11 +109,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject token with wrong checksum', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const wrongChecksumPayload: PaymentPayload = {
@@ -131,11 +140,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject malformed token address', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const malformedPayload: PaymentPayload = {
@@ -161,11 +169,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject empty token address', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const emptyTokenPayload: PaymentPayload = {
@@ -191,11 +198,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject zero address as token', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const zeroTokenPayload: PaymentPayload = {
@@ -223,11 +229,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject payment with wrong recipient address', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const wrongRecipientPayload: PaymentPayload = {
@@ -248,17 +253,18 @@ describe('Security: Token and Recipient Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_recipient_mismatch'
+      );
     });
 
     it('should accept payment with correct recipient', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -273,11 +279,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject recipient with wrong checksum', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const wrongChecksumPayload: PaymentPayload = {
@@ -303,11 +308,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject malformed recipient address', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const malformedPayload: PaymentPayload = {
@@ -333,11 +337,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject empty recipient address', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const emptyRecipientPayload: PaymentPayload = {
@@ -363,11 +366,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject zero address as recipient', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const zeroRecipientPayload: PaymentPayload = {
@@ -393,11 +395,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should reject payment to self (payer = recipient)', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const selfPaymentPayload: PaymentPayload = {
@@ -427,13 +428,12 @@ describe('Security: Token and Recipient Validation', () => {
     it('should handle addresses with leading zeros', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset:
           '0x000000000000000000000000000000000000000000000000000000000000001',
         payTo:
           '0x000000000000000000000000000000000000000000000000000000000000002',
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
@@ -457,11 +457,10 @@ describe('Security: Token and Recipient Validation', () => {
     it('should normalize address comparison', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: '0x1',
         payTo: '0x2',
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
@@ -490,11 +489,10 @@ describe('Security: Token and Recipient Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS, // Legitimate recipient
-        resource: 'https://example.com/resource',
       };
 
       const attackPayload: PaymentPayload = {
@@ -515,7 +513,9 @@ describe('Security: Token and Recipient Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_recipient_mismatch'
+      );
       // Protects against payment redirection attacks
     });
 
@@ -525,11 +525,10 @@ describe('Security: Token and Recipient Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS, // Expecting USDC
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const attackPayload: PaymentPayload = {
@@ -550,7 +549,9 @@ describe('Security: Token and Recipient Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_token_mismatch'
+      );
       // Protects against wrong token attacks
     });
   });

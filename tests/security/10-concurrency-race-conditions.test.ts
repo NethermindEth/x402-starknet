@@ -19,9 +19,15 @@ describe('Security: Concurrency and Race Conditions', () => {
     '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   const basePayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset: USDC_ADDRESS,
+      payTo: RECIPIENT_ADDRESS,
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -46,11 +52,10 @@ describe('Security: Concurrency and Race Conditions', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload = {
@@ -67,7 +72,7 @@ describe('Security: Concurrency and Race Conditions', () => {
       const options = {
         paymasterConfig: {
           endpoint: 'https://sepolia.paymaster.avnu.fi',
-          network: 'starknet-sepolia' as const,
+          network: 'starknet:sepolia' as const,
         },
       };
 
@@ -198,11 +203,10 @@ describe('Security: Concurrency and Race Conditions', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Start settlement (don't await)
@@ -213,7 +217,7 @@ describe('Security: Concurrency and Race Conditions', () => {
         {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         }
       );
@@ -238,11 +242,10 @@ describe('Security: Concurrency and Race Conditions', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Multiple concurrent verifications should all succeed
@@ -271,11 +274,10 @@ describe('Security: Concurrency and Race Conditions', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // First verification - balance is sufficient
@@ -354,11 +356,10 @@ describe('Security: Concurrency and Race Conditions', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const startTime = Date.now();
@@ -386,7 +387,7 @@ describe('Security: Concurrency and Race Conditions', () => {
         await settlePayment(mockProvider, payload, requirements, {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         });
       }

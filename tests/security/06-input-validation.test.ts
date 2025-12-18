@@ -28,8 +28,8 @@ describe('Security: Input Validation', () => {
   describe('Test 6.1: Malformed Payload Structure', () => {
     it('should reject payload with missing network field', async () => {
       const malformedPayload = {
-        x402Version: 1,
-        scheme: 'exact',
+        x402Version: 2,
+        // accepted: missing
         // network: missing
         payload: {
           signature: {
@@ -49,11 +49,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -63,24 +62,29 @@ describe('Security: Input Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_network');
+      expect(result.invalidReason).toBe('invalid_payload');
     });
 
     it('should reject payload with missing payload field', async () => {
       const malformedPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         // payload: missing
       } as any;
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -94,9 +98,15 @@ describe('Security: Input Validation', () => {
 
     it('should reject payload with missing signature', async () => {
       const malformedPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           // signature: missing
           authorization: {
@@ -112,11 +122,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -130,9 +139,15 @@ describe('Security: Input Validation', () => {
 
     it('should reject payload with missing authorization', async () => {
       const malformedPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -144,11 +159,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -163,8 +177,14 @@ describe('Security: Input Validation', () => {
     it('should reject payload with wrong x402Version', async () => {
       const malformedPayload: PaymentPayload = {
         x402Version: 999, // Invalid version
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -183,11 +203,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -204,11 +223,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -225,11 +243,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -246,9 +263,15 @@ describe('Security: Input Validation', () => {
     it('should not allow prototype pollution via __proto__', () => {
       const maliciousPayload = {
         __proto__: { admin: true },
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -276,9 +299,15 @@ describe('Security: Input Validation', () => {
     it('should not allow prototype pollution via constructor', () => {
       const maliciousPayload = {
         constructor: { prototype: { admin: true } },
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -304,9 +333,15 @@ describe('Security: Input Validation', () => {
 
     it('should handle malicious JSON with extra fields', () => {
       const maliciousJSON = JSON.stringify({
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         maliciousField: '<script>alert("XSS")</script>',
         payload: {
           signature: {
@@ -334,9 +369,15 @@ describe('Security: Input Validation', () => {
 
     it('should handle deeply nested objects', () => {
       const deeplyNested = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -423,9 +464,15 @@ describe('Security: Input Validation', () => {
 
     it('should handle very large base64 strings', () => {
       const hugePayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '9'.repeat(76),
+          asset: '0x' + '5'.repeat(63),
+          payTo: '0x' + '4'.repeat(63),
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x' + '1'.repeat(63),
@@ -453,9 +500,15 @@ describe('Security: Input Validation', () => {
   describe('Edge Cases: Schema Validation', () => {
     it('should reject payload with extra unexpected fields', async () => {
       const extraFieldsPayload = {
-        x402Version: 1,
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        x402Version: 2,
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         unexpectedField: 'malicious data',
         payload: {
           signature: {
@@ -475,11 +528,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -495,8 +547,14 @@ describe('Security: Input Validation', () => {
     it('should reject payload with wrong field types', async () => {
       const wrongTypesPayload = {
         x402Version: '1', // Should be number
-        scheme: 'exact',
-        network: 'starknet-sepolia',
+        accepted: {
+          scheme: 'exact',
+          network: 'starknet:sepolia',
+          amount: '1000000',
+          asset: USDC_ADDRESS,
+          payTo: RECIPIENT_ADDRESS,
+          maxTimeoutSeconds: 3600,
+        },
         payload: {
           signature: {
             r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -515,11 +573,10 @@ describe('Security: Input Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(

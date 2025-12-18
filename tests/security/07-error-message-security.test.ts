@@ -19,9 +19,15 @@ describe('Security: Error Message Security', () => {
     '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   const basePayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset: USDC_ADDRESS,
+      payTo: RECIPIENT_ADDRESS,
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -46,11 +52,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -81,11 +86,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '2000000', // Try higher amount
+        network: 'starknet:sepolia',
+        amount: '2000000', // Try higher amount
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -111,11 +115,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -146,11 +149,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -177,11 +179,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -218,11 +219,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       try {
@@ -253,11 +253,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -289,11 +288,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -358,11 +356,10 @@ describe('Security: Error Message Security', () => {
 
         const requirements: PaymentRequirements = {
           scheme: 'exact',
-          network: 'starknet-sepolia',
-          maxAmountRequired: '1000000',
+          network: 'starknet:sepolia',
+          amount: '1000000',
           asset: USDC_ADDRESS,
           payTo: RECIPIENT_ADDRESS,
-          resource: 'https://example.com/resource',
         };
 
         const result = await verifyPayment(
@@ -391,11 +388,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -423,11 +419,10 @@ describe('Security: Error Message Security', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(

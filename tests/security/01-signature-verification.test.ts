@@ -15,17 +15,24 @@ import type { RpcProvider } from 'starknet';
 describe('Security: Signature Verification', () => {
   const mockPaymentRequirements: PaymentRequirements = {
     scheme: 'exact',
-    network: 'starknet-sepolia',
-    maxAmountRequired: '1000000',
+    network: 'starknet:sepolia',
+    amount: '1000000',
     asset: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
     payTo: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-    resource: 'https://example.com/api/data',
   };
 
   const validPayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset:
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+      payTo:
+        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -108,7 +115,7 @@ describe('Security: Signature Verification', () => {
         {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         }
       );
@@ -145,7 +152,7 @@ describe('Security: Signature Verification', () => {
         {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         }
       );
@@ -181,7 +188,7 @@ describe('Security: Signature Verification', () => {
         {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         }
       );
@@ -217,7 +224,7 @@ describe('Security: Signature Verification', () => {
         {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         }
       );
@@ -243,7 +250,7 @@ describe('Security: Signature Verification', () => {
       const options = {
         paymasterConfig: {
           endpoint: 'https://sepolia.paymaster.avnu.fi',
-          network: 'starknet-sepolia' as const,
+          network: 'starknet:sepolia' as const,
         },
       };
 
@@ -304,7 +311,9 @@ describe('Security: Signature Verification', () => {
 
       // Should fail verification due to recipient mismatch
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_recipient_mismatch'
+      );
     });
 
     it('should reject replay with different amount but same signature', async () => {
@@ -332,7 +341,9 @@ describe('Security: Signature Verification', () => {
 
       // Should fail verification due to amount mismatch
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should enforce nonce progression to prevent replay', async () => {
