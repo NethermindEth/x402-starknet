@@ -61,6 +61,29 @@ export {
 } from './networks/index.js';
 
 // ============================================================================
+// Token Constants & Utilities
+// ============================================================================
+
+export {
+  // Token addresses
+  ETH_ADDRESSES,
+  STRK_ADDRESSES,
+  USDC_ADDRESSES,
+  TOKEN_ADDRESSES,
+  TOKEN_DECIMALS,
+  // Token utilities
+  getTokenAddress,
+  getTokenDecimals,
+  getTokenSymbol,
+  toAtomicUnits,
+  fromAtomicUnits,
+  isTokenAvailable,
+  getAvailableTokens,
+  // Types
+  type TokenSymbol,
+} from './tokens/index.js';
+
+// ============================================================================
 // Constants
 // ============================================================================
 

@@ -395,26 +395,31 @@ setInterval(checkPaymasterHealth, 60000); // Every minute
 For self-hosted paymasters, monitor sponsor account balance:
 
 ```typescript
-import { RpcProvider, Contract } from 'starknet';
-
-const ETH_ADDRESS =
-  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+import { RpcProvider } from 'starknet';
+import { ETH_ADDRESSES, toAtomicUnits, fromAtomicUnits } from '@x402/starknet';
 
 async function checkSponsorBalance(
   provider: RpcProvider,
-  sponsorAddress: string
+  sponsorAddress: string,
+  network: 'starknet:mainnet' | 'starknet:sepolia'
 ) {
+  const ethAddress = ETH_ADDRESSES[network];
+  if (!ethAddress) {
+    throw new Error(`ETH not available on ${network}`);
+  }
+
   const result = await provider.callContract({
-    contractAddress: ETH_ADDRESS,
+    contractAddress: ethAddress,
     entrypoint: 'balanceOf',
     calldata: [sponsorAddress],
   });
 
   const balance = BigInt(result[0]);
-  const threshold = BigInt('100000000000000000'); // 0.1 ETH
+  const threshold = BigInt(toAtomicUnits(0.1, 'ETH')); // 0.1 ETH
 
   if (balance < threshold) {
-    console.warn('Sponsor balance low:', balance.toString());
+    const humanBalance = fromAtomicUnits(balance.toString(), 'ETH');
+    console.warn(`Sponsor balance low: ${humanBalance} ETH`);
     // Alert operations team
   }
 }

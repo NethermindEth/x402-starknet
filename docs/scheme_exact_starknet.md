@@ -411,6 +411,40 @@ Facilitators MUST normalize addresses before comparison by:
 - For tokens with 18 decimals: `1 ETH = "1000000000000000000"`
 - Always use `BigInt` for amount arithmetic to prevent precision loss
 
+The library provides utilities for working with tokens:
+
+```typescript
+import {
+  ETH_ADDRESSES,
+  STRK_ADDRESSES,
+  USDC_ADDRESSES,
+  getTokenAddress,
+  getTokenDecimals,
+  toAtomicUnits,
+  fromAtomicUnits,
+  isTokenAvailable,
+  getAvailableTokens,
+} from '@x402/starknet';
+
+// Get token address for a network
+const ethAddress = ETH_ADDRESSES['starknet:mainnet'];
+// or: getTokenAddress('ETH', 'starknet:mainnet')
+
+// Convert human amounts to atomic units
+const atomicAmount = toAtomicUnits(1.5, 'USDC'); // '1500000' (6 decimals)
+const ethAmount = toAtomicUnits(0.001, 'ETH'); // '1000000000000000' (18 decimals)
+
+// Convert atomic units back to human-readable
+const humanAmount = fromAtomicUnits('1500000', 'USDC'); // 1.5
+
+// Check token availability
+console.log(isTokenAvailable('USDC', 'starknet:mainnet')); // true
+console.log(isTokenAvailable('USDC', 'starknet:sepolia')); // false
+
+// Get all tokens for a network
+const tokens = getAvailableTokens('starknet:mainnet'); // ['ETH', 'STRK', 'USDC']
+```
+
 ### Chain ID Mapping
 
 Map Starknet chain IDs to network identifiers:

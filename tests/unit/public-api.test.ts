@@ -44,6 +44,20 @@ describe('Public API Surface', () => {
       'NETWORK_REFERENCES',
       'NETWORK_NAMES',
       'DEFAULT_RPC_URLS',
+      // Token constants (IMPROVEMENT_SPEC section 3)
+      'ETH_ADDRESSES',
+      'STRK_ADDRESSES',
+      'USDC_ADDRESSES',
+      'TOKEN_ADDRESSES',
+      'TOKEN_DECIMALS',
+      // Token utilities
+      'getTokenAddress',
+      'getTokenDecimals',
+      'getTokenSymbol',
+      'toAtomicUnits',
+      'fromAtomicUnits',
+      'isTokenAvailable',
+      'getAvailableTokens',
       // Facilitator client
       'FacilitatorClient',
       'createFacilitatorClient',
@@ -118,8 +132,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 79
-    expect(allExports).toHaveLength(79);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 15 network utils/constants + 12 token utils/constants + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 91
+    expect(allExports).toHaveLength(91);
   });
 
   it('should export VERSION constant', () => {

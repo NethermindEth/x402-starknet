@@ -12,6 +12,7 @@ Complete API documentation for the Starknet x402 payment protocol library.
 - [Quick Start](#quick-start)
 - [Core Payment Operations](#core-payment-operations)
 - [Network Utilities](#network-utilities)
+- [Token Utilities](#token-utilities)
 - [Encoding Utilities](#encoding-utilities)
 - [Facilitator Client](#facilitator-client)
 - [Discovery Client](#discovery-client)
@@ -619,6 +620,239 @@ import { DEFAULT_RPC_URLS } from '@x402/starknet';
 
 const rpcUrl = DEFAULT_RPC_URLS['starknet:mainnet'];
 // 'https://starknet-mainnet.public.blastapi.io'
+```
+
+---
+
+## Token Utilities
+
+Canonical token addresses and utilities for Starknet.
+
+### Token Address Constants
+
+#### `ETH_ADDRESSES`
+
+ETH contract addresses by network (18 decimals).
+
+```typescript
+const ETH_ADDRESSES: Partial<Record<StarknetNetworkId, string>>;
+```
+
+**Example:**
+
+```typescript
+import { ETH_ADDRESSES } from '@x402/starknet';
+
+const mainnetEth = ETH_ADDRESSES['starknet:mainnet'];
+// '0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7'
+```
+
+---
+
+#### `STRK_ADDRESSES`
+
+STRK contract addresses by network (18 decimals).
+
+```typescript
+const STRK_ADDRESSES: Partial<Record<StarknetNetworkId, string>>;
+```
+
+---
+
+#### `USDC_ADDRESSES`
+
+USDC contract addresses by network (6 decimals). Note: USDC is only available on mainnet.
+
+```typescript
+const USDC_ADDRESSES: Partial<Record<StarknetNetworkId, string>>;
+```
+
+---
+
+#### `TOKEN_ADDRESSES`
+
+All token addresses indexed by symbol and network.
+
+```typescript
+const TOKEN_ADDRESSES: Record<
+  TokenSymbol,
+  Partial<Record<StarknetNetworkId, string>>
+>;
+```
+
+---
+
+#### `TOKEN_DECIMALS`
+
+Token decimal places by symbol.
+
+```typescript
+const TOKEN_DECIMALS: Record<TokenSymbol, number>;
+// { ETH: 18, STRK: 18, USDC: 6 }
+```
+
+---
+
+### `getTokenAddress`
+
+Get token contract address for a specific network.
+
+```typescript
+function getTokenAddress(
+  symbol: TokenSymbol,
+  network: StarknetNetworkId
+): string | undefined;
+```
+
+**Parameters:**
+
+- `symbol` - Token symbol (`'ETH'`, `'STRK'`, or `'USDC'`)
+- `network` - Network identifier
+
+**Returns:** Token contract address or `undefined` if not available
+
+**Example:**
+
+```typescript
+import { getTokenAddress } from '@x402/starknet';
+
+const ethAddress = getTokenAddress('ETH', 'starknet:mainnet');
+const usdcAddress = getTokenAddress('USDC', 'starknet:mainnet');
+
+// Returns undefined for unsupported combinations
+const sepoliaUsdc = getTokenAddress('USDC', 'starknet:sepolia'); // undefined
+```
+
+---
+
+### `getTokenDecimals`
+
+Get number of decimals for a token.
+
+```typescript
+function getTokenDecimals(symbol: TokenSymbol): number;
+```
+
+**Example:**
+
+```typescript
+import { getTokenDecimals } from '@x402/starknet';
+
+console.log(getTokenDecimals('ETH')); // 18
+console.log(getTokenDecimals('USDC')); // 6
+```
+
+---
+
+### `toAtomicUnits`
+
+Convert human-readable amount to atomic units (smallest unit).
+
+```typescript
+function toAtomicUnits(amount: number, symbol: TokenSymbol): string;
+```
+
+**Example:**
+
+```typescript
+import { toAtomicUnits } from '@x402/starknet';
+
+const atomic = toAtomicUnits(1.5, 'USDC');
+console.log(atomic); // '1500000' (1.5 * 10^6)
+
+const ethAtomic = toAtomicUnits(0.001, 'ETH');
+console.log(ethAtomic); // '1000000000000000' (0.001 * 10^18)
+```
+
+---
+
+### `fromAtomicUnits`
+
+Convert atomic units to human-readable amount.
+
+```typescript
+function fromAtomicUnits(atomicUnits: string, symbol: TokenSymbol): number;
+```
+
+**Example:**
+
+```typescript
+import { fromAtomicUnits } from '@x402/starknet';
+
+const amount = fromAtomicUnits('1500000', 'USDC');
+console.log(amount); // 1.5
+
+const ethAmount = fromAtomicUnits('1000000000000000', 'ETH');
+console.log(ethAmount); // 0.001
+```
+
+---
+
+### `getTokenSymbol`
+
+Identify token symbol from contract address.
+
+```typescript
+function getTokenSymbol(
+  address: string,
+  network: StarknetNetworkId
+): TokenSymbol | undefined;
+```
+
+**Example:**
+
+```typescript
+import { getTokenSymbol, ETH_ADDRESSES } from '@x402/starknet';
+
+const symbol = getTokenSymbol(
+  ETH_ADDRESSES['starknet:mainnet']!,
+  'starknet:mainnet'
+);
+console.log(symbol); // 'ETH'
+```
+
+---
+
+### `isTokenAvailable`
+
+Check if a token is available on a specific network.
+
+```typescript
+function isTokenAvailable(
+  symbol: TokenSymbol,
+  network: StarknetNetworkId
+): boolean;
+```
+
+**Example:**
+
+```typescript
+import { isTokenAvailable } from '@x402/starknet';
+
+console.log(isTokenAvailable('USDC', 'starknet:mainnet')); // true
+console.log(isTokenAvailable('USDC', 'starknet:sepolia')); // false
+```
+
+---
+
+### `getAvailableTokens`
+
+Get all available tokens for a network.
+
+```typescript
+function getAvailableTokens(network: StarknetNetworkId): Array<TokenSymbol>;
+```
+
+**Example:**
+
+```typescript
+import { getAvailableTokens } from '@x402/starknet';
+
+const mainnetTokens = getAvailableTokens('starknet:mainnet');
+console.log(mainnetTokens); // ['ETH', 'STRK', 'USDC']
+
+const sepoliaTokens = getAvailableTokens('starknet:sepolia');
+console.log(sepoliaTokens); // ['ETH', 'STRK']
 ```
 
 ---
