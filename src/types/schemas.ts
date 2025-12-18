@@ -290,3 +290,88 @@ export const PROVIDER_OPTIONS_SCHEMA = z.object({
   timeout: z.number().int().positive().optional(),
   retries: z.number().int().nonnegative().optional(),
 });
+
+// ============================================================================
+// Discovery API Schemas
+// ============================================================================
+
+/**
+ * Schema for resource type
+ * Spec compliance: x402 v2 - Section 8
+ */
+export const RESOURCE_TYPE_SCHEMA = z.enum(['http', 'mcp', 'a2a']);
+
+/**
+ * Schema for resource metadata
+ */
+export const RESOURCE_METADATA_SCHEMA = z
+  .object({
+    category: z.string().optional(),
+    provider: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  })
+  .catchall(z.unknown());
+
+/**
+ * Schema for discovered resource
+ * Spec compliance: x402 v2 - Section 8.2
+ */
+export const DISCOVERED_RESOURCE_SCHEMA = z.object({
+  resource: z.string().min(1, 'Resource URL is required'),
+  type: RESOURCE_TYPE_SCHEMA,
+  x402Version: z.number().int().positive(),
+  accepts: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
+  lastUpdated: z.number().int().nonnegative(),
+  metadata: RESOURCE_METADATA_SCHEMA.optional(),
+});
+
+/**
+ * Schema for discovery pagination
+ */
+export const DISCOVERY_PAGINATION_SCHEMA = z.object({
+  limit: z.number().int().positive(),
+  offset: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+});
+
+/**
+ * Schema for discovery response
+ * Spec compliance: x402 v2 - Section 8.1
+ */
+export const DISCOVERY_RESPONSE_SCHEMA = z.object({
+  x402Version: z.literal(2),
+  items: z.array(DISCOVERED_RESOURCE_SCHEMA),
+  pagination: DISCOVERY_PAGINATION_SCHEMA,
+});
+
+/**
+ * Schema for discovery parameters
+ */
+export const DISCOVERY_PARAMS_SCHEMA = z.object({
+  type: RESOURCE_TYPE_SCHEMA.optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().nonnegative().optional(),
+  network: z.string().optional(),
+  category: z.string().optional(),
+  provider: z.string().optional(),
+  query: z.string().optional(),
+});
+
+/**
+ * Schema for resource registration request
+ */
+export const REGISTER_RESOURCE_REQUEST_SCHEMA = z.object({
+  resource: z.string().min(1, 'Resource URL is required'),
+  type: RESOURCE_TYPE_SCHEMA,
+  accepts: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
+  metadata: RESOURCE_METADATA_SCHEMA.optional(),
+});
+
+/**
+ * Schema for resource registration response
+ */
+export const REGISTER_RESOURCE_RESPONSE_SCHEMA = z.object({
+  success: z.boolean(),
+  resourceId: z.string().optional(),
+  error: z.string().optional(),
+});

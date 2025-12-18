@@ -46,6 +46,18 @@ export type {
   SupportedResponse,
 } from './settlement.js';
 
+// Discovery types
+export type {
+  ResourceType,
+  ResourceMetadata,
+  DiscoveredResource,
+  DiscoveryPagination,
+  DiscoveryResponse,
+  DiscoveryParams,
+  RegisterResourceRequest,
+  RegisterResourceResponse,
+} from './discovery.js';
+
 // Paymaster types
 export type {
   PaymasterConfig,
@@ -95,4 +107,13 @@ export {
   NETWORK_CONFIG_SCHEMA,
   ACCOUNT_CONFIG_SCHEMA,
   PROVIDER_OPTIONS_SCHEMA,
+  // Discovery schemas
+  RESOURCE_TYPE_SCHEMA,
+  RESOURCE_METADATA_SCHEMA,
+  DISCOVERED_RESOURCE_SCHEMA,
+  DISCOVERY_PAGINATION_SCHEMA,
+  DISCOVERY_RESPONSE_SCHEMA,
+  DISCOVERY_PARAMS_SCHEMA,
+  REGISTER_RESOURCE_REQUEST_SCHEMA,
+  REGISTER_RESOURCE_RESPONSE_SCHEMA,
 } from './schemas.js';
