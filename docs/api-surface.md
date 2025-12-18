@@ -498,10 +498,10 @@ Field names updated:
 
 ## Documentation
 
-- **API Reference**: See [API.md](./API.md) for complete documentation
-- **README**: See [README.md](./README.md) for quick start guide
-- **Scheme Spec**: See [docs/scheme_exact_starknet.md](./docs/scheme_exact_starknet.md) for payment scheme details
-- **Examples**: See [API.md](./API.md#examples) for usage examples
+- **API Reference**: See [api.md](./api.md) for complete documentation
+- **Usage Examples**: See [usage-examples.md](./usage-examples.md) for practical integration examples
+- **Scheme Spec**: See [scheme_exact_starknet.md](./scheme_exact_starknet.md) for payment scheme details
+- **Paymaster Setup**: See [paymaster-setup.md](./paymaster-setup.md) for paymaster configuration
 
 ---
 
