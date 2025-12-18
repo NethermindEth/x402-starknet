@@ -2,9 +2,9 @@
 
 Complete API documentation for the Starknet x402 payment protocol library.
 
-**Version:** 0.1.0
-**License:** MIT
-**Protocol Version:** x402 v1
+**Version:** 1.0.0
+**License:** Apache-2.0
+**Protocol Version:** x402 v2
 
 ## Table of Contents
 

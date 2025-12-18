@@ -4,8 +4,10 @@
  * A pure library providing core functionality for implementing
  * the x402 payment protocol on Starknet.
  *
+ * Spec compliance: x402 v2
+ *
  * @module @x402/starknet
- * @version 0.1.0
+ * @version 0.2.0
  */
 
 // ============================================================================
@@ -47,12 +49,12 @@ export {
 /**
  * Library version
  */
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 /**
  * Supported x402 protocol version
  */
-export const X402_VERSION = 1;
+export const X402_VERSION = 2;
 
 /**
  * Default AVNU paymaster endpoints for each network
@@ -69,16 +71,23 @@ export { NETWORK_CONFIGS } from './networks/constants.js';
 // ============================================================================
 
 // Network types
-export type { StarknetNetwork, NetworkConfig } from './types/network.js';
+export type {
+  StarknetNetwork,
+  StarknetNetworkId,
+  NetworkConfig,
+} from './types/network.js';
 
 // Payment types
 export type {
   PaymentScheme,
   Signature,
   PaymentAuthorization,
+  ResourceInfo,
+  ExtensionData,
   PaymentRequirements,
+  PaymentRequired,
+  ExactStarknetPayload,
   PaymentPayload,
-  PaymentRequirementsResponse,
 } from './types/payment.js';
 
 // Settlement types
@@ -86,6 +95,8 @@ export type {
   InvalidPaymentReason,
   VerifyResponse,
   SettleResponse,
+  SupportedKind,
+  SupportedResponse,
 } from './types/settlement.js';
 
 // Paymaster types
