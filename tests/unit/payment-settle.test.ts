@@ -98,9 +98,8 @@ describe('Payment Settlement', () => {
       } as unknown as RpcProvider;
 
       // Mock executeTransaction to return success
-      const { executeTransaction } = await import(
-        '../../src/paymaster/index.js'
-      );
+      const { executeTransaction } =
+        await import('../../src/paymaster/index.js');
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash123',
       });
@@ -164,9 +163,8 @@ describe('Payment Settlement', () => {
         }),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import(
-        '../../src/paymaster/index.js'
-      );
+      const { executeTransaction } =
+        await import('../../src/paymaster/index.js');
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash456',
       });
@@ -202,9 +200,8 @@ describe('Payment Settlement', () => {
         callContract: vi.fn().mockResolvedValue(['2000000', '0']),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import(
-        '../../src/paymaster/index.js'
-      );
+      const { executeTransaction } =
+        await import('../../src/paymaster/index.js');
       (executeTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error('Paymaster rejected transaction')
       );
@@ -230,9 +227,8 @@ describe('Payment Settlement', () => {
         }),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import(
-        '../../src/paymaster/index.js'
-      );
+      const { executeTransaction } =
+        await import('../../src/paymaster/index.js');
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxhash789',
       });
@@ -256,9 +252,8 @@ describe('Payment Settlement', () => {
           .mockRejectedValue(new Error('Transaction timeout')),
       } as unknown as RpcProvider;
 
-      const { executeTransaction } = await import(
-        '../../src/paymaster/index.js'
-      );
+      const { executeTransaction } =
+        await import('../../src/paymaster/index.js');
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxtimeout',
       });
@@ -281,9 +276,8 @@ describe('Payment Settlement', () => {
         }),
       } as unknown as RpcProvider;
 
-      const { executeTransaction, createPaymasterClient } = await import(
-        '../../src/paymaster/index.js'
-      );
+      const { executeTransaction, createPaymasterClient } =
+        await import('../../src/paymaster/index.js');
       (executeTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({
         transaction_hash: '0xtxwithkey',
       });
