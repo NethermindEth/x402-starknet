@@ -6,8 +6,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { verifyPayment } from '../../src/payment/verify.js';
 import {
-  encodePaymentHeader,
-  decodePaymentHeader,
+  encodePaymentSignature,
+  decodePaymentSignature,
 } from '../../src/payment/create.js';
 import type {
   PaymentPayload,
@@ -288,8 +288,8 @@ describe('Security: Input Validation', () => {
         },
       };
 
-      const encoded = encodePaymentHeader(maliciousPayload as any);
-      const decoded = decodePaymentHeader(encoded);
+      const encoded = encodePaymentSignature(maliciousPayload as any);
+      const decoded = decodePaymentSignature(encoded);
 
       // Should not pollute prototype
       expect((decoded as any).__proto__?.admin).toBeUndefined();
@@ -324,8 +324,8 @@ describe('Security: Input Validation', () => {
         },
       };
 
-      const encoded = encodePaymentHeader(maliciousPayload as any);
-      const decoded = decodePaymentHeader(encoded);
+      const encoded = encodePaymentSignature(maliciousPayload as any);
+      const decoded = decodePaymentSignature(encoded);
 
       // Should not pollute
       expect((Object.prototype as any).admin).toBeUndefined();
@@ -360,7 +360,7 @@ describe('Security: Input Validation', () => {
       });
 
       const encoded = Buffer.from(maliciousJSON).toString('base64');
-      const decoded = decodePaymentHeader(encoded);
+      const decoded = decodePaymentSignature(encoded);
 
       // Decoded but should be validated before use
       expect(decoded).toBeDefined();
@@ -407,8 +407,8 @@ describe('Security: Input Validation', () => {
         },
       };
 
-      const encoded = encodePaymentHeader(deeplyNested as any);
-      const decoded = decodePaymentHeader(encoded);
+      const encoded = encodePaymentSignature(deeplyNested as any);
+      const decoded = decodePaymentSignature(encoded);
 
       expect(decoded).toBeDefined();
       // Should handle without stack overflow
@@ -419,47 +419,47 @@ describe('Security: Input Validation', () => {
     it('should throw on invalid base64 string', () => {
       const invalid = 'not-valid-base64!!!';
 
-      expect(() => decodePaymentHeader(invalid)).toThrow();
+      expect(() => decodePaymentSignature(invalid)).toThrow();
     });
 
     it('should throw on malformed base64 (missing padding)', () => {
       const invalidBase64 = 'SGVsbG8gV29ybGQ'; // Missing padding
 
-      expect(() => decodePaymentHeader(invalidBase64)).toThrow();
+      expect(() => decodePaymentSignature(invalidBase64)).toThrow();
     });
 
     it('should throw on empty string', () => {
-      expect(() => decodePaymentHeader('')).toThrow();
+      expect(() => decodePaymentSignature('')).toThrow();
     });
 
     it('should throw on base64 with invalid characters', () => {
       const invalidChars = 'SGVs$G8@V29ybGQ=';
 
-      expect(() => decodePaymentHeader(invalidChars)).toThrow();
+      expect(() => decodePaymentSignature(invalidChars)).toThrow();
     });
 
     it('should throw on base64 that decodes to invalid JSON', () => {
       const invalidJSON = Buffer.from('{ invalid json }').toString('base64');
 
-      expect(() => decodePaymentHeader(invalidJSON)).toThrow();
+      expect(() => decodePaymentSignature(invalidJSON)).toThrow();
     });
 
     it('should throw on base64 that decodes to non-object', () => {
       const notAnObject = Buffer.from('"just a string"').toString('base64');
 
-      expect(() => decodePaymentHeader(notAnObject)).toThrow();
+      expect(() => decodePaymentSignature(notAnObject)).toThrow();
     });
 
     it('should throw on base64 that decodes to array', () => {
       const arrayJSON = Buffer.from('[]').toString('base64');
 
-      expect(() => decodePaymentHeader(arrayJSON)).toThrow();
+      expect(() => decodePaymentSignature(arrayJSON)).toThrow();
     });
 
     it('should throw on base64 that decodes to number', () => {
       const numberJSON = Buffer.from('123').toString('base64');
 
-      expect(() => decodePaymentHeader(numberJSON)).toThrow();
+      expect(() => decodePaymentSignature(numberJSON)).toThrow();
     });
 
     it('should handle very large base64 strings', () => {
@@ -489,8 +489,8 @@ describe('Security: Input Validation', () => {
         },
       };
 
-      const encoded = encodePaymentHeader(hugePayload as any);
-      const decoded = decodePaymentHeader(encoded);
+      const encoded = encodePaymentSignature(hugePayload as any);
+      const decoded = decodePaymentSignature(encoded);
 
       expect(decoded).toBeDefined();
       // Should handle large payloads

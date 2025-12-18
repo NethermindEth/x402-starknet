@@ -4,8 +4,8 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  encodePaymentResponseHeader,
-  decodePaymentResponseHeader,
+  encodePaymentRequired,
+  decodePaymentRequired,
 } from '../../src/payment/create.js';
 import type { PaymentRequired } from '../../src/types/index.js';
 
@@ -31,9 +31,9 @@ describe('Payment Response Header Helpers', () => {
     ],
   };
 
-  describe('encodePaymentResponseHeader', () => {
+  describe('encodePaymentRequired', () => {
     it('should encode PaymentRequired to base64', () => {
-      const encoded = encodePaymentResponseHeader(validResponse);
+      const encoded = encodePaymentRequired(validResponse);
 
       expect(encoded).toBeTruthy();
       expect(typeof encoded).toBe('string');
@@ -42,7 +42,7 @@ describe('Payment Response Header Helpers', () => {
     });
 
     it('should produce valid base64 that can be decoded', () => {
-      const encoded = encodePaymentResponseHeader(validResponse);
+      const encoded = encodePaymentRequired(validResponse);
       const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
       const parsed = JSON.parse(decoded);
 
@@ -80,7 +80,7 @@ describe('Payment Response Header Helpers', () => {
         ],
       };
 
-      const encoded = encodePaymentResponseHeader(multiResponse);
+      const encoded = encodePaymentRequired(multiResponse);
       const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
       const parsed = JSON.parse(decoded);
 
@@ -116,7 +116,7 @@ describe('Payment Response Header Helpers', () => {
         ],
       };
 
-      const encoded = encodePaymentResponseHeader(responseWithOptionals);
+      const encoded = encodePaymentRequired(responseWithOptionals);
       const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
       const parsed = JSON.parse(decoded);
 
@@ -148,7 +148,7 @@ describe('Payment Response Header Helpers', () => {
         ],
       };
 
-      const encoded = encodePaymentResponseHeader(responseWithSpecialChars);
+      const encoded = encodePaymentRequired(responseWithSpecialChars);
       const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
       const parsed = JSON.parse(decoded);
 
@@ -158,17 +158,17 @@ describe('Payment Response Header Helpers', () => {
     });
   });
 
-  describe('decodePaymentResponseHeader', () => {
+  describe('decodePaymentRequired', () => {
     it('should decode valid base64 encoded response', () => {
-      const encoded = encodePaymentResponseHeader(validResponse);
-      const decoded = decodePaymentResponseHeader(encoded);
+      const encoded = encodePaymentRequired(validResponse);
+      const decoded = decodePaymentRequired(encoded);
 
       expect(decoded).toEqual(validResponse);
     });
 
     it('should decode response and preserve all fields', () => {
-      const encoded = encodePaymentResponseHeader(validResponse);
-      const decoded = decodePaymentResponseHeader(encoded);
+      const encoded = encodePaymentRequired(validResponse);
+      const decoded = decodePaymentRequired(encoded);
 
       expect(decoded.x402Version).toBe(2);
       expect(decoded.error).toBe('Payment required to access this resource');
@@ -182,8 +182,8 @@ describe('Payment Response Header Helpers', () => {
       // Encode an array instead of object
       const invalidEncoded = Buffer.from(JSON.stringify([])).toString('base64');
 
-      expect(() => decodePaymentResponseHeader(invalidEncoded)).toThrow(
-        'Invalid payment response: must be an object'
+      expect(() => decodePaymentRequired(invalidEncoded)).toThrow(
+        'Invalid payment required: must be an object'
       );
     });
 
@@ -192,8 +192,8 @@ describe('Payment Response Header Helpers', () => {
         'base64'
       );
 
-      expect(() => decodePaymentResponseHeader(invalidEncoded)).toThrow(
-        'Invalid payment response: must be an object'
+      expect(() => decodePaymentRequired(invalidEncoded)).toThrow(
+        'Invalid payment required: must be an object'
       );
     });
 
@@ -202,8 +202,8 @@ describe('Payment Response Header Helpers', () => {
         JSON.stringify('not an object')
       ).toString('base64');
 
-      expect(() => decodePaymentResponseHeader(invalidEncoded)).toThrow(
-        'Invalid payment response: must be an object'
+      expect(() => decodePaymentRequired(invalidEncoded)).toThrow(
+        'Invalid payment required: must be an object'
       );
     });
 
@@ -212,29 +212,29 @@ describe('Payment Response Header Helpers', () => {
         'base64'
       );
 
-      expect(() => decodePaymentResponseHeader(invalidEncoded)).toThrow(
-        'Invalid payment response: must be an object'
+      expect(() => decodePaymentRequired(invalidEncoded)).toThrow(
+        'Invalid payment required: must be an object'
       );
     });
 
     it('should throw error for invalid base64', () => {
       const invalidBase64 = 'not-valid-base64!!!';
 
-      expect(() => decodePaymentResponseHeader(invalidBase64)).toThrow();
+      expect(() => decodePaymentRequired(invalidBase64)).toThrow();
     });
 
     it('should throw error for invalid JSON', () => {
       const invalidJson = Buffer.from('{ invalid json }').toString('base64');
 
-      expect(() => decodePaymentResponseHeader(invalidJson)).toThrow();
+      expect(() => decodePaymentRequired(invalidJson)).toThrow();
     });
   });
 
   describe('Round-trip encoding/decoding', () => {
     it('should survive round-trip encoding and decoding', () => {
       const original = validResponse;
-      const encoded = encodePaymentResponseHeader(original);
-      const decoded = decodePaymentResponseHeader(encoded);
+      const encoded = encodePaymentRequired(original);
+      const decoded = decodePaymentRequired(encoded);
 
       expect(decoded).toEqual(original);
     });
@@ -243,8 +243,8 @@ describe('Payment Response Header Helpers', () => {
       let current = validResponse;
 
       for (let i = 0; i < 5; i++) {
-        const encoded = encodePaymentResponseHeader(current);
-        current = decodePaymentResponseHeader(encoded);
+        const encoded = encodePaymentRequired(current);
+        current = decodePaymentRequired(encoded);
       }
 
       expect(current).toEqual(validResponse);
@@ -279,8 +279,8 @@ describe('Payment Response Header Helpers', () => {
         ],
       };
 
-      const encoded = encodePaymentResponseHeader(complexResponse);
-      const decoded = decodePaymentResponseHeader(encoded);
+      const encoded = encodePaymentRequired(complexResponse);
+      const decoded = decodePaymentRequired(encoded);
 
       expect(decoded).toEqual(complexResponse);
       expect(decoded.accepts[0].extra?.name).toBe('Test Token');
@@ -313,8 +313,8 @@ describe('Payment Response Header Helpers', () => {
         ],
       };
 
-      const encoded = encodePaymentResponseHeader(longErrorResponse);
-      const decoded = decodePaymentResponseHeader(encoded);
+      const encoded = encodePaymentRequired(longErrorResponse);
+      const decoded = decodePaymentRequired(encoded);
 
       expect(decoded.error).toBe(longError);
       expect(decoded.error).toHaveLength(10000);
@@ -341,8 +341,8 @@ describe('Payment Response Header Helpers', () => {
         ],
       };
 
-      const encoded = encodePaymentResponseHeader(unicodeResponse);
-      const decoded = decodePaymentResponseHeader(encoded);
+      const encoded = encodePaymentRequired(unicodeResponse);
+      const decoded = decodePaymentRequired(encoded);
 
       expect(decoded.error).toBe('支付需要 💰 Paiement requis 🔒');
     });
@@ -357,7 +357,7 @@ describe('Payment Response Header Helpers', () => {
       });
       const encoded = Buffer.from(maliciousJson).toString('base64');
 
-      const decoded = decodePaymentResponseHeader(encoded);
+      const decoded = decodePaymentRequired(encoded);
 
       // Should decode but not pollute Object.prototype
       expect(decoded).toHaveProperty('x402Version');
@@ -368,7 +368,7 @@ describe('Payment Response Header Helpers', () => {
   describe('Compatibility with existing header helpers', () => {
     it('should use same encoding format as payment header helpers', () => {
       const response = validResponse;
-      const encoded = encodePaymentResponseHeader(response);
+      const encoded = encodePaymentRequired(response);
 
       // Should be valid base64
       const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
@@ -380,7 +380,7 @@ describe('Payment Response Header Helpers', () => {
 
     it('should be distinguishable from payment payload headers', () => {
       const response = validResponse;
-      const encoded = encodePaymentResponseHeader(response);
+      const encoded = encodePaymentRequired(response);
       const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
       const parsed = JSON.parse(decoded);
 

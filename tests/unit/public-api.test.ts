@@ -17,11 +17,15 @@ describe('Public API Surface', () => {
       'createPaymentPayload',
       'verifyPayment',
       'settlePayment',
-      // Encoding
-      'encodePaymentHeader',
-      'decodePaymentHeader',
-      'encodePaymentResponseHeader',
-      'decodePaymentResponseHeader',
+      // Encoding (v2 header names)
+      'encodePaymentSignature',
+      'decodePaymentSignature',
+      'encodePaymentRequired',
+      'decodePaymentRequired',
+      'encodePaymentResponse',
+      'decodePaymentResponse',
+      // HTTP header constants
+      'HTTP_HEADERS',
       // Network utilities
       'getNetworkConfig',
       'getTransactionUrl',
@@ -48,8 +52,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 13 functions + 4 constants + 3 error classes + 1 ERROR_CODES = 21
-    expect(allExports).toHaveLength(21);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 4 constants + 3 error classes + 1 ERROR_CODES = 24
+    expect(allExports).toHaveLength(24);
   });
 
   it('should export VERSION constant', () => {

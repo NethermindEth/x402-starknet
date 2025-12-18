@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   createPaymentPayload,
   selectPaymentRequirements,
-  encodePaymentHeader,
-  decodePaymentHeader,
+  encodePaymentSignature,
+  decodePaymentSignature,
   getDefaultPaymasterEndpoint,
 } from '../../src/payment/create.js';
 import type {
@@ -196,7 +196,7 @@ describe('Payment Creation', () => {
     });
   });
 
-  describe('encodePaymentHeader', () => {
+  describe('encodePaymentSignature', () => {
     it('should encode payment payload to base64', () => {
       const payload: PaymentPayload = {
         x402Version: 2,
@@ -218,7 +218,7 @@ describe('Payment Creation', () => {
         },
       };
 
-      const encoded = encodePaymentHeader(payload);
+      const encoded = encodePaymentSignature(payload);
       expect(typeof encoded).toBe('string');
       expect(encoded.length).toBeGreaterThan(0);
 
@@ -228,7 +228,7 @@ describe('Payment Creation', () => {
     });
   });
 
-  describe('decodePaymentHeader', () => {
+  describe('decodePaymentSignature', () => {
     it('should decode base64 payment header', () => {
       const payload: PaymentPayload = {
         x402Version: 2,
@@ -250,8 +250,8 @@ describe('Payment Creation', () => {
         },
       };
 
-      const encoded = encodePaymentHeader(payload);
-      const decoded = decodePaymentHeader(encoded);
+      const encoded = encodePaymentSignature(payload);
+      const decoded = decodePaymentSignature(encoded);
 
       expect(decoded).toEqual(payload);
     });
@@ -277,7 +277,9 @@ describe('Payment Creation', () => {
         },
       };
 
-      const roundTrip = decodePaymentHeader(encodePaymentHeader(original));
+      const roundTrip = decodePaymentSignature(
+        encodePaymentSignature(original)
+      );
       expect(roundTrip).toEqual(original);
     });
   });
