@@ -125,6 +125,21 @@ export { NETWORK_CONFIGS } from './networks/constants.js';
 export { createProvider, getChainId } from './utils/provider.js';
 
 // ============================================================================
+// Payment Builder Utilities
+// ============================================================================
+
+export {
+  buildPaymentRequirements,
+  buildETHPayment,
+  buildSTRKPayment,
+  buildUSDCPayment,
+  type PaymentRequirementsParams,
+  type ETHPaymentParams,
+  type STRKPaymentParams,
+  type USDCPaymentParams,
+} from './builders/index.js';
+
+// ============================================================================
 // TypeScript Types (All Public)
 // ============================================================================
 

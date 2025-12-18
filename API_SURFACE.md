@@ -4,7 +4,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-- **Small, stable surface** - Only 96 named exports
+- **Small, stable surface** - Only 100 named exports
 - **No wildcard exports** - Explicit named exports only
 - **No deep imports** - Single entry point via `@x402/starknet`
 - **Tree-shakeable** - `sideEffects: false` in package.json
@@ -15,7 +15,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ---
 
-## Public Exports (96 total)
+## Public Exports (100 total)
 
 ### Core Functions (3)
 
@@ -90,6 +90,20 @@ Payment operations:
 
 - `FacilitatorClient` - HTTP client class for facilitator API
 - `createFacilitatorClient()` - Factory function for FacilitatorClient
+
+### Discovery Client (2)
+
+- `DiscoveryClient` - HTTP client class for Bazaar discovery API
+- `createDiscoveryClient()` - Factory function for DiscoveryClient
+
+### Payment Builder Utilities (4)
+
+Convenience builders for constructing payment requirements:
+
+- `buildPaymentRequirements()` - Build PaymentRequirements with token resolution and amount conversion
+- `buildETHPayment()` - Build ETH payment requirements
+- `buildSTRKPayment()` - Build STRK payment requirements
+- `buildUSDCPayment()` - Build USDC payment requirements (mainnet only)
 
 ### Extensions System (10)
 
@@ -188,6 +202,10 @@ All TypeScript types are exported:
 - `PaymasterConfig`, `SettlementOptions`, `PaymasterConfigOptions`, `ErrorCode`
 - `Extension`, `IExtensionRegistry`, `ValidationResult`, `JSONSchema`
 - `FacilitatorClientConfig`, `IFacilitatorClient`
+- `DiscoveryClientConfig`, `IDiscoveryClient`
+- `ResourceType`, `ResourceMetadata`, `DiscoveredResource`, `DiscoveryPagination`
+- `DiscoveryResponse`, `DiscoveryParams`, `RegisterResourceRequest`, `RegisterResourceResponse`
+- `PaymentRequirementsParams`, `ETHPaymentParams`, `STRKPaymentParams`, `USDCPaymentParams`
 
 ---
 
@@ -256,6 +274,26 @@ import { createFacilitatorClient } from '@x402/starknet';
 
 const client = createFacilitatorClient({
   baseUrl: 'https://facilitator.example.com',
+});
+```
+
+### Good - Payment Builders
+
+```typescript
+import { buildUSDCPayment, buildETHPayment } from '@x402/starknet';
+
+// Build USDC payment requirements
+const usdcReq = buildUSDCPayment({
+  network: 'starknet:mainnet',
+  amount: 1.5, // $1.50 USDC (human-readable)
+  payTo: '0x1234...',
+});
+
+// Build ETH payment requirements
+const ethReq = buildETHPayment({
+  network: 'starknet:sepolia',
+  amount: 0.001, // 0.001 ETH
+  payTo: '0x1234...',
 });
 ```
 
@@ -386,7 +424,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(96); // Enforced!
+  expect(allExports).toHaveLength(100); // Enforced!
 });
 ```
 
@@ -471,7 +509,7 @@ Field names updated:
 
 | Practice           | Status | Notes                               |
 | ------------------ | ------ | ----------------------------------- |
-| Small surface      | Yes    | 96 named exports                    |
+| Small surface      | Yes    | 100 named exports                   |
 | Named exports only | Yes    | No `export *`                       |
 | No deep imports    | Yes    | Single entry point                  |
 | Tree-shakeable     | Yes    | `sideEffects: false`                |
@@ -489,7 +527,7 @@ Field names updated:
 
 The `@x402/starknet` library follows industry best practices for library design:
 
-- **Minimal, stable API** with 96 exports
+- **Minimal, stable API** with 100 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
 - **Predictable errors** with stable, spec-compliant error codes
