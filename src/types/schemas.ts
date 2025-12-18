@@ -20,22 +20,9 @@ export const STARKNET_NETWORK_ID_SCHEMA = z.enum([
 ]);
 
 /**
- * Schema for legacy Starknet network identifiers
- * @deprecated Use STARKNET_NETWORK_ID_SCHEMA for v2
+ * Alias for STARKNET_NETWORK_ID_SCHEMA (v2 uses only CAIP-2 format)
  */
-export const STARKNET_NETWORK_LEGACY_SCHEMA = z.enum([
-  'starknet-mainnet',
-  'starknet-sepolia',
-  'starknet-devnet',
-]);
-
-/**
- * Schema for Starknet network (accepts both CAIP-2 and legacy formats)
- */
-export const STARKNET_NETWORK_SCHEMA = z.union([
-  STARKNET_NETWORK_ID_SCHEMA,
-  STARKNET_NETWORK_LEGACY_SCHEMA,
-]);
+export const STARKNET_NETWORK_SCHEMA = STARKNET_NETWORK_ID_SCHEMA;
 
 // ============================================================================
 // Common Schemas
@@ -71,7 +58,7 @@ export const PAYMENT_AUTHORIZATION_SCHEMA = z.object({
 // ============================================================================
 
 /**
- * Schema for resource info (v2)
+ * Schema for resource info
  * Spec compliance: x402 v2 - ResourceInfo Schema
  */
 export const RESOURCE_INFO_SCHEMA = z.object({
@@ -81,7 +68,7 @@ export const RESOURCE_INFO_SCHEMA = z.object({
 });
 
 /**
- * Schema for extension data (v2)
+ * Schema for extension data
  * Spec compliance: x402 v2 - Extensions System
  */
 export const EXTENSION_DATA_SCHEMA = z.object({
@@ -90,10 +77,10 @@ export const EXTENSION_DATA_SCHEMA = z.object({
 });
 
 /**
- * Schema for payment requirements (v2)
+ * Schema for payment requirements
  * Spec compliance: x402 v2 - PaymentRequirements Schema
  */
-export const PAYMENT_REQUIREMENTS_V2_SCHEMA = z.object({
+export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
   scheme: PAYMENT_SCHEME_SCHEMA,
   network: STARKNET_NETWORK_ID_SCHEMA,
   amount: z.string().regex(/^\d+$/, 'Amount must be a numeric string'),
@@ -117,7 +104,12 @@ export const PAYMENT_REQUIREMENTS_V2_SCHEMA = z.object({
 });
 
 /**
- * Schema for exact starknet payload (v2)
+ * Alias for v2 schema naming consistency
+ */
+export const PAYMENT_REQUIREMENTS_V2_SCHEMA = PAYMENT_REQUIREMENTS_SCHEMA;
+
+/**
+ * Schema for exact starknet payload
  * Spec compliance: x402 v2 - scheme_exact_starknet
  */
 export const EXACT_STARKNET_PAYLOAD_SCHEMA = z.object({
@@ -126,14 +118,14 @@ export const EXACT_STARKNET_PAYLOAD_SCHEMA = z.object({
 });
 
 /**
- * Schema for payment payload (v2)
+ * Schema for payment payload
  * Spec compliance: x402 v2 - PaymentPayload Schema
  */
-export const PAYMENT_PAYLOAD_V2_SCHEMA = z
+export const PAYMENT_PAYLOAD_SCHEMA = z
   .object({
     x402Version: z.literal(2),
     resource: RESOURCE_INFO_SCHEMA.optional(),
-    accepted: PAYMENT_REQUIREMENTS_V2_SCHEMA,
+    accepted: PAYMENT_REQUIREMENTS_SCHEMA,
     payload: EXACT_STARKNET_PAYLOAD_SCHEMA,
     extensions: z.record(z.string(), z.unknown()).optional(),
     typedData: z.unknown().optional(),
@@ -142,19 +134,24 @@ export const PAYMENT_PAYLOAD_V2_SCHEMA = z
   .loose(); // Allow additional fields for forward compatibility
 
 /**
- * Schema for payment required response (v2)
- * Spec compliance: x402 v2 - PaymentRequired Schema (402 response)
+ * Alias for v2 schema naming consistency
+ */
+export const PAYMENT_PAYLOAD_V2_SCHEMA = PAYMENT_PAYLOAD_SCHEMA;
+
+/**
+ * Schema for payment required response (402 response)
+ * Spec compliance: x402 v2 - PaymentRequired Schema
  */
 export const PAYMENT_REQUIRED_SCHEMA = z.object({
   x402Version: z.literal(2),
   error: z.string().optional(),
   resource: RESOURCE_INFO_SCHEMA,
-  accepts: z.array(PAYMENT_REQUIREMENTS_V2_SCHEMA).min(1),
+  accepts: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
   extensions: z.record(z.string(), EXTENSION_DATA_SCHEMA).optional(),
 });
 
 /**
- * Schema for invalid payment reason (v2)
+ * Schema for invalid payment reason
  * Spec compliance: x402 v2 - Error Codes
  */
 export const INVALID_PAYMENT_REASON_SCHEMA = z.enum([
@@ -178,19 +175,13 @@ export const INVALID_PAYMENT_REASON_SCHEMA = z.enum([
   'invalid_exact_starknet_payload_recipient_mismatch',
   'invalid_exact_starknet_payload_token_mismatch',
   'invalid_exact_starknet_payload_nonce_used',
-  // Legacy error codes (for backward compatibility)
-  'nonce_used',
-  'expired',
-  'token_not_approved',
-  'invalid_recipient',
-  'contract_error',
 ]);
 
 /**
- * Schema for verify response (v2)
+ * Schema for verify response
  * Spec compliance: x402 v2 - VerifyResponse Schema
  */
-export const VERIFY_RESPONSE_V2_SCHEMA = z.object({
+export const VERIFY_RESPONSE_SCHEMA = z.object({
   isValid: z.boolean(),
   invalidReason: INVALID_PAYMENT_REASON_SCHEMA.optional(),
   payer: z
@@ -210,10 +201,15 @@ export const VERIFY_RESPONSE_V2_SCHEMA = z.object({
 });
 
 /**
- * Schema for settle response (v2)
+ * Alias for v2 schema naming consistency
+ */
+export const VERIFY_RESPONSE_V2_SCHEMA = VERIFY_RESPONSE_SCHEMA;
+
+/**
+ * Schema for settle response
  * Spec compliance: x402 v2 - SettlementResponse Schema
  */
-export const SETTLE_RESPONSE_V2_SCHEMA = z.object({
+export const SETTLE_RESPONSE_SCHEMA = z.object({
   success: z.boolean(),
   errorReason: z.string().optional(),
   payer: z
@@ -233,7 +229,12 @@ export const SETTLE_RESPONSE_V2_SCHEMA = z.object({
 });
 
 /**
- * Schema for supported kind (v2)
+ * Alias for v2 schema naming consistency
+ */
+export const SETTLE_RESPONSE_V2_SCHEMA = SETTLE_RESPONSE_SCHEMA;
+
+/**
+ * Schema for supported kind
  * Spec compliance: x402 v2 - GET /supported
  */
 export const SUPPORTED_KIND_SCHEMA = z.object({
@@ -244,7 +245,7 @@ export const SUPPORTED_KIND_SCHEMA = z.object({
 });
 
 /**
- * Schema for supported response (v2)
+ * Schema for supported response
  * Spec compliance: x402 v2 - GET /supported Response
  */
 export const SUPPORTED_RESPONSE_SCHEMA = z.object({
@@ -254,144 +255,14 @@ export const SUPPORTED_RESPONSE_SCHEMA = z.object({
 });
 
 // ============================================================================
-// Legacy Schemas (v1 compatibility)
-// ============================================================================
-
-/**
- * Schema for payment requirements (v1)
- * @deprecated Use PAYMENT_REQUIREMENTS_V2_SCHEMA for v2
- */
-export const PAYMENT_REQUIREMENTS_SCHEMA = z.object({
-  scheme: PAYMENT_SCHEME_SCHEMA,
-  network: STARKNET_NETWORK_SCHEMA,
-  maxAmountRequired: z
-    .string()
-    .regex(/^\d+$/, 'Max amount must be a numeric string'),
-  asset: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid asset address format'),
-  payTo: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid payTo address format'),
-  resource: z
-    .string()
-    .min(
-      1,
-      'Resource must be a non-empty string (supports HTTP, MCP, A2A, etc.)'
-    ),
-  description: z.string().optional(),
-  mimeType: z.string().optional(),
-  outputSchema: z.looseObject({}).nullable().optional(),
-  maxTimeoutSeconds: z
-    .number()
-    .int()
-    .positive('maxTimeoutSeconds must be a positive integer'),
-  extra: z
-    .object({
-      tokenName: z.string().optional(),
-      tokenSymbol: z.string().optional(),
-      tokenDecimals: z.number().int().nonnegative().optional(),
-      paymentContract: z
-        .string()
-        .regex(/^0x[0-9a-fA-F]+$/, 'Invalid payment contract address')
-        .optional(),
-    })
-    .optional(),
-});
-
-/**
- * Schema for payment payload (v1)
- * @deprecated Use PAYMENT_PAYLOAD_V2_SCHEMA for v2
- */
-export const PAYMENT_PAYLOAD_SCHEMA = z
-  .object({
-    x402Version: z.literal(1),
-    scheme: PAYMENT_SCHEME_SCHEMA,
-    network: STARKNET_NETWORK_SCHEMA,
-    payload: z.object({
-      signature: SIGNATURE_SCHEMA,
-      authorization: PAYMENT_AUTHORIZATION_SCHEMA,
-    }),
-    settlementTransaction: z
-      .string()
-      .regex(/^0x[0-9a-fA-F]+$/, 'Invalid transaction hash format')
-      .optional(),
-    typedData: z.unknown().optional(),
-    paymasterEndpoint: z.url('Invalid paymaster endpoint URL').optional(),
-  })
-  .loose(); // Allow additional fields for forward compatibility
-
-/**
- * Schema for payment requirements response (v1)
- * @deprecated Use PAYMENT_REQUIRED_SCHEMA for v2
- */
-export const PAYMENT_REQUIREMENTS_RESPONSE_SCHEMA = z.object({
-  x402Version: z.literal(1),
-  error: z.string().min(1, 'Error message cannot be empty'),
-  accepts: z.array(PAYMENT_REQUIREMENTS_SCHEMA).min(1),
-});
-
-/**
- * Schema for verify response (v1)
- * @deprecated Use VERIFY_RESPONSE_V2_SCHEMA for v2
- */
-export const VERIFY_RESPONSE_SCHEMA = z.object({
-  isValid: z.boolean(),
-  invalidReason: z
-    .enum([
-      'invalid_signature',
-      'insufficient_funds',
-      'nonce_used',
-      'expired',
-      'invalid_network',
-      'invalid_amount',
-      'token_not_approved',
-      'invalid_recipient',
-      'contract_error',
-      'unexpected_verify_error',
-    ])
-    .optional(),
-  payer: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid payer address format'),
-  details: z
-    .object({
-      balance: z.string().optional(),
-      nonceUsed: z.boolean().optional(),
-      timestamp: z.number().int().optional(),
-      error: z.string().optional(),
-      validUntil: z.string().optional(),
-      currentTimestamp: z.string().optional(),
-    })
-    .optional(),
-});
-
-/**
- * Schema for settle response (v1)
- * @deprecated Use SETTLE_RESPONSE_V2_SCHEMA for v2
- */
-export const SETTLE_RESPONSE_SCHEMA = z.object({
-  success: z.boolean(),
-  errorReason: z.string().optional(),
-  transaction: z
-    .string()
-    .regex(/^0x[0-9a-fA-F]+$/, 'Invalid transaction hash format'),
-  network: STARKNET_NETWORK_SCHEMA,
-  payer: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid payer address format'),
-  status: z
-    .enum(['pending', 'accepted_on_l2', 'accepted_on_l1', 'rejected'])
-    .optional(),
-  blockNumber: z.number().int().nonnegative().optional(),
-  blockHash: z
-    .string()
-    .regex(/^0x[0-9a-fA-F]+$/, 'Invalid block hash format')
-    .optional(),
-});
-
-// ============================================================================
 // Config Schemas
 // ============================================================================
 
 /**
- * Schema for network config (v2)
+ * Schema for network config
  */
 export const NETWORK_CONFIG_SCHEMA = z.object({
   network: STARKNET_NETWORK_ID_SCHEMA,
-  legacyNetwork: STARKNET_NETWORK_LEGACY_SCHEMA,
   chainId: z.string().regex(/^0x[0-9a-fA-F]+$/, 'Invalid chain ID format'),
   rpcUrl: z.url('RPC URL must be a valid URL'),
   explorerUrl: z.url('Explorer URL must be a valid URL').nullable(),
@@ -407,14 +278,14 @@ export const ACCOUNT_CONFIG_SCHEMA = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]+$/, 'Invalid private key format')
     .optional(),
-  network: STARKNET_NETWORK_SCHEMA,
+  network: STARKNET_NETWORK_ID_SCHEMA,
 });
 
 /**
  * Schema for provider options
  */
 export const PROVIDER_OPTIONS_SCHEMA = z.object({
-  network: STARKNET_NETWORK_SCHEMA,
+  network: STARKNET_NETWORK_ID_SCHEMA,
   rpcUrl: z.url('RPC URL must be a valid URL').optional(),
   timeout: z.number().int().positive().optional(),
   retries: z.number().int().nonnegative().optional(),
