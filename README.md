@@ -1,6 +1,6 @@
-![x402-starknet](./docs/banner.png)
-
 # x402-starknet
+
+![x402-starknet](./docs/banner.png)
 
 **Pure library for implementing the x402 payment protocol on Starknet**
 
