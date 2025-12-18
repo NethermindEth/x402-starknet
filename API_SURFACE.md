@@ -4,7 +4,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ## Design Principles
 
-- **Small, stable surface** - Only 37 named exports
+- **Small, stable surface** - Only 70 named exports
 - **No wildcard exports** - Explicit named exports only
 - **No deep imports** - Single entry point via `@x402/starknet`
 - **Tree-shakeable** - `sideEffects: false` in package.json
@@ -15,7 +15,7 @@ This document outlines the public API surface of `@x402/starknet` following libr
 
 ---
 
-## Public Exports (37 total)
+## Public Exports (70 total)
 
 ### Core Functions (3)
 
@@ -65,7 +65,7 @@ Payment operations:
 
 ### Constants (4)
 
-- `VERSION` - Library version (`'0.2.0'`)
+- `VERSION` - Library version (`'1.0.0'`)
 - `X402_VERSION` - Protocol version (`2`)
 - `DEFAULT_PAYMASTER_ENDPOINTS` - AVNU paymaster endpoints
 - `NETWORK_CONFIGS` - Network configurations
@@ -76,6 +76,56 @@ Payment operations:
 - `PaymentError` - Payment-related errors
 - `NetworkError` - Network-related errors
 - `ERROR_CODES` - Constant object with all error codes
+
+### Zod Validation Schemas (31)
+
+Runtime validation schemas for type-safe parsing:
+
+**Network Schemas:**
+
+- `STARKNET_NETWORK_ID_SCHEMA` - Validate CAIP-2 network identifiers
+- `STARKNET_NETWORK_SCHEMA` - Alias for network validation
+
+**Payment Schemas:**
+
+- `PAYMENT_SCHEME_SCHEMA` - Validate payment scheme ("exact")
+- `SIGNATURE_SCHEMA` - Validate Starknet signatures
+- `PAYMENT_AUTHORIZATION_SCHEMA` - Validate authorization structure
+- `RESOURCE_INFO_SCHEMA` - Validate resource information
+- `EXTENSION_DATA_SCHEMA` - Validate extension data
+- `PAYMENT_REQUIREMENTS_SCHEMA` - Validate payment requirements
+- `PAYMENT_REQUIREMENTS_V2_SCHEMA` - Alias for v2 requirements
+- `EXACT_STARKNET_PAYLOAD_SCHEMA` - Validate exact scheme payload
+- `PAYMENT_PAYLOAD_SCHEMA` - Validate payment payload
+- `PAYMENT_PAYLOAD_V2_SCHEMA` - Alias for v2 payload
+- `PAYMENT_REQUIRED_SCHEMA` - Validate 402 response
+
+**Settlement Schemas:**
+
+- `INVALID_PAYMENT_REASON_SCHEMA` - Validate error reasons
+- `VERIFY_RESPONSE_SCHEMA` - Validate verification response
+- `VERIFY_RESPONSE_V2_SCHEMA` - Alias for v2 verify response
+- `SETTLE_RESPONSE_SCHEMA` - Validate settlement response
+- `SETTLE_RESPONSE_V2_SCHEMA` - Alias for v2 settle response
+- `SUPPORTED_KIND_SCHEMA` - Validate supported payment kind
+- `SUPPORTED_RESPONSE_SCHEMA` - Validate /supported response
+
+**Config Schemas:**
+
+- `NETWORK_CONFIG_SCHEMA` - Validate network configuration
+- `ACCOUNT_CONFIG_SCHEMA` - Validate account configuration
+- `PROVIDER_OPTIONS_SCHEMA` - Validate provider options
+
+**Discovery Schemas:**
+
+- `RESOURCE_TYPE_SCHEMA` - Validate resource type (http, mcp, a2a)
+- `RESOURCE_METADATA_SCHEMA` - Validate resource metadata
+- `DISCOVERED_RESOURCE_SCHEMA` - Validate discovered resource
+- `DISCOVERY_PAGINATION_SCHEMA` - Validate pagination info
+- `DISCOVERY_RESPONSE_SCHEMA` - Validate discovery API response
+- `DISCOVERY_PARAMS_SCHEMA` - Validate discovery query params
+- `REGISTER_RESOURCE_REQUEST_SCHEMA` - Validate registration request
+- `REGISTER_RESOURCE_RESPONSE_SCHEMA` - Validate registration response
 
 ### Types (Exported as TypeScript types)
 
@@ -97,7 +147,6 @@ All TypeScript types are exported:
 
 The following are implementation details and NOT exported:
 
-- Zod schemas (validation is internal)
 - `PaymasterClient` class (abstracted away)
 - Low-level paymaster helpers (`buildTransaction`, `executeTransaction`, etc.)
 - Token utilities (`getTokenBalance`, `getTokenMetadata`)
@@ -176,6 +225,27 @@ registry.register(
 );
 ```
 
+### Good - Validation with Zod schemas
+
+```typescript
+import {
+  PAYMENT_PAYLOAD_SCHEMA,
+  PAYMENT_REQUIREMENTS_SCHEMA,
+} from '@x402/starknet';
+
+// Parse and validate incoming data - result is properly typed
+const payload = PAYMENT_PAYLOAD_SCHEMA.parse(rawPayload);
+const requirements = PAYMENT_REQUIREMENTS_SCHEMA.parse(rawRequirements);
+
+// Safe parsing (returns { success, data } or { success, error })
+const result = PAYMENT_PAYLOAD_SCHEMA.safeParse(untrustedData);
+if (result.success) {
+  console.log('Valid payload:', result.data);
+} else {
+  console.error('Validation errors:', result.error);
+}
+```
+
 ### Bad - Wildcard import (prevents tree-shaking)
 
 ```typescript
@@ -226,7 +296,7 @@ try {
 
 ## API Stability
 
-**Current version:** 0.2.0 (experimental)
+**Current version:** 1.0.0 (stable)
 
 **Versioning:**
 
@@ -241,7 +311,7 @@ try {
 3. Remove in next major version
 4. Provide migration guide and codemod if feasible
 
-**Breaking changes may occur in minor releases until v1.0.0.**
+**Breaking changes will only occur in major releases.**
 
 ---
 
@@ -268,7 +338,7 @@ import * as publicApi from '@x402/starknet';
 
 it('should export only intended symbols', () => {
   const allExports = Object.keys(publicApi);
-  expect(allExports).toHaveLength(37); // Enforced!
+  expect(allExports).toHaveLength(70); // Enforced!
 });
 ```
 
@@ -353,7 +423,7 @@ Field names updated:
 
 | Practice           | Status | Notes                               |
 | ------------------ | ------ | ----------------------------------- |
-| Small surface      | Yes    | 37 named exports                    |
+| Small surface      | Yes    | 70 named exports                    |
 | Named exports only | Yes    | No `export *`                       |
 | No deep imports    | Yes    | Single entry point                  |
 | Tree-shakeable     | Yes    | `sideEffects: false`                |
@@ -371,7 +441,7 @@ Field names updated:
 
 The `@x402/starknet` library follows industry best practices for library design:
 
-- **Minimal, stable API** with 37 exports
+- **Minimal, stable API** with 70 exports
 - **Tree-shakeable** for optimal bundle sizes
 - **Type-safe** with comprehensive TypeScript support
 - **Predictable errors** with stable, spec-compliant error codes

@@ -2,7 +2,7 @@
 
 Complete API documentation for the Starknet x402 payment protocol library.
 
-**Version:** 0.2.0
+**Version:** 1.0.0
 **License:** Apache-2.0
 **Protocol Version:** x402 v2
 
@@ -14,7 +14,9 @@ Complete API documentation for the Starknet x402 payment protocol library.
 - [Network Utilities](#network-utilities)
 - [Encoding Utilities](#encoding-utilities)
 - [Facilitator Client](#facilitator-client)
+- [Discovery Client](#discovery-client)
 - [Extensions System](#extensions-system)
+- [Zod Validation Schemas](#zod-validation-schemas)
 - [Constants](#constants)
 - [TypeScript Types](#typescript-types)
 - [Error Handling](#error-handling)
@@ -778,6 +780,130 @@ if (hasExtension(payload.extensions, 'receipts')) {
 
 ---
 
+## Zod Validation Schemas
+
+The library exports Zod schemas for runtime validation and type-safe parsing of all protocol structures. These schemas enable consuming projects to validate incoming data without maintaining duplicate schema definitions.
+
+### Usage
+
+```typescript
+import {
+  PAYMENT_PAYLOAD_SCHEMA,
+  PAYMENT_REQUIREMENTS_SCHEMA,
+} from '@x402/starknet';
+
+// Parse and validate - result is properly typed
+const paymentPayload = PAYMENT_PAYLOAD_SCHEMA.parse(rawPayload);
+const requirements = PAYMENT_REQUIREMENTS_SCHEMA.parse(rawRequirements);
+
+// Safe parsing (returns { success, data } or { success, error })
+const result = PAYMENT_PAYLOAD_SCHEMA.safeParse(untrustedData);
+if (result.success) {
+  console.log('Valid payload:', result.data);
+} else {
+  console.error('Validation errors:', result.error.issues);
+}
+```
+
+### Available Schemas
+
+#### Network Schemas
+
+- `STARKNET_NETWORK_ID_SCHEMA` - Validates CAIP-2 network identifiers (`starknet:mainnet`, `starknet:sepolia`, `starknet:devnet`)
+- `STARKNET_NETWORK_SCHEMA` - Alias for `STARKNET_NETWORK_ID_SCHEMA`
+
+#### Payment Schemas
+
+- `PAYMENT_SCHEME_SCHEMA` - Validates payment scheme (currently only `"exact"`)
+- `SIGNATURE_SCHEMA` - Validates Starknet signature structure (`{ r, s }`)
+- `PAYMENT_AUTHORIZATION_SCHEMA` - Validates authorization structure
+- `RESOURCE_INFO_SCHEMA` - Validates resource information (`{ url, description?, mimeType? }`)
+- `EXTENSION_DATA_SCHEMA` - Validates extension data structure
+- `PAYMENT_REQUIREMENTS_SCHEMA` - Validates server payment requirements
+- `PAYMENT_REQUIREMENTS_V2_SCHEMA` - Alias for v2 naming consistency
+- `EXACT_STARKNET_PAYLOAD_SCHEMA` - Validates exact scheme payload
+- `PAYMENT_PAYLOAD_SCHEMA` - Validates client payment payload
+- `PAYMENT_PAYLOAD_V2_SCHEMA` - Alias for v2 naming consistency
+- `PAYMENT_REQUIRED_SCHEMA` - Validates 402 response structure
+
+#### Settlement Schemas
+
+- `INVALID_PAYMENT_REASON_SCHEMA` - Validates error reason codes
+- `VERIFY_RESPONSE_SCHEMA` - Validates verification response
+- `VERIFY_RESPONSE_V2_SCHEMA` - Alias for v2 naming consistency
+- `SETTLE_RESPONSE_SCHEMA` - Validates settlement response
+- `SETTLE_RESPONSE_V2_SCHEMA` - Alias for v2 naming consistency
+- `SUPPORTED_KIND_SCHEMA` - Validates supported payment kind
+- `SUPPORTED_RESPONSE_SCHEMA` - Validates `/supported` endpoint response
+
+#### Config Schemas
+
+- `NETWORK_CONFIG_SCHEMA` - Validates network configuration
+- `ACCOUNT_CONFIG_SCHEMA` - Validates account configuration
+- `PROVIDER_OPTIONS_SCHEMA` - Validates provider options
+
+#### Discovery Schemas
+
+- `RESOURCE_TYPE_SCHEMA` - Validates resource type (`http`, `mcp`, `a2a`)
+- `RESOURCE_METADATA_SCHEMA` - Validates resource metadata
+- `DISCOVERED_RESOURCE_SCHEMA` - Validates discovered resource structure
+- `DISCOVERY_PAGINATION_SCHEMA` - Validates pagination information
+- `DISCOVERY_RESPONSE_SCHEMA` - Validates discovery API response
+- `DISCOVERY_PARAMS_SCHEMA` - Validates discovery query parameters
+- `REGISTER_RESOURCE_REQUEST_SCHEMA` - Validates registration request
+- `REGISTER_RESOURCE_RESPONSE_SCHEMA` - Validates registration response
+
+### Example: Server-side Validation
+
+```typescript
+import {
+  PAYMENT_PAYLOAD_SCHEMA,
+  PAYMENT_REQUIREMENTS_SCHEMA,
+  verifyPayment,
+  settlePayment,
+  type PaymentPayload,
+  type PaymentRequirements,
+} from '@x402/starknet';
+import { RpcProvider } from 'starknet';
+
+async function handlePayment(rawPayload: unknown, rawRequirements: unknown) {
+  // Validate incoming data with proper error handling
+  const payloadResult = PAYMENT_PAYLOAD_SCHEMA.safeParse(rawPayload);
+  if (!payloadResult.success) {
+    return {
+      error: 'Invalid payment payload',
+      details: payloadResult.error.issues,
+    };
+  }
+
+  const requirementsResult =
+    PAYMENT_REQUIREMENTS_SCHEMA.safeParse(rawRequirements);
+  if (!requirementsResult.success) {
+    return {
+      error: 'Invalid requirements',
+      details: requirementsResult.error.issues,
+    };
+  }
+
+  // Types are now properly inferred
+  const payload: PaymentPayload = payloadResult.data;
+  const requirements: PaymentRequirements = requirementsResult.data;
+
+  // Continue with verification and settlement
+  const provider = new RpcProvider({ nodeUrl: '...' });
+  const verification = await verifyPayment(provider, payload, requirements);
+
+  if (!verification.isValid) {
+    return { error: verification.invalidReason };
+  }
+
+  const settlement = await settlePayment(provider, payload, requirements);
+  return { success: settlement.success, transaction: settlement.transaction };
+}
+```
+
+---
+
 ## Constants
 
 ### `VERSION`
@@ -785,7 +911,7 @@ if (hasExtension(payload.extensions, 'receipts')) {
 Library version.
 
 ```typescript
-const VERSION: string = '0.2.0';
+const VERSION: string = '1.0.0';
 ```
 
 ---
@@ -1412,7 +1538,7 @@ This library follows semantic versioning:
 - **MINOR** version for new features (backwards-compatible)
 - **PATCH** version for bug fixes
 
-Current API is **experimental** (v0.x.x). Breaking changes may occur in minor releases until v1.0.0.
+Current API is **stable** (v1.0.0). Breaking changes will only occur in major releases.
 
 ---
 

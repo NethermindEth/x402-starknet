@@ -51,6 +51,43 @@ describe('Public API Surface', () => {
       'filterRegisteredExtensions',
       'validateExtensions',
       'defineExtension',
+      // Zod validation schemas - Network
+      'STARKNET_NETWORK_ID_SCHEMA',
+      'STARKNET_NETWORK_SCHEMA',
+      // Zod validation schemas - Common
+      'PAYMENT_SCHEME_SCHEMA',
+      'SIGNATURE_SCHEMA',
+      'PAYMENT_AUTHORIZATION_SCHEMA',
+      // Zod validation schemas - Payment
+      'RESOURCE_INFO_SCHEMA',
+      'EXTENSION_DATA_SCHEMA',
+      'PAYMENT_REQUIREMENTS_SCHEMA',
+      'PAYMENT_REQUIREMENTS_V2_SCHEMA',
+      'EXACT_STARKNET_PAYLOAD_SCHEMA',
+      'PAYMENT_PAYLOAD_SCHEMA',
+      'PAYMENT_PAYLOAD_V2_SCHEMA',
+      'PAYMENT_REQUIRED_SCHEMA',
+      // Zod validation schemas - Settlement
+      'INVALID_PAYMENT_REASON_SCHEMA',
+      'VERIFY_RESPONSE_SCHEMA',
+      'VERIFY_RESPONSE_V2_SCHEMA',
+      'SETTLE_RESPONSE_SCHEMA',
+      'SETTLE_RESPONSE_V2_SCHEMA',
+      'SUPPORTED_KIND_SCHEMA',
+      'SUPPORTED_RESPONSE_SCHEMA',
+      // Zod validation schemas - Config
+      'NETWORK_CONFIG_SCHEMA',
+      'ACCOUNT_CONFIG_SCHEMA',
+      'PROVIDER_OPTIONS_SCHEMA',
+      // Zod validation schemas - Discovery
+      'RESOURCE_TYPE_SCHEMA',
+      'RESOURCE_METADATA_SCHEMA',
+      'DISCOVERED_RESOURCE_SCHEMA',
+      'DISCOVERY_PAGINATION_SCHEMA',
+      'DISCOVERY_RESPONSE_SCHEMA',
+      'DISCOVERY_PARAMS_SCHEMA',
+      'REGISTER_RESOURCE_REQUEST_SCHEMA',
+      'REGISTER_RESOURCE_RESPONSE_SCHEMA',
       // Constants
       'VERSION',
       'X402_VERSION',
@@ -70,8 +107,8 @@ describe('Public API Surface', () => {
     const allExports = Object.keys(publicApi).filter(
       (key) => key !== 'default'
     );
-    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 2 discovery + 11 extensions + 4 constants + 3 error classes + 1 ERROR_CODES = 39
-    expect(allExports).toHaveLength(39);
+    // 3 payment ops + 6 encoding + 1 HTTP_HEADERS + 6 network utils + 2 facilitator + 2 discovery + 11 extensions + 31 schemas + 4 constants + 3 error classes + 1 ERROR_CODES = 70
+    expect(allExports).toHaveLength(70);
   });
 
   it('should export VERSION constant', () => {
