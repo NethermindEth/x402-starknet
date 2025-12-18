@@ -1,6 +1,6 @@
 # Exact Payment Scheme for Starknet (`exact`)
 
-This document specifies the `exact` payment scheme for the x402 protocol on Starknet.
+This document specifies the `exact` payment scheme for the x402 protocol v2 on Starknet.
 
 This scheme facilitates payments of a specific amount of an ERC20 token on the Starknet blockchain using gasless transactions sponsored by a paymaster.
 
@@ -13,13 +13,13 @@ This scheme facilitates payments of a specific amount of an ERC20 token on the S
 The protocol flow for `exact` on Starknet is client-driven with paymaster sponsorship.
 
 1. **Client** makes an HTTP request to a **Resource Server**.
-2. **Resource Server** responds with a `402 Payment Required` status. The response body contains the `PaymentRequirementsResponse` with `accepts` array for the `exact` scheme.
+2. **Resource Server** responds with a `402 Payment Required` status. The response includes the `PAYMENT-REQUIRED` header (base64-encoded) or body containing `PaymentRequired` with `accepts` array for the `exact` scheme.
 3. **Client** queries a **Paymaster Service** to build a gasless transaction containing a transfer of the specified asset to the resource server's wallet address.
 4. **Paymaster Service** constructs a typed data structure following the SNIP-12 standard for the transfer transaction.
 5. **Client** signs the typed data with their Starknet account. This creates a signature that authorizes the transaction.
-6. **Client** creates the payment payload containing the signature and authorization parameters.
-7. **Client** sends a new HTTP request to the resource server with the `X-PAYMENT` header containing the Base64-encoded payment payload.
-8. **Resource Server** receives the request and forwards the `X-PAYMENT` header and `PaymentRequirements` to a **Facilitator Server's** `/verify` endpoint.
+6. **Client** creates the payment payload containing the signature, authorization parameters, and accepted payment option.
+7. **Client** sends a new HTTP request to the resource server with the `PAYMENT-SIGNATURE` header containing the Base64-encoded payment payload.
+8. **Resource Server** receives the request and forwards the `PAYMENT-SIGNATURE` header and `PaymentRequirements` to a **Facilitator Server's** `/verify` endpoint.
 9. **Facilitator** decodes and validates the payment payload:
    - Verifies payload structure
    - Verifies signature is valid (via SNIP-6 `isValidSignature`)
@@ -35,13 +35,13 @@ The protocol flow for `exact` on Starknet is client-driven with paymaster sponso
 
 ## `PaymentRequirements` for `exact`
 
-The `exact` scheme on Starknet uses the standard x402 `PaymentRequirements` fields:
+The `exact` scheme on Starknet uses the standard x402 v2 `PaymentRequirements` fields:
 
 ```json
 {
   "scheme": "exact",
-  "network": "starknet-sepolia",
-  "maxAmountRequired": "1000000",
+  "network": "starknet:sepolia",
+  "amount": "1000000",
   "asset": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
   "payTo": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
   "resource": "https://api.example.com/data",
@@ -59,14 +59,14 @@ The `exact` scheme on Starknet uses the standard x402 `PaymentRequirements` fiel
 ### Field Definitions
 
 - `scheme`: Must be `"exact"`
-- `network`: Network identifier. Valid values:
-  - `"starknet-mainnet"` - Starknet mainnet (chain ID: `0x534e5f4d41494e`)
-  - `"starknet-sepolia"` - Starknet Sepolia testnet (chain ID: `0x534e5f5345504f4c4941`)
-  - `"starknet-devnet"` - Local development network
-- `maxAmountRequired`: Maximum amount required (as decimal string, not hex) in the smallest unit of the token
+- `network`: Network identifier in CAIP-2 format. Valid values:
+  - `"starknet:mainnet"` - Starknet mainnet (chain ID: `0x534e5f4d41494e`)
+  - `"starknet:sepolia"` - Starknet Sepolia testnet (chain ID: `0x534e5f5345504f4c4941`)
+  - `"starknet:devnet"` - Local development network
+- `amount`: Payment amount (as decimal string, not hex) in the smallest unit of the token
 - `asset`: Contract address of the ERC20 token
 - `payTo`: Recipient address (resource server's wallet)
-- `resource`: URL or URI of the protected resource
+- `resource`: URL or URI of the protected resource (string or ResourceInfo object)
 - `description`: Optional human-readable description of the payment
 - `mimeType`: Optional MIME type of the resource
 - `maxTimeoutSeconds`: Required maximum timeout in seconds for settlement
@@ -76,17 +76,26 @@ The `exact` scheme on Starknet uses the standard x402 `PaymentRequirements` fiel
   - `tokenDecimals`: Number of decimals (e.g., 18)
   - Additional custom fields as needed
 
-## `X-PAYMENT` Header Payload
+## `PAYMENT-SIGNATURE` Header Payload
 
-The `X-PAYMENT` header is base64 encoded and sent in the request from the client to the resource server when paying for a resource.
+The `PAYMENT-SIGNATURE` header is base64 encoded and sent in the request from the client to the resource server when paying for a resource.
 
-Once decoded, the `X-PAYMENT` header is a JSON string with the following properties:
+Once decoded, the `PAYMENT-SIGNATURE` header is a JSON string with the following properties:
 
 ```json
 {
-  "x402Version": 1,
+  "x402Version": 2,
   "scheme": "exact",
-  "network": "starknet-sepolia",
+  "network": "starknet:sepolia",
+  "accepted": {
+    "scheme": "exact",
+    "network": "starknet:sepolia",
+    "amount": "1000000",
+    "asset": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+    "payTo": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "resource": "https://api.example.com/data",
+    "maxTimeoutSeconds": 300
+  },
   "payload": {
     "signature": {
       "r": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
@@ -103,6 +112,15 @@ Once decoded, the `X-PAYMENT` header is a JSON string with the following propert
   }
 }
 ```
+
+### v2 Payload Changes
+
+The x402 v2 payload differs from v1:
+
+- `x402Version`: Now `2` instead of `1`
+- `accepted`: New field containing the accepted `PaymentRequirements` from the 402 response
+- `network`: Uses CAIP-2 format (`starknet:sepolia` instead of `starknet-sepolia`)
+- `amount`: Field name in requirements (previously `maxAmountRequired`)
 
 ### Signature Structure
 
@@ -144,11 +162,38 @@ Default paymaster endpoints per network:
 - **Sepolia**: `http://localhost:12777` (development)
 - **Devnet**: `http://localhost:12777` (development)
 
+The library provides utilities for paymaster configuration:
+
+```typescript
+import {
+  createPaymasterConfig,
+  createSettlementOptions,
+  hasPublicPaymaster,
+  DEFAULT_PAYMASTER_ENDPOINTS,
+} from 'x402-starknet';
+
+// Check if network has a default paymaster
+if (hasPublicPaymaster('starknet:mainnet')) {
+  console.log('Using default endpoint');
+}
+
+// Create paymaster configuration
+const config = createPaymasterConfig('starknet:mainnet', {
+  apiKey: process.env.PAYMASTER_API_KEY,
+});
+
+// Or create complete settlement options
+const options = createSettlementOptions('starknet:mainnet', {
+  endpoint: 'https://custom-paymaster.com', // Optional
+  apiKey: process.env.PAYMASTER_API_KEY,
+});
+```
+
 ### Typed Data Structure
 
 The paymaster constructs a SNIP-12 typed data structure for the transfer. The client signs this typed data, creating a signature that authorizes the transaction.
 
-The typed data is stored alongside the payment payload for later use during settlement, but is **not included in the `X-PAYMENT` header** to minimize payload size. The facilitator reconstructs or caches the typed data separately.
+The typed data is stored alongside the payment payload for later use during settlement, but is **not included in the `PAYMENT-SIGNATURE` header** to minimize payload size. The facilitator reconstructs or caches the typed data separately.
 
 ## Facilitator Verification Rules (MUST)
 
@@ -156,28 +201,30 @@ A facilitator verifying an `exact`-scheme Starknet payment MUST enforce all of t
 
 ### 1. Payload Structure Validation
 
-- Decode the base64 `X-PAYMENT` header
+- Decode the base64 `PAYMENT-SIGNATURE` header
 - Parse as JSON and validate against the schema
-- Verify `x402Version` is `1`
+- Verify `x402Version` is `2`
 - Verify `scheme` is `"exact"`
-- Verify `network` matches one of: `starknet-mainnet`, `starknet-sepolia`, `starknet-devnet`
+- Verify `network` matches CAIP-2 format: `starknet:mainnet`, `starknet:sepolia`, or `starknet:devnet`
+- Verify `accepted` field contains valid `PaymentRequirements`
 - Verify `payload.signature` contains valid `r` and `s` hex strings
 - Verify `payload.authorization` contains all required fields
 
 ### 2. Network Compatibility
 
 - Verify `payload.network` matches `paymentRequirements.network`
+- Verify `payload.accepted.network` matches `paymentRequirements.network`
 - Verify the RPC provider is connected to the correct network
 - Map chain IDs to network identifiers:
-  - `0x534e5f4d41494e` → `starknet-mainnet`
-  - `0x534e5f5345504f4c4941` → `starknet-sepolia`
-  - Other → `starknet-devnet`
+  - `0x534e5f4d41494e` → `starknet:mainnet`
+  - `0x534e5f5345504f4c4941` → `starknet:sepolia`
+  - Other → `starknet:devnet`
 
 ### 3. Authorization Parameters
 
 - Verify `payload.authorization.token` matches `paymentRequirements.asset`
 - Verify `payload.authorization.to` matches `paymentRequirements.payTo`
-- Verify `payload.authorization.amount` >= `paymentRequirements.maxAmountRequired`
+- Verify `payload.authorization.amount` >= `paymentRequirements.amount`
 - Normalize addresses before comparison (handle `0x1` vs `0x0001` equivalence)
 
 ### 4. Expiration Check
@@ -276,7 +323,7 @@ The facilitator MUST verify signatures using the account contract's `isValidSign
 
 ### Amount Validation
 
-- Always verify `amount >= maxAmountRequired`
+- Always verify `amount >= paymentRequirements.amount`
 - Consider setting maximum limits to prevent DoS attacks
 - Validate amounts are within token's decimal precision
 - Check for integer overflow/underflow
@@ -306,7 +353,7 @@ The facilitator MUST verify signatures using the account contract's `isValidSign
 
 ## Error Codes
 
-Following x402 spec §9, these error codes are returned by verification and settlement:
+Following x402 spec section 9, these error codes are returned by verification and settlement:
 
 ### Verification Errors
 
@@ -343,7 +390,8 @@ Settlement response (success):
 ```json
 {
   "success": true,
-  "transactionHash": "0x1234567890abcdef...",
+  "transaction": "0x1234567890abcdef...",
+  "network": "starknet:sepolia",
   "payer": "0x857b06519e91e3a54538791bdbb0e22373e36b66"
 }
 ```
@@ -353,12 +401,10 @@ Settlement response (failure):
 ```json
 {
   "success": false,
-  "error": "settlement_failed",
-  "payer": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
-  "details": {
-    "message": "Transaction reverted",
-    "transactionHash": "0xabcdef..."
-  }
+  "errorReason": "settlement_failed",
+  "transaction": "",
+  "network": "starknet:sepolia",
+  "payer": "0x857b06519e91e3a54538791bdbb0e22373e36b66"
 }
 ```
 
@@ -392,6 +438,40 @@ Facilitators MUST normalize addresses before comparison by:
 - For tokens with 18 decimals: `1 ETH = "1000000000000000000"`
 - Always use `BigInt` for amount arithmetic to prevent precision loss
 
+The library provides utilities for working with tokens:
+
+```typescript
+import {
+  ETH_ADDRESSES,
+  STRK_ADDRESSES,
+  USDC_ADDRESSES,
+  getTokenAddress,
+  getTokenDecimals,
+  toAtomicUnits,
+  fromAtomicUnits,
+  isTokenAvailable,
+  getAvailableTokens,
+} from 'x402-starknet';
+
+// Get token address for a network
+const ethAddress = ETH_ADDRESSES['starknet:mainnet'];
+// or: getTokenAddress('ETH', 'starknet:mainnet')
+
+// Convert human amounts to atomic units
+const atomicAmount = toAtomicUnits(1.5, 'USDC'); // '1500000' (6 decimals)
+const ethAmount = toAtomicUnits(0.001, 'ETH'); // '1000000000000000' (18 decimals)
+
+// Convert atomic units back to human-readable
+const humanAmount = fromAtomicUnits('1500000', 'USDC'); // 1.5
+
+// Check token availability
+console.log(isTokenAvailable('USDC', 'starknet:mainnet')); // true
+console.log(isTokenAvailable('USDC', 'starknet:sepolia')); // false
+
+// Get all tokens for a network
+const tokens = getAvailableTokens('starknet:mainnet'); // ['ETH', 'STRK', 'USDC']
+```
+
 ### Chain ID Mapping
 
 Map Starknet chain IDs to network identifiers:
@@ -400,12 +480,86 @@ Map Starknet chain IDs to network identifiers:
 const chainId = await provider.getChainId();
 switch (chainId) {
   case '0x534e5f4d41494e': // SN_MAIN
-    return 'starknet-mainnet';
+    return 'starknet:mainnet';
   case '0x534e5f5345504f4c4941': // SN_SEPOLIA
-    return 'starknet-sepolia';
+    return 'starknet:sepolia';
   default:
-    return 'starknet-devnet'; // Unknown = devnet
+    return 'starknet:devnet'; // Unknown = devnet
 }
+```
+
+The library provides utilities for network validation and conversion:
+
+```typescript
+import {
+  isStarknetNetwork,
+  validateNetwork,
+  parseStarknetNetwork,
+  STARKNET_NETWORKS,
+} from 'x402-starknet';
+
+// Type guard
+if (isStarknetNetwork(userInput)) {
+  // userInput is now typed as StarknetNetworkId
+}
+
+// Validate or throw
+const network = validateNetwork(userInput);
+
+// Parse CAIP-2 components
+const { namespace, reference } = parseStarknetNetwork('starknet:mainnet');
+// namespace = 'starknet', reference = 'mainnet'
+
+// Iterate all supported networks
+for (const network of STARKNET_NETWORKS) {
+  console.log(network);
+}
+```
+
+The library also provides a provider factory for creating RPC providers:
+
+```typescript
+import { createProvider, getChainId } from 'x402-starknet';
+import { constants } from 'starknet';
+
+// Create provider with default RPC URL
+const provider = createProvider('starknet:sepolia');
+
+// Create provider with custom RPC URL
+const provider = createProvider('starknet:mainnet', {
+  rpcUrl: 'https://your-rpc-endpoint.com',
+  timeout: 60000,
+});
+
+// Get Starknet.js chain ID constant
+const chainId = getChainId('starknet:mainnet');
+console.log(chainId === constants.StarknetChainId.SN_MAIN); // true
+```
+
+## HTTP Headers (v2)
+
+The x402 v2 protocol uses these HTTP headers:
+
+| Header              | Description                               | Direction       |
+| ------------------- | ----------------------------------------- | --------------- |
+| `PAYMENT-REQUIRED`  | Base64-encoded `PaymentRequired` response | Server → Client |
+| `PAYMENT-SIGNATURE` | Base64-encoded `PaymentPayload`           | Client → Server |
+| `PAYMENT-RESPONSE`  | Base64-encoded settlement response        | Server → Client |
+
+Example headers:
+
+```http
+# 402 Response
+HTTP/1.1 402 Payment Required
+PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50IHJlcXVpcmVkIi...
+
+# Payment Request
+POST /api/resource HTTP/1.1
+PAYMENT-SIGNATURE: eyJ4NDAyVmVyc2lvbiI6Miwic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoi...
+
+# Success Response
+HTTP/1.1 200 OK
+PAYMENT-RESPONSE: eyJzdWNjZXNzIjp0cnVlLCJ0cmFuc2FjdGlvbiI6IjB4MTIzNC...
 ```
 
 ## Comparison with Other Networks
@@ -456,3 +610,4 @@ This approach provides equivalent functionality while being native to Starknet's
 - [Starknet Documentation](https://docs.starknet.io/)
 - [AVNU Paymaster Service](https://doc.avnu.fi/avnu-paymaster-service/introduction)
 - [x402 Protocol Specification](https://github.com/coinbase/x402/blob/main/specs/x402-specification.md)
+- [CAIP-2: Blockchain ID Specification](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md)

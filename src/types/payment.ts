@@ -1,8 +1,9 @@
 /**
  * Payment type definitions for Starknet x402
+ * Spec compliance: x402 v2
  */
 
-import type { StarknetNetwork } from './network.js';
+import type { StarknetNetworkId } from './network.js';
 
 /**
  * Payment scheme type
@@ -38,80 +39,111 @@ export interface PaymentAuthorization {
   validUntil: string;
 }
 
+// ============================================================================
+// x402 v2 Types
+// ============================================================================
+
 /**
- * Payment requirements sent by server
- * Spec compliance: x402 v0.2 Section 5.1 - PaymentRequirements Schema
+ * Resource information for protected resources
+ * Spec compliance: x402 v2 - ResourceInfo Schema
+ */
+export interface ResourceInfo {
+  /** URL of the protected resource */
+  url: string;
+  /** Human-readable description of the resource */
+  description?: string;
+  /** MIME type of the expected response */
+  mimeType?: string;
+}
+
+/**
+ * Extension data structure for protocol extensions
+ * Spec compliance: x402 v2 - Extensions System
+ */
+export interface ExtensionData {
+  /** Extension-specific information */
+  info: unknown;
+  /** JSON Schema defining expected structure */
+  schema?: object;
+}
+
+/**
+ * Payment requirements sent by server (v2)
+ * Spec compliance: x402 v2 - PaymentRequirements Schema
  */
 export interface PaymentRequirements {
   /** Payment scheme */
   scheme: PaymentScheme;
-  /** Network identifier */
-  network: StarknetNetwork;
-  /** Maximum amount required (u256 as string, in token's smallest unit) */
-  maxAmountRequired: string;
+  /** Network identifier (CAIP-2 format, e.g., "starknet:sepolia") */
+  network: StarknetNetworkId;
+  /** Required payment amount (u256 as string, in token's smallest unit) */
+  amount: string;
   /** Token contract address (felt252) */
   asset: string;
   /** Recipient address (felt252) */
   payTo: string;
-  /** Protected resource identifier (supports HTTP, MCP, A2A, IPFS, and other schemes) */
-  resource: string;
-  /** Human-readable description of what payment is for */
-  description?: string;
-  /** MIME type of the resource */
-  mimeType?: string;
-  /** JSON schema describing the response format */
-  outputSchema?: object | null;
-  /** Maximum timeout in seconds for payment settlement (REQUIRED per spec §5.1) */
+  /** Maximum timeout in seconds for payment completion */
   maxTimeoutSeconds: number;
   /** Additional scheme-specific data */
   extra?: {
     /** Token name (e.g., "USD Coin") */
-    tokenName?: string;
+    name?: string;
     /** Token symbol (e.g., "USDC") */
-    tokenSymbol?: string;
+    symbol?: string;
     /** Token decimals (e.g., 6 for USDC) */
-    tokenDecimals?: number;
+    decimals?: number;
     /** Payment contract address for settlement */
     paymentContract?: string;
   };
 }
 
 /**
- * Payment payload created by client
+ * Payment required response from server (402 response)
+ * Spec compliance: x402 v2 - PaymentRequired Schema
+ */
+export interface PaymentRequired {
+  /** x402 protocol version */
+  x402Version: 2;
+  /** Human-readable error message explaining why payment is required */
+  error?: string;
+  /** Information about the protected resource */
+  resource: ResourceInfo;
+  /** Array of acceptable payment methods */
+  accepts: Array<PaymentRequirements>;
+  /** Protocol extensions */
+  extensions?: Record<string, ExtensionData>;
+}
+
+/**
+ * Exact scheme payload for Starknet
+ * Spec compliance: x402 v2 - scheme_exact_starknet
+ */
+export interface ExactStarknetPayload {
+  /** Signature over the authorization */
+  signature: Signature;
+  /** Authorization details */
+  authorization: PaymentAuthorization;
+}
+
+/**
+ * Payment payload created by client (v2)
+ * Spec compliance: x402 v2 - PaymentPayload Schema
  */
 export interface PaymentPayload {
   /** x402 protocol version */
-  x402Version: 1;
-  /** Payment scheme */
-  scheme: PaymentScheme;
-  /** Network identifier */
-  network: StarknetNetwork;
-  /** Payment details */
-  payload: {
-    /** Signature over the authorization */
-    signature: Signature;
-    /** Authorization details */
-    authorization: PaymentAuthorization;
-  };
-  /** Settlement transaction hash (added after calling /facilitator/settle) */
-  settlementTransaction?: string;
+  x402Version: 2;
+  /** Information about the protected resource (optional, echo from PaymentRequired) */
+  resource?: ResourceInfo;
+  /** The chosen payment requirement from accepts array */
+  accepted: PaymentRequirements;
+  /** Scheme-specific payment data */
+  payload: ExactStarknetPayload;
+  /** Protocol extensions */
+  extensions?: Record<string, unknown>;
   /** Typed data used for signature (required for settlement) */
   typedData?: unknown;
   /** Paymaster endpoint for settlement (optional) */
   paymasterEndpoint?: string;
-}
-
-/**
- * Payment requirements response from server (402 response)
- * Spec compliance: x402 v0.2 Section 5.1 - PaymentRequirementsResponse Schema
- */
-export interface PaymentRequirementsResponse {
-  /** x402 protocol version */
-  x402Version: 1;
-  /** Human-readable error message explaining why payment is required */
-  error: string;
-  /** Array of payment options (renamed from paymentRequirements per spec) */
-  accepts: Array<PaymentRequirements>;
 }
 
 /**

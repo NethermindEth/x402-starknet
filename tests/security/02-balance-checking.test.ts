@@ -19,9 +19,15 @@ describe('Security: Balance Checking', () => {
     '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   const basePayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset: USDC_ADDRESS,
+      payTo: RECIPIENT_ADDRESS,
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -53,11 +59,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000', // 1M USDC required
+        network: 'starknet:sepolia',
+        amount: '1000000', // 1M USDC required
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -79,11 +84,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -106,15 +110,18 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000000000000', // 1 quadrillion
+        network: 'starknet:sepolia',
+        amount: '1000000000000000', // 1 quadrillion
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '1000000000000000',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -136,11 +143,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -162,11 +168,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Step 1: Verify with sufficient balance
@@ -198,7 +203,7 @@ describe('Security: Balance Checking', () => {
         {
           paymasterConfig: {
             endpoint: 'https://sepolia.paymaster.avnu.fi',
-            network: 'starknet-sepolia',
+            network: 'starknet:sepolia',
           },
         }
       );
@@ -217,11 +222,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Two concurrent verifications for same amount
@@ -250,11 +254,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Multiple verifications should all pass (no locking)
@@ -278,11 +281,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -303,15 +305,18 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1', // Smallest possible amount
+        network: 'starknet:sepolia',
+        amount: '1', // Smallest possible amount
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '1',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -334,15 +339,18 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: largeAmount,
+        network: 'starknet:sepolia',
+        amount: largeAmount,
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: largeAmount,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -364,11 +372,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -387,11 +394,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -415,11 +421,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -442,11 +447,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -464,11 +468,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -486,11 +489,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -512,11 +514,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -535,11 +536,10 @@ describe('Security: Balance Checking', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(

@@ -18,9 +18,15 @@ describe('Security: RPC Provider Trust', () => {
     '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   const basePayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset: USDC_ADDRESS,
+      payTo: RECIPIENT_ADDRESS,
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -46,11 +52,10 @@ describe('Security: RPC Provider Trust', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -75,11 +80,10 @@ describe('Security: RPC Provider Trust', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -103,11 +107,10 @@ describe('Security: RPC Provider Trust', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -132,11 +135,10 @@ describe('Security: RPC Provider Trust', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -166,11 +168,10 @@ describe('Security: RPC Provider Trust', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Query multiple providers
@@ -300,13 +301,13 @@ describe('Security: RPC Provider Trust', () => {
     it('should use environment variables for RPC URLs', () => {
       const getRpcUrl = (network: string): string => {
         const envVar =
-          network === 'starknet-mainnet'
+          network === 'starknet:mainnet'
             ? 'MAINNET_RPC_URL'
             : 'SEPOLIA_RPC_URL';
 
         return (
           process.env[envVar] ||
-          `https://starknet-${network}.public-rpc.example.com`
+          `https://starknet:${network}.public-rpc.example.com`
         );
       };
 
@@ -318,7 +319,7 @@ describe('Security: RPC Provider Trust', () => {
 
     it('should implement RPC health checks', () => {
       const rpcHealth = {
-        url: 'https://starknet-sepolia.public.blastapi.io',
+        url: 'https://starknet:sepolia.public.blastapi.io',
         isHealthy: true,
         lastCheck: new Date(),
         failureCount: 0,

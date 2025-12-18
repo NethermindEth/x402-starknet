@@ -52,8 +52,7 @@ export async function verifyPayment(
     if (!validationResult.success) {
       return {
         isValid: false,
-        invalidReason: 'invalid_network',
-        payer: '',
+        invalidReason: 'invalid_payload',
         details: {
           error: validationResult.error.message,
         },
@@ -63,8 +62,8 @@ export async function verifyPayment(
     // 2. Extract payer address
     const payer = extractPayerAddress(payload);
 
-    // 3. Verify network matches
-    if (payload.network !== paymentRequirements.network) {
+    // 3. Verify network matches (v2: network is in payload.accepted)
+    if (payload.accepted.network !== paymentRequirements.network) {
       return {
         isValid: false,
         invalidReason: 'invalid_network',
@@ -83,7 +82,7 @@ export async function verifyPayment(
     ) {
       return {
         isValid: false,
-        invalidReason: 'invalid_network',
+        invalidReason: 'invalid_exact_starknet_payload_token_mismatch',
         payer,
       };
     }
@@ -96,19 +95,16 @@ export async function verifyPayment(
     ) {
       return {
         isValid: false,
-        invalidReason: 'invalid_amount',
+        invalidReason: 'invalid_exact_starknet_payload_recipient_mismatch',
         payer,
       };
     }
 
-    // 7. Verify amount matches requirement
-    if (
-      payload.payload.authorization.amount !==
-      paymentRequirements.maxAmountRequired
-    ) {
+    // 7. Verify amount matches requirement (v2: uses 'amount' instead of 'maxAmountRequired')
+    if (payload.payload.authorization.amount !== paymentRequirements.amount) {
       return {
         isValid: false,
-        invalidReason: 'invalid_amount',
+        invalidReason: 'invalid_exact_starknet_payload_authorization_value',
         payer,
       };
     }
@@ -122,7 +118,8 @@ export async function verifyPayment(
     if (isNaN(validUntil)) {
       return {
         isValid: false,
-        invalidReason: 'invalid_network', // Using invalid_network for malformed data
+        invalidReason:
+          'invalid_exact_starknet_payload_authorization_valid_until',
         payer,
         details: {
           error: 'Invalid validUntil timestamp format',
@@ -134,7 +131,8 @@ export async function verifyPayment(
     if (validUntil !== 0 && currentTimestamp > validUntil) {
       return {
         isValid: false,
-        invalidReason: 'expired',
+        invalidReason:
+          'invalid_exact_starknet_payload_authorization_valid_until',
         payer,
         details: {
           validUntil: validUntil.toString(),
@@ -163,7 +161,7 @@ export async function verifyPayment(
           if (!isSignatureValid) {
             return {
               isValid: false,
-              invalidReason: 'invalid_signature',
+              invalidReason: 'invalid_exact_starknet_payload_signature',
               payer,
               details: {
                 error: 'Signature verification failed',
@@ -185,7 +183,7 @@ export async function verifyPayment(
     // The signature will still be verified during paymaster execution.
     // This is acceptable because typedData is optional in the payload structure.
 
-    // 10. Check token balance
+    // 10. Check token balance (v2: uses 'amount' instead of 'maxAmountRequired')
     const { getTokenBalance } = await import('../utils/token.js');
     const balance = await getTokenBalance(
       provider,
@@ -193,10 +191,10 @@ export async function verifyPayment(
       payer
     );
 
-    if (BigInt(balance) < BigInt(paymentRequirements.maxAmountRequired)) {
+    if (BigInt(balance) < BigInt(paymentRequirements.amount)) {
       return {
         isValid: false,
-        invalidReason: 'insufficient_funds', // Updated per spec §9
+        invalidReason: 'insufficient_funds',
         payer,
         details: {
           balance,
@@ -221,8 +219,7 @@ export async function verifyPayment(
 
     return {
       isValid: false,
-      invalidReason: 'unexpected_verify_error', // Updated per spec §9
-      payer: '',
+      invalidReason: 'unexpected_verify_error',
       details: {
         error: errorMessage,
       },

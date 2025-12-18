@@ -12,7 +12,7 @@ describe('Security: Paymaster Security', () => {
     it('should accept any paymaster endpoint (known limitation)', () => {
       const maliciousConfig: PaymasterConfig = {
         endpoint: 'https://evil.paymaster.com',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       // Library accepts any endpoint - KNOWN LIMITATION (SECURITY.md:217-235)
@@ -31,12 +31,12 @@ describe('Security: Paymaster Security', () => {
 
       const goodConfig: PaymasterConfig = {
         endpoint: 'https://sepolia.paymaster.avnu.fi',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       const badConfig: PaymasterConfig = {
         endpoint: 'https://evil.paymaster.com',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       // Application-level validation (recommended pattern)
@@ -67,12 +67,12 @@ describe('Security: Paymaster Security', () => {
     it('should provide default trusted paymaster endpoints', () => {
       // Library provides default endpoints
       // Sepolia uses localhost for testing (to avoid requiring API keys)
-      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia']).toBe(
+      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia']).toBe(
         'http://localhost:12777'
       );
 
       // Mainnet uses production AVNU endpoint
-      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet-mainnet']).toBe(
+      expect(DEFAULT_PAYMASTER_ENDPOINTS['starknet:mainnet']).toBe(
         'https://starknet.paymaster.avnu.fi'
       );
 
@@ -171,7 +171,7 @@ describe('Security: Paymaster Security', () => {
     it('should handle paymaster network errors gracefully', async () => {
       const unavailableConfig: PaymasterConfig = {
         endpoint: 'https://nonexistent.paymaster.invalid',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       // In a real scenario, this would fail with network error
@@ -310,20 +310,20 @@ describe('Security: Paymaster Security', () => {
       const getPaymasterConfig = (): PaymasterConfig => {
         const endpoint =
           process.env.PAYMASTER_ENDPOINT ||
-          DEFAULT_PAYMASTER_ENDPOINTS['starknet-sepolia'];
+          DEFAULT_PAYMASTER_ENDPOINTS['starknet:sepolia'];
 
         const apiKey = process.env.PAYMASTER_API_KEY;
 
         return {
           endpoint,
-          network: 'starknet-sepolia',
+          network: 'starknet:sepolia',
           ...(apiKey ? { apiKey } : {}),
         };
       };
 
       const config = getPaymasterConfig();
       expect(config.endpoint).toBeDefined();
-      expect(config.network).toBe('starknet-sepolia');
+      expect(config.network).toBe('starknet:sepolia');
     });
 
     it('should log paymaster requests for audit trail', () => {
@@ -338,7 +338,7 @@ describe('Security: Paymaster Security', () => {
 
       const config: PaymasterConfig = {
         endpoint: 'https://sepolia.paymaster.avnu.fi',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
         apiKey: 'secret-key-123',
       };
 

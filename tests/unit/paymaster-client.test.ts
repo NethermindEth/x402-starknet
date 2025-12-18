@@ -10,7 +10,7 @@ import { createMockFetch } from '../helpers/mock-fetch.js';
 describe('PaymasterClient', () => {
   const config: PaymasterConfig = {
     endpoint: 'https://test.paymaster.example.com',
-    network: 'starknet-sepolia',
+    network: 'starknet:sepolia',
     apiKey: 'test-api-key',
   };
 
@@ -205,7 +205,7 @@ describe('PaymasterClient', () => {
     it('should work without API key', async () => {
       const configWithoutKey: PaymasterConfig = {
         endpoint: 'https://test.paymaster.example.com',
-        network: 'starknet-sepolia',
+        network: 'starknet:sepolia',
       };
 
       const mockResponse = { available: true };

@@ -6,10 +6,12 @@ import type { Call, TypedData } from 'starknet';
 import { num, hash, CallData } from 'starknet';
 import type {
   PaymasterFeeMode,
+  PaymasterConfig,
   BuildTransactionResponse,
   ExecuteTransactionResponse,
   PaymasterCall,
 } from '../types/paymaster.js';
+import type { StarknetNetworkId } from '../types/network.js';
 import type { PaymasterClient } from './client.js';
 import { err } from '../errors.js';
 
@@ -202,7 +204,7 @@ export function extractTypedData(
 }
 
 /**
- * Default paymaster endpoints by network
+ * Default paymaster endpoints by network (CAIP-2 format)
  *
  * Note: The old endpoints (starknet.api.avnu.fi) are deprecated.
  * Use these SNIP-29 compatible endpoints instead.
@@ -215,7 +217,122 @@ export function extractTypedData(
  * @see https://doc.avnu.fi/avnu-paymaster/cover-your-users-gas-fees
  */
 export const DEFAULT_PAYMASTER_ENDPOINTS = {
-  'starknet-mainnet': 'https://starknet.paymaster.avnu.fi',
-  'starknet-sepolia': 'http://localhost:12777', // Local paymaster (run locally to avoid API key requirement)
-  'starknet-devnet': 'http://localhost:12777', // Local paymaster for testing
+  'starknet:mainnet': 'https://starknet.paymaster.avnu.fi',
+  'starknet:sepolia': 'http://localhost:12777', // Local paymaster (run locally to avoid API key requirement)
+  'starknet:devnet': 'http://localhost:12777', // Local paymaster for testing
 } as const;
+
+/**
+ * Settlement options including paymaster configuration
+ */
+export interface SettlementOptions {
+  /** Paymaster configuration for sponsored transactions */
+  paymasterConfig?: PaymasterConfig;
+}
+
+/**
+ * Options for creating paymaster configuration
+ */
+export interface PaymasterConfigOptions {
+  /** Custom paymaster endpoint URL (uses default if not provided) */
+  endpoint?: string;
+  /** API key for authenticated/sponsored requests */
+  apiKey?: string;
+}
+
+/**
+ * Create paymaster configuration
+ *
+ * @param network - Target network (CAIP-2 format)
+ * @param options - Optional configuration overrides
+ * @returns PaymasterConfig object ready for use with settlePayment()
+ *
+ * @example
+ * ```typescript
+ * // Using default endpoint for mainnet
+ * const config = createPaymasterConfig('starknet:mainnet');
+ *
+ * // Using custom endpoint with API key
+ * const config = createPaymasterConfig('starknet:mainnet', {
+ *   endpoint: 'https://custom-paymaster.com',
+ *   apiKey: 'your-api-key',
+ * });
+ *
+ * // Use with settlePayment
+ * const result = await settlePayment(provider, payload, requirements, {
+ *   paymasterConfig: config,
+ * });
+ * ```
+ */
+export function createPaymasterConfig(
+  network: StarknetNetworkId,
+  options?: PaymasterConfigOptions
+): PaymasterConfig {
+  const endpoint = options?.endpoint ?? DEFAULT_PAYMASTER_ENDPOINTS[network];
+
+  return {
+    endpoint,
+    network,
+    ...(options?.apiKey && { apiKey: options.apiKey }),
+  };
+}
+
+/**
+ * Create settlement options with paymaster configuration
+ *
+ * Convenience wrapper that creates SettlementOptions with paymaster config.
+ *
+ * @param network - Target network (CAIP-2 format)
+ * @param options - Optional paymaster configuration
+ * @returns SettlementOptions object ready for settlePayment()
+ *
+ * @example
+ * ```typescript
+ * // Simple usage with defaults
+ * const options = createSettlementOptions('starknet:mainnet');
+ *
+ * // With API key for sponsored transactions
+ * const options = createSettlementOptions('starknet:mainnet', {
+ *   apiKey: process.env.PAYMASTER_API_KEY,
+ * });
+ *
+ * // Use with settlePayment
+ * const result = await settlePayment(
+ *   provider,
+ *   payload,
+ *   requirements,
+ *   options
+ * );
+ * ```
+ */
+export function createSettlementOptions(
+  network: StarknetNetworkId,
+  options?: PaymasterConfigOptions
+): SettlementOptions {
+  return {
+    paymasterConfig: createPaymasterConfig(network, options),
+  };
+}
+
+/**
+ * Check if a network has a known public paymaster endpoint
+ *
+ * @param network - Network to check (CAIP-2 format)
+ * @returns True if the network has a default paymaster endpoint
+ *
+ * @example
+ * ```typescript
+ * if (hasPublicPaymaster('starknet:mainnet')) {
+ *   // Can use default endpoint
+ *   const config = createPaymasterConfig('starknet:mainnet');
+ * } else {
+ *   // Must provide custom endpoint
+ *   const config = createPaymasterConfig(network, {
+ *     endpoint: 'https://my-paymaster.com',
+ *   });
+ * }
+ * ```
+ */
+export function hasPublicPaymaster(network: StarknetNetworkId): boolean {
+  return network in DEFAULT_PAYMASTER_ENDPOINTS;
+}

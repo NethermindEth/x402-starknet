@@ -18,9 +18,15 @@ describe('Security: Amount Validation', () => {
     '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
   const basePayload: PaymentPayload = {
-    x402Version: 1,
-    scheme: 'exact',
-    network: 'starknet-sepolia',
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'starknet:sepolia',
+      amount: '1000000',
+      asset: USDC_ADDRESS,
+      payTo: RECIPIENT_ADDRESS,
+      maxTimeoutSeconds: 3600,
+    },
     payload: {
       signature: {
         r: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -49,16 +55,19 @@ describe('Security: Amount Validation', () => {
     it('should reject payment with tampered amount', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Tamper with amount in payload
       const tamperedPayload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '1',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -75,21 +84,26 @@ describe('Security: Amount Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should reject amount higher than required', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const tamperedPayload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '5000000',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -106,21 +120,26 @@ describe('Security: Amount Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should reject amount lower than required', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const tamperedPayload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '500000',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -137,22 +156,27 @@ describe('Security: Amount Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should enforce strict equality for amount matching', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Off by 1 (less)
       const lessPayload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '999999',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -168,11 +192,17 @@ describe('Security: Amount Validation', () => {
         requirements
       );
       expect(resultLess.isValid).toBe(false);
-      expect(resultLess.invalidReason).toBe('invalid_amount');
+      expect(resultLess.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
 
       // Off by 1 (more)
       const morePayload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '1000001',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -188,17 +218,18 @@ describe('Security: Amount Validation', () => {
         requirements
       );
       expect(resultMore.isValid).toBe(false);
-      expect(resultMore.invalidReason).toBe('invalid_amount');
+      expect(resultMore.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should accept exact amount match', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -223,15 +254,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: MAX_U256,
+        network: 'starknet:sepolia',
+        amount: MAX_U256,
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: MAX_U256,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -257,15 +291,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: largeAmount,
+        network: 'starknet:sepolia',
+        amount: largeAmount,
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: largeAmount,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -288,15 +325,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: amount1,
+        network: 'starknet:sepolia',
+        amount: amount1,
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: amount2,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -309,7 +349,9 @@ describe('Security: Amount Validation', () => {
       const result = await verifyPayment(mockProvider, payload, requirements);
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
       // Must detect even 1 unit difference in very large numbers
     });
 
@@ -320,15 +362,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: amount,
+        network: 'starknet:sepolia',
+        amount: amount,
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: amount,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -350,15 +395,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: amount,
+        network: 'starknet:sepolia',
+        amount: amount,
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: amount,
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -381,15 +429,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '0',
+        network: 'starknet:sepolia',
+        amount: '0',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '0',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -410,11 +461,10 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '0',
+        network: 'starknet:sepolia',
+        amount: '0',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Payload has non-zero amount but requirement is zero
@@ -425,7 +475,9 @@ describe('Security: Amount Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should reject zero amount when non-zero required', async () => {
@@ -433,15 +485,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '0',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -454,7 +509,9 @@ describe('Security: Amount Validation', () => {
       const result = await verifyPayment(mockProvider, payload, requirements);
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
 
     it('should handle zero amount with zero balance', async () => {
@@ -462,15 +519,18 @@ describe('Security: Amount Validation', () => {
 
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '0',
+        network: 'starknet:sepolia',
+        amount: '0',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '0',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -491,15 +551,18 @@ describe('Security: Amount Validation', () => {
     it('should handle amount with leading zeros', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '0001000000',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -518,15 +581,18 @@ describe('Security: Amount Validation', () => {
     it('should handle amount in hexadecimal format', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '0xf4240',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -544,15 +610,18 @@ describe('Security: Amount Validation', () => {
     it('should reject negative amount strings', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '-1000000',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -572,15 +641,18 @@ describe('Security: Amount Validation', () => {
     it('should reject non-numeric amount strings', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: 'invalid',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -599,15 +671,18 @@ describe('Security: Amount Validation', () => {
     it('should reject floating point amounts', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const payload: PaymentPayload = {
         ...basePayload,
+        accepted: {
+          ...basePayload.accepted,
+          amount: '1000000.5',
+        },
         payload: {
           ...basePayload.payload,
           authorization: {
@@ -628,11 +703,10 @@ describe('Security: Amount Validation', () => {
     it('should verify amount matches across all fields', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '1000000',
+        network: 'starknet:sepolia',
+        amount: '1000000',
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       // Correct payload with consistent amounts
@@ -648,11 +722,10 @@ describe('Security: Amount Validation', () => {
     it('should reject if authorization amount differs from requirement', async () => {
       const requirements: PaymentRequirements = {
         scheme: 'exact',
-        network: 'starknet-sepolia',
-        maxAmountRequired: '2000000', // Different from payload
+        network: 'starknet:sepolia',
+        amount: '2000000', // Different from payload
         asset: USDC_ADDRESS,
         payTo: RECIPIENT_ADDRESS,
-        resource: 'https://example.com/resource',
       };
 
       const result = await verifyPayment(
@@ -662,7 +735,9 @@ describe('Security: Amount Validation', () => {
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.invalidReason).toBe('invalid_amount');
+      expect(result.invalidReason).toBe(
+        'invalid_exact_starknet_payload_authorization_value'
+      );
     });
   });
 });
