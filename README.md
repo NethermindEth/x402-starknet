@@ -26,7 +26,7 @@ import {
   settlePayment,
   buildUSDCPayment,
   createProvider,
-  createSettlementOptions,
+  createPaymasterConfig,
 } from 'x402-starknet';
 
 // Server: Build payment requirements
@@ -46,11 +46,13 @@ const payload = await createPaymentPayload(account, 2, requirements, {
 const provider = createProvider('starknet:mainnet');
 const verification = await verifyPayment(provider, payload, requirements);
 
-if (verification.valid) {
-  const options = createSettlementOptions('starknet:mainnet', {
+if (verification.isValid) {
+  const paymasterConfig = createPaymasterConfig('starknet:mainnet', {
     apiKey: process.env.PAYMASTER_API_KEY,
   });
-  const result = await settlePayment(provider, payload, requirements, options);
+  const result = await settlePayment(provider, payload, requirements, {
+    paymasterConfig,
+  });
 }
 ```
 
@@ -76,6 +78,7 @@ if (verification.valid) {
 | Document                                                | Description                          |
 | ------------------------------------------------------- | ------------------------------------ |
 | [Usage Examples](./docs/usage-examples.md)              | Practical integration examples       |
+| [Code Examples](./examples/)                            | Runnable TypeScript example files    |
 | [API Reference](./docs/api.md)                          | Complete API documentation           |
 | [API Surface](./docs/api-surface.md)                    | Public exports and design principles |
 | [Paymaster Setup](./docs/paymaster-setup.md)            | Paymaster configuration guide        |
@@ -88,7 +91,7 @@ git clone https://github.com/aspect-build/x402-starknet.git
 cd x402-starknet
 bun install
 bun run build    # Build TypeScript
-bun run test     # Run tests (541 tests)
+bun run test     # Run tests (575 tests)
 bun run lint     # Lint code
 bun run check    # Run all checks
 ```
@@ -99,4 +102,4 @@ Apache License 2.0 - see [LICENSE](./LICENSE) for details.
 
 ---
 
-**Version**: 1.0.0 | **Protocol**: x402 v2 | **Tests**: 541 passing
+**Version**: 1.0.0 | **Protocol**: x402 v2 | **Tests**: 575 passing

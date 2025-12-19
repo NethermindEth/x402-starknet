@@ -2,6 +2,8 @@
 
 This guide provides practical examples for integrating the `x402-starknet` library into your applications.
 
+> **Note:** All code examples in this guide are available as runnable TypeScript files in the [`examples/`](../examples/) directory.
+
 ## Table of Contents
 
 - [Building an x402 Client](#building-an-x402-client)
@@ -29,24 +31,33 @@ An x402 client handles payment flows from the user's perspective. It receives pa
 ### Basic Client Setup
 
 ```typescript
+import { Account, RpcProvider } from 'starknet';
 import {
   createPaymentPayload,
   decodePaymentRequired,
   encodePaymentSignature,
-  selectPaymentRequirements,
   DEFAULT_PAYMASTER_ENDPOINTS,
   HTTP_HEADERS,
   type PaymentPayload,
   type PaymentRequired,
   type PaymentRequirements,
 } from 'x402-starknet';
-import { Account, RpcProvider } from 'starknet';
 
-// Initialize Starknet account (from wallet connection or private key)
+// Initialize Starknet provider
 const provider = new RpcProvider({
   nodeUrl: 'https://starknet-sepolia.public.blastapi.io',
 });
-const account = new Account(provider, accountAddress, privateKey);
+
+// These would come from your wallet or environment
+declare const accountAddress: string;
+declare const privateKey: string;
+
+// Create account (starknet.js v9+)
+const account = new Account({
+  provider,
+  address: accountAddress,
+  signer: privateKey,
+});
 
 /**
  * Complete x402 client that handles the payment flow
@@ -87,16 +98,30 @@ class X402Client {
     console.log('Payment required:', paymentRequired.error);
 
     // Step 4: Select the best payment option (if multiple offered)
-    const requirements = await this.selectPayment(paymentRequired.accepts);
+    const requirements = this.selectPayment(paymentRequired.accepts);
 
     // Step 5: Create signed payment payload
     const payload = await this.createPayment(requirements);
 
-    // Step 6: Retry request with payment
+    // Step 6: Retry request with payment - merge headers properly
+    let existingHeaders: Record<string, string> = {};
+    if (options.headers instanceof Headers) {
+      options.headers.forEach((value, key) => {
+        existingHeaders[key] = value;
+      });
+    } else if (Array.isArray(options.headers)) {
+      existingHeaders = Object.fromEntries(options.headers) as Record<
+        string,
+        string
+      >;
+    } else if (options.headers) {
+      existingHeaders = options.headers as Record<string, string>;
+    }
+
     const paidResponse = await fetch(url, {
       ...options,
       headers: {
-        ...options.headers,
+        ...existingHeaders,
         [HTTP_HEADERS.PAYMENT_SIGNATURE]: encodePaymentSignature(payload),
       },
     });
@@ -106,26 +131,19 @@ class X402Client {
 
   /**
    * Select the best payment option from available requirements
+   * This is a simple implementation - you can add more sophisticated logic
+   * (e.g., check balances, prefer certain tokens, etc.)
    */
-  private async selectPayment(
-    accepts: PaymentRequirements[]
-  ): Promise<PaymentRequirements> {
-    if (accepts.length === 1) {
-      return accepts[0];
+  private selectPayment(
+    accepts: Array<PaymentRequirements>
+  ): PaymentRequirements {
+    // For simplicity, just pick the first option
+    // In production, you might check balances, prefer certain tokens, etc.
+    const first = accepts[0];
+    if (!first) {
+      throw new Error('No payment options available');
     }
-
-    // Use built-in selection logic (checks balance, optimizes cost)
-    const selected = await selectPaymentRequirements(
-      accepts,
-      this.account,
-      this.account // provider
-    );
-
-    if (!selected) {
-      throw new Error('No suitable payment option found');
-    }
-
-    return selected;
+    return first;
   }
 
   /**
@@ -136,28 +154,27 @@ class X402Client {
   ): Promise<PaymentPayload> {
     const paymasterEndpoint = DEFAULT_PAYMASTER_ENDPOINTS[requirements.network];
 
-    const payload = await createPaymentPayload(
-      this.account,
-      2, // x402 version
-      requirements,
-      {
-        endpoint: paymasterEndpoint,
-        network: requirements.network,
-      }
-    );
+    const payload = await createPaymentPayload(this.account, 2, requirements, {
+      endpoint: paymasterEndpoint,
+      network: requirements.network,
+    });
 
     return payload;
   }
 }
 
 // Usage example
-const client = new X402Client(account);
+async function main(): Promise<void> {
+  const client = new X402Client(account);
 
-// Fetch from a paid API - payment is handled automatically
-const response = await client.fetchWithPayment(
-  'https://api.example.com/premium-data'
-);
-const data = await response.json();
+  // Fetch from a paid API - payment is handled automatically
+  const response = await client.fetchWithPayment(
+    'https://api.example.com/premium-data'
+  );
+  const data = await response.json();
+  console.log('Received data:', data);
+}
+main().catch(console.error);
 ```
 
 ### React/Frontend Integration
@@ -221,17 +238,16 @@ An x402 API protects resources behind payments. It returns 402 responses with pa
 ### Express.js API Server
 
 ```typescript
-import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import {
   // Payment requirements builders
   buildUSDCPayment,
-  buildETHPayment,
   buildSTRKPayment,
   // Verification and settlement
   verifyPayment,
   settlePayment,
   createProvider,
-  createSettlementOptions,
+  createPaymasterConfig,
   // HTTP utilities
   encodePaymentRequired,
   decodePaymentSignature,
@@ -240,26 +256,33 @@ import {
   PAYMENT_PAYLOAD_SCHEMA,
   // Types
   type PaymentRequired,
-  type PaymentPayload,
   type PaymentRequirements,
 } from 'x402-starknet';
 
-const app = express();
-app.use(express.json());
-
 // Configuration
-const PAYMENT_RECIPIENT = process.env.PAYMENT_ADDRESS!;
-const PAYMASTER_API_KEY = process.env.PAYMASTER_API_KEY;
+const PAYMENT_RECIPIENT = process.env['PAYMENT_ADDRESS'] ?? '';
+const PAYMASTER_API_KEY = process.env['PAYMASTER_API_KEY'];
+
+// Extended request type with payment info
+interface PaymentRequest extends Request {
+  payment?: {
+    payload: ReturnType<typeof PAYMENT_PAYLOAD_SCHEMA.parse>;
+    requirements: PaymentRequirements;
+    provider: ReturnType<typeof createProvider>;
+  };
+}
 
 /**
  * Middleware to handle x402 payment flow
  */
-function requirePayment(requirements: PaymentRequirements) {
+function requirePayment(
+  requirements: PaymentRequirements
+): (req: PaymentRequest, res: Response, next: NextFunction) => Promise<void> {
   return async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
+    req: PaymentRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     // Check for payment header
     const paymentHeader =
       req.headers[HTTP_HEADERS.PAYMENT_SIGNATURE.toLowerCase()];
@@ -281,7 +304,8 @@ function requirePayment(requirements: PaymentRequirements) {
         HTTP_HEADERS.PAYMENT_REQUIRED,
         encodePaymentRequired(paymentRequired)
       );
-      return res.json(paymentRequired);
+      res.json(paymentRequired);
+      return;
     }
 
     try {
@@ -294,17 +318,18 @@ function requirePayment(requirements: PaymentRequirements) {
       const verification = await verifyPayment(provider, payload, requirements);
 
       if (!verification.isValid) {
-        return res.status(402).json({
+        res.status(402).json({
           error: 'Payment verification failed',
           reason: verification.invalidReason,
         });
+        return;
       }
 
       // Attach payment info to request for later settlement
-      (req as any).payment = { payload, requirements, provider };
+      req.payment = { payload, requirements, provider };
       next();
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid payment payload',
         details: String(error),
       });
@@ -315,31 +340,25 @@ function requirePayment(requirements: PaymentRequirements) {
 /**
  * Settle payment after response is sent
  */
-async function settlePaymentAfterResponse(
-  req: express.Request,
-  res: express.Response
-) {
-  const payment = (req as any).payment;
+async function settlePaymentAfterResponse(req: PaymentRequest): Promise<void> {
+  const payment = req.payment;
   if (!payment) return;
 
   const { payload, requirements, provider } = payment;
 
   try {
-    const options = createSettlementOptions(requirements.network, {
+    const paymasterConfig = createPaymasterConfig(requirements.network, {
       apiKey: PAYMASTER_API_KEY,
     });
 
-    const result = await settlePayment(
-      provider,
-      payload,
-      requirements,
-      options
-    );
+    const result = await settlePayment(provider, payload, requirements, {
+      paymasterConfig,
+    });
 
     if (result.success) {
       console.log(`Payment settled: ${result.transaction}`);
     } else {
-      console.error(`Settlement failed: ${result.errorReason}`);
+      console.error(`Settlement failed: ${result.errorReason ?? 'unknown'}`);
     }
   } catch (error) {
     console.error('Settlement error:', error);
@@ -359,43 +378,48 @@ const aiGenerationPayment = buildSTRKPayment({
   payTo: PAYMENT_RECIPIENT,
 });
 
-// Protected endpoints
-app.get(
-  '/api/premium-data',
-  requirePayment(premiumDataPayment),
-  async (req, res) => {
-    // Serve the protected resource
-    const data = { premium: true, data: 'Exclusive content here' };
-    res.json(data);
+// Example route handlers (would be used with express app)
+async function handlePremiumData(
+  req: PaymentRequest,
+  res: Response
+): Promise<void> {
+  // Serve the protected resource
+  const data = { premium: true, data: 'Exclusive content here' };
+  res.json(data);
 
-    // Settle payment after response
-    settlePaymentAfterResponse(req, res);
-  }
-);
+  // Settle payment after response
+  await settlePaymentAfterResponse(req);
+}
 
-app.post(
-  '/api/ai/generate',
-  requirePayment(aiGenerationPayment),
-  async (req, res) => {
-    const { prompt } = req.body;
+async function handleAIGeneration(
+  req: PaymentRequest,
+  res: Response
+): Promise<void> {
+  const { prompt } = req.body as { prompt: string };
 
-    // Generate content (your AI logic here)
-    const result = { generated: `Response to: ${prompt}` };
-    res.json(result);
+  // Generate content (your AI logic here)
+  const result = { generated: `Response to: ${prompt}` };
+  res.json(result);
 
-    // Settle payment
-    settlePaymentAfterResponse(req, res);
-  }
-);
+  // Settle payment
+  await settlePaymentAfterResponse(req);
+}
 
-// Free endpoint example
-app.get('/api/public', (req, res) => {
+function handlePublic(_req: Request, res: Response): void {
   res.json({ message: 'This is free content' });
-});
+}
 
-app.listen(3000, () => {
-  console.log('x402 API running on port 3000');
-});
+// Export for use in an actual Express app
+export {
+  requirePayment,
+  settlePaymentAfterResponse,
+  premiumDataPayment,
+  aiGenerationPayment,
+  handlePremiumData,
+  handleAIGeneration,
+  handlePublic,
+  type PaymentRequest,
+};
 ```
 
 ### Hono Framework Example
@@ -489,12 +513,12 @@ A facilitator is a service that handles payment verification and settlement on b
 ### Facilitator Service
 
 ```typescript
-import express from 'express';
+import type { Request, Response } from 'express';
 import {
   verifyPayment,
   settlePayment,
   createProvider,
-  createSettlementOptions,
+  createPaymasterConfig,
   PAYMENT_PAYLOAD_SCHEMA,
   PAYMENT_REQUIREMENTS_SCHEMA,
   getSupportedNetworks,
@@ -503,28 +527,33 @@ import {
   type VerifyResponse,
   type SettleResponse,
   type SupportedResponse,
-  type StarknetNetworkId,
+  type SupportedKind,
 } from 'x402-starknet';
-
-const app = express();
-app.use(express.json());
 
 /**
  * GET /supported
  * Returns the payment schemes, networks, and tokens this facilitator supports
  */
-app.get('/supported', (req, res) => {
+function handleSupported(_req: Request, res: Response): void {
   const networks = getSupportedNetworks();
 
   // Build list of supported payment kinds
-  const kinds = networks.flatMap((network) => {
-    const tokens = getAvailableTokens(network as StarknetNetworkId);
-    return tokens.map((token) => ({
-      scheme: 'exact',
-      network,
-      asset: getTokenAddress(token, network as StarknetNetworkId),
-    }));
-  });
+  const kinds: Array<SupportedKind> = [];
+
+  for (const network of networks) {
+    const tokens = getAvailableTokens(network);
+    for (const token of tokens) {
+      const asset = getTokenAddress(token, network);
+      if (asset) {
+        kinds.push({
+          x402Version: 2,
+          scheme: 'exact',
+          network: network,
+          extra: { asset },
+        });
+      }
+    }
+  }
 
   const response: SupportedResponse = {
     kinds,
@@ -535,15 +564,18 @@ app.get('/supported', (req, res) => {
   };
 
   res.json(response);
-});
+}
 
 /**
  * POST /verify
  * Verifies a payment payload against requirements
  */
-app.post('/verify', async (req, res) => {
+async function handleVerify(req: Request, res: Response): Promise<void> {
   try {
-    const { paymentPayload, paymentRequirements } = req.body;
+    const { paymentPayload, paymentRequirements } = req.body as {
+      paymentPayload: unknown;
+      paymentRequirements: unknown;
+    };
 
     // Validate inputs
     const payload = PAYMENT_PAYLOAD_SCHEMA.parse(paymentPayload);
@@ -568,15 +600,18 @@ app.post('/verify', async (req, res) => {
       details: { error: String(error) },
     });
   }
-});
+}
 
 /**
  * POST /settle
  * Settles a verified payment by executing the transaction
  */
-app.post('/settle', async (req, res) => {
+async function handleSettle(req: Request, res: Response): Promise<void> {
   try {
-    const { paymentPayload, paymentRequirements } = req.body;
+    const { paymentPayload, paymentRequirements } = req.body as {
+      paymentPayload: unknown;
+      paymentRequirements: unknown;
+    };
 
     // Validate inputs
     const payload = PAYMENT_PAYLOAD_SCHEMA.parse(paymentPayload);
@@ -586,7 +621,7 @@ app.post('/settle', async (req, res) => {
     const provider = createProvider(requirements.network);
 
     // Configure settlement options with paymaster
-    const options = createSettlementOptions(requirements.network, {
+    const paymasterConfig = createPaymasterConfig(requirements.network, {
       apiKey: process.env.PAYMASTER_API_KEY,
     });
 
@@ -595,7 +630,7 @@ app.post('/settle', async (req, res) => {
       provider,
       payload,
       requirements,
-      options
+      { paymasterConfig }
     );
 
     res.json(result);
@@ -607,15 +642,21 @@ app.post('/settle', async (req, res) => {
       errorReason: String(error),
     });
   }
-});
+}
 
 /**
  * POST /verify-and-settle
  * Combined endpoint that verifies and settles in one call
  */
-app.post('/verify-and-settle', async (req, res) => {
+async function handleVerifyAndSettle(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    const { paymentPayload, paymentRequirements } = req.body;
+    const { paymentPayload, paymentRequirements } = req.body as {
+      paymentPayload: unknown;
+      paymentRequirements: unknown;
+    };
 
     const payload = PAYMENT_PAYLOAD_SCHEMA.parse(paymentPayload);
     const requirements = PAYMENT_REQUIREMENTS_SCHEMA.parse(paymentRequirements);
@@ -625,24 +666,22 @@ app.post('/verify-and-settle', async (req, res) => {
     const verification = await verifyPayment(provider, payload, requirements);
 
     if (!verification.isValid) {
-      return res.json({
+      res.json({
         verified: false,
         settled: false,
         verifyResult: verification,
       });
+      return;
     }
 
     // Then settle
-    const options = createSettlementOptions(requirements.network, {
+    const paymasterConfig = createPaymasterConfig(requirements.network, {
       apiKey: process.env.PAYMASTER_API_KEY,
     });
 
-    const settlement = await settlePayment(
-      provider,
-      payload,
-      requirements,
-      options
-    );
+    const settlement = await settlePayment(provider, payload, requirements, {
+      paymasterConfig,
+    });
 
     res.json({
       verified: true,
@@ -657,11 +696,10 @@ app.post('/verify-and-settle', async (req, res) => {
       error: String(error),
     });
   }
-});
+}
 
-app.listen(4000, () => {
-  console.log('x402 Facilitator running on port 4000');
-});
+// Export handlers for use in an actual Express app
+export { handleSupported, handleVerify, handleSettle, handleVerifyAndSettle };
 ```
 
 ### Using the Facilitator Client
@@ -669,43 +707,73 @@ app.listen(4000, () => {
 Applications can use the facilitator client to delegate payment processing:
 
 ```typescript
+import type { Request, Response } from 'express';
 import {
   createFacilitatorClient,
   buildUSDCPayment,
   decodePaymentSignature,
+  encodePaymentRequired,
   HTTP_HEADERS,
   PAYMENT_PAYLOAD_SCHEMA,
-  type PaymentPayload,
+  type PaymentRequired,
 } from 'x402-starknet';
-import express from 'express';
-
-const app = express();
-app.use(express.json());
 
 // Create facilitator client
+const facilitatorApiKey = process.env['FACILITATOR_API_KEY'];
 const facilitator = createFacilitatorClient({
   baseUrl: 'https://facilitator.example.com',
-  apiKey: process.env.FACILITATOR_API_KEY,
+  apiKey: facilitatorApiKey,
   timeout: 30000,
 });
 
-// Check what the facilitator supports
-const supported = await facilitator.supported();
-console.log('Facilitator supports:', supported.kinds);
+/**
+ * Check what the facilitator supports
+ */
+async function checkFacilitatorCapabilities(): Promise<void> {
+  const supported = await facilitator.supported();
+  console.log('Facilitator supports:', supported.kinds);
+  console.log('Extensions:', supported.extensions);
+  console.log('Signers:', supported.signers);
+}
 
-// Use facilitator in your API
-app.get('/api/paid-resource', async (req, res) => {
+/**
+ * API endpoint that uses the facilitator for payment processing
+ */
+async function handlePaidResource(req: Request, res: Response): Promise<void> {
+  const paymentAddress = process.env['PAYMENT_ADDRESS'];
+  if (!paymentAddress) {
+    res.status(500).json({ error: 'Payment address not configured' });
+    return;
+  }
+
   const requirements = buildUSDCPayment({
     network: 'starknet:mainnet',
     amount: 0.05,
-    payTo: process.env.PAYMENT_ADDRESS!,
+    payTo: paymentAddress,
   });
 
   const paymentHeader =
     req.headers[HTTP_HEADERS.PAYMENT_SIGNATURE.toLowerCase()];
 
   if (!paymentHeader) {
-    return res.status(402).json({ error: 'Payment required' });
+    // Return 402 with requirements
+    const paymentRequired: PaymentRequired = {
+      x402Version: 2,
+      error: 'Payment required',
+      resource: {
+        url: req.originalUrl,
+        description: 'Premium content',
+      },
+      accepts: [requirements],
+    };
+
+    res.status(402);
+    res.header(
+      HTTP_HEADERS.PAYMENT_REQUIRED,
+      encodePaymentRequired(paymentRequired)
+    );
+    res.json(paymentRequired);
+    return;
   }
 
   try {
@@ -717,10 +785,11 @@ app.get('/api/paid-resource', async (req, res) => {
     const verifyResult = await facilitator.verify(payload, requirements);
 
     if (!verifyResult.isValid) {
-      return res.status(402).json({
+      res.status(402).json({
         error: 'Payment invalid',
         reason: verifyResult.invalidReason,
       });
+      return;
     }
 
     // Serve the resource
@@ -729,12 +798,13 @@ app.get('/api/paid-resource', async (req, res) => {
     // Delegate settlement to facilitator
     const settleResult = await facilitator.settle(payload, requirements);
     console.log('Settlement:', settleResult.success ? 'Success' : 'Failed');
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: 'Payment processing failed' });
   }
-});
+}
 
-app.listen(3000);
+// Export for use
+export { facilitator, checkFacilitatorCapabilities, handlePaidResource };
 ```
 
 ### Facilitator with Caching and Rate Limiting
