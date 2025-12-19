@@ -22,7 +22,10 @@
     "build:ts": "tsc -p tsconfig.json",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
+    "test:docs": "vitest run tests/docs/",
     "typecheck": "tsc --noEmit",
+    "typecheck:examples": "tsc -p tsconfig.examples.json --noEmit",
+    "validate:examples": "bun run build && bun run typecheck:examples && bun run test:docs",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier . -w",
@@ -55,6 +58,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/express": "^5.0.3",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
@@ -65,13 +69,13 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^16.5.0",
     "prettier": "^3.7.4",
-    "starknet": "^8.9.0",
+    "starknet": "^9.2.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.0",
     "vitest": "^4.0.16"
   },
   "peerDependencies": {
-    "starknet": "^8.9.0"
+    "starknet": "^9.2.1"
   },
   "engines": {
     "node": ">=18.0.0"
